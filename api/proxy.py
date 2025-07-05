@@ -1,20 +1,26 @@
-from http.client import HTTPSConnection
-from urllib.parse import urlencode
 from flask import Flask, request, Response
+import requests
 
 app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
 def proxy():
+    deployment_id = request.args.get("deployment_id")
     client_id = request.args.get("client_id")
     password = request.args.get("password")
-    if not client_id or not password:
+
+    if not deployment_id or not client_id or not password:
         return Response("Missing parameters", status=400)
 
-    # ESEMPIO: costruisci la URL di destinazione
-    target_url = f"https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec?client_id={client_id}&password={password}"
+    # Costruisci la URL di destinazione
+    target_url = f"https://script.google.com/macros/s/{deployment_id}/exec"
+    params = {
+        "client_id": client_id,
+        "password": password
+    }
 
-    conn = HTTPSConnection("script.google.com")
-    conn.request("GET", f"/macros/s/YOUR_DEPLOYMENT_ID/exec?client_id={client_id}&password={password}")
-    res = conn.getresponse()
-    return Response(res.read(), status=res.status, content_type=res.getheader("Content-Type"))
+    try:
+        resp = requests.get(target_url, params=params, timeout=10)
+        return Response(resp.content, status=resp.status_code, content_type=resp.headers.get("Content-Type", "text/html"))
+    except Exception as e:
+        return Response(f"Proxy error: {str(e)}", status=502)
