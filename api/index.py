@@ -4,7 +4,7 @@ import requests
 app = Flask(__name__)
 
 @app.route("/", methods=["GET"])
-def proxy():
+def my_proxy():
     deployment_id = request.args.get("deployment_id")
     client_id = request.args.get("client_id")
     password = request.args.get("password")
