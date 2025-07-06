@@ -9,12 +9,16 @@ export default async function handler(req, res) {
 
   try {
     const response = await fetch(url);
-    const text = await response.text();
+    const json = await response.json();
 
+    if (!json.data) {
+      return res.status(500).send("No data returned");
+    }
+
+    // Restituisce HTML dinamico
     res.setHeader("Content-Type", "text/html");
-    return res.status(200).send(text);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).send("Proxy error");
+    res.status(200).send(json.data);
+  } catch (error) {
+    res.status(500).send("Errore nel proxy: " + error.message);
   }
 }
