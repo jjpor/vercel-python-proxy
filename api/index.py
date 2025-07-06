@@ -1,7 +1,10 @@
 from flask import Flask, request, Response
+from flask_cors import CORS
 import requests
 
 app = Flask(__name__)
+CORS(app)
+
 
 @app.route("/", methods=["GET"])
 def my_proxy():
