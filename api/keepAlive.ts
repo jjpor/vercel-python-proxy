@@ -6,8 +6,8 @@ async function keepAliveAttempt(): Promise<{status: number, text: string}> {
   if (response.status === 200) {
     return { status: 200, text };
   } else {
-    // ritardo random tra 0 e 60 secondi
-    const delay = Math.random() * 60000;
+    // ritardo random tra 0 e 5 secondi
+    const delay = Math.random() * 5000;
     await new Promise(res => setTimeout(res, delay));
     const retry = await fetch('https://smartalk.onrender.com');
     return { status: retry.status, text: "Home reloaded" };
