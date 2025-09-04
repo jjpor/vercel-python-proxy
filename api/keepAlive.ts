@@ -1,5 +1,4 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import fetch from 'node-fetch';
 
 async function keepAliveAttempt(): Promise<{status: number, text: string}> {
   const response = await fetch('https://smartalk.onrender.com/keep_alive');
