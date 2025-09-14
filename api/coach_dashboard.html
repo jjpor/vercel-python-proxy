@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Call Logging Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+    .container { max-width: 900px; }
+    .form-input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; background-color: #fff; transition: all 0.2s; }
+    .form-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
+    .form-label { font-weight: 500; color: #4b5563; }
+    .hidden { display: none; }
+    .modal { position: fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:1000; }
+    .modal-content { background-color:white; padding:2rem; border-radius:1rem; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
+    .cube-button { display:flex; flex-direction:column; justify-content:center; align-items:center; padding:24px; border-radius:12px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor:pointer; }
+    .cube-button:hover { transform: translateY(-4px); box-shadow:0 6px 10px rgba(0,0,0,0.15); }
+    table { border-collapse: collapse; width:100%; }
+    th, td { text-align:left; padding:12px; border-bottom:1px solid #ddd; }
+    th { background-color:#f2f2f2; }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+  <div class="container bg-white p-8 md:p-12 rounded-2xl shadow-xl space-y-8 border border-gray-200">
+    <!-- Login -->
+    <div id="loginSection">
+      <div class="text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Login</h1>
+        <p class="mt-2 text-gray-500">Usa le tue credenziali da coach.</p>
+      </div>
+      <form id="loginForm" class="mt-8 space-y-4">
+        <div>
+          <label for="coachId" class="form-label block mb-2">ID Coach</label>
+          <input type="text" id="coachId" name="coachId" class="form-input" placeholder="e.g., MA" required>
+        </div>
+        <div>
+          <label for="password" class="form-label block mb-2">Password Dashboard</label>
+          <input type="password" id="password" name="password" class="form-input" placeholder="Password" required autocomplete="current-password">
+        </div>
+        <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+          Accedi
+        </button>
+      </form>
+      <div id="loginMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboardSection" class="hidden">
+      <div class="text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Dashboard</h1>
+        <p class="mt-2 text-gray-500">Benvenuto, <span id="coachNameDisplay" class="font-bold text-blue-600"></span>!</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+        <div id="monthlyEarningsDisplay" class="cube-button bg-blue-600 text-white cursor-default">
+          <p class="text-lg font-medium opacity-80">Guadagno del Mese</p>
+          <p class="mt-2 text-4xl sm:text-5xl font-bold"><span id="earningsAmount">--</span>€</p>
+        </div>
+
+        <button id="logCallBtn" class="cube-button bg-green-600 text-white">
+          <span class="text-4xl">📝</span>
+          <p class="mt-2 text-lg font-semibold">Registra una nuova call</p>
+        </button>
+
+        <button id="viewFolderBtn" class="cube-button bg-gray-600 text-white">
+          <span class="text-4xl">📂</span>
+          <p class="mt-2 text-lg font-semibold">La mia cartella pagamenti</p>
+        </button>
+
+        <button id="viewCallLogBtn" class="cube-button bg-purple-600 text-white">
+          <span class="text-4xl">📖</span>
+          <p class="mt-2 text-lg font-semibold">Log lezioni</p>
+        </button>
+
+        <button id="logoutBtn" class="cube-button bg-red-600 text-white sm:col-span-2 lg:col-span-1">
+          <span class="text-4xl">🚪</span>
+          <p class="mt-2 text-lg font-semibold">Esci</p>
+        </button>
+      </div>
+    </div>
+
+    <!-- Call form -->
+    <div id="callSection" class="hidden">
+      <div class="text-center">
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Registra una nuova call</h1>
+        <p class="mt-2 text-gray-500">Accesso come <span class="font-bold text-blue-600" id="callSectionCoachNameDisplay"></span>.</p>
+      </div>
+
+      <form id="callForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+        <!-- hidden -->
+        <input type="hidden" id="coachName" name="coachName">
+        <input type="hidden" id="units" name="units">
+        <input type="hidden" id="allocationId" name="allocationId">
+        <input type="hidden" id="productId" name="productId">
+
+        <!-- Student -->
+        <div>
+          <label for="studentId" class="form-label block mb-2">ID Studente</label>
+          <select id="studentId" name="studentId" class="form-input" required>
+            <option value="" disabled selected>Caricamento ID Studenti...</option>
+          </select>
+        </div>
+
+        <!-- Product -->
+        <div>
+          <label for="productIdSelect" class="form-label block mb-2">ID Prodotto</label>
+          <select id="productIdSelect" name="productIdSelect" class="form-input" required disabled>
+            <option value="" disabled selected>Seleziona prima un ID Studente</option>
+          </select>
+        </div>
+
+        <!-- Date -->
+        <div>
+          <label for="callDate" class="form-label block mb-2">Data</label>
+          <input type="date" id="callDate" name="callDate" class="form-input" required>
+        </div>
+
+        <!-- € / h -->
+        <div>
+          <label for="hourlyRate" class="form-label block mb-2">Tariffa Coach (€)</label>
+          <input type="number" id="hourlyRate" name="hourlyRate" class="form-input" step="0.01" placeholder="Calcolo automatico" required readonly>
+        </div>
+
+        <!-- Technical duration -->
+        <div>
+          <label for="technicalDuration" class="form-label block mb-2">Duration (minuti)</label>
+          <input type="number" id="technicalDuration" name="technicalDuration" class="form-input" step="1" placeholder="Calcolo automatico" required readonly>
+        </div>
+
+        <!-- Override -->
+        <div>
+          <label for="callDuration" class="form-label block mb-2">Duration Override (minuti)</label>
+          <select id="callDuration" name="callDuration" class="form-input" required>
+            <option value="30">30</option>
+            <option value="60" selected>60</option>
+            <option value="90">90</option>
+            <option value="120">120</option>
+          </select>
+        </div>
+
+        <div class="md:col-span-2 mt-4">
+          <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Registra Call</button>
+          <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50">Torna alla Dashboard</button>
+        </div>
+      </form>
+
+      <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
+    </div>
+
+    <!-- Call history -->
+    <div id="callHistorySection" class="hidden">
+      <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Le mie call</h2>
+        <div class="flex items-center space-x-4">
+          <select id="monthFilter" class="form-input w-48">
+            <option value="all">Tutti i mesi</option>
+          </select>
+          <button id="backToDashboardFromHistoryBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50">Torna alla Dashboard</button>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl shadow-lg border border-gray-200">
+        <table class="min-w-full bg-white text-sm">
+          <thead>
+            <tr class="bg-gray-200 text-gray-600 uppercase text-xs leading-normal">
+              <th class="py-3 px-6 text-left">Data</th>
+              <th class="py-3 px-6 text-left">ID Studente</th>
+              <th class="py-3 px-6 text-left">ID Allocazione</th>
+              <th class="py-3 px-6 text-left">Guadagno</th>
+            </tr>
+          </thead>
+          <tbody id="callHistoryTableBody" class="text-gray-600 text-sm font-light"></tbody>
+        </table>
+      </div>
+
+      <div id="callHistoryMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="confirmationModal" class="modal hidden">
+    <div class="modal-content">
+      <h2 class="text-2xl font-bold text-gray-800">Successo!</h2>
+      <p id="modalMessage" class="mt-4 text-gray-600"></p>
+      <button id="closeModalBtn" class="mt-6 bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">OK</button>
+    </div>
+  </div>
+
+  <script>
+    // URL del Web App (Deployment → Web app)
+    const base_url = "https://vercel-python-proxy.vercel.app/api";
+    const deployment_id = "AKfycbyjdURvAVQSX92uJT31YZtbTLIkkQWo9W49WvelHNY0aCso6gPKpv1sHwvzSXhFpm0w";
+
+    // --- Riferimenti DOM
+    const loginForm = document.getElementById('loginForm');
+    const callForm = document.getElementById('callForm');
+
+    const loginSection = document.getElementById('loginSection');
+    const dashboardSection = document.getElementById('dashboardSection');
+    const callSection = document.getElementById('callSection');
+    const callHistorySection = document.getElementById('callHistorySection');
+
+    const logCallBtn = document.getElementById('logCallBtn');
+    const viewFolderBtn = document.getElementById('viewFolderBtn');
+    const viewCallLogBtn = document.getElementById('viewCallLogBtn');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+    const backToDashboardFromHistoryBtn = document.getElementById('backToDashboardFromHistoryBtn');
+
+    const loginMessageBox = document.getElementById('loginMessageBox');
+    const callMessageBox = document.getElementById('callMessageBox');
+    const callHistoryMessageBox = document.getElementById('callHistoryMessageBox');
+
+    const studentIdSelect = document.getElementById('studentId');
+    const productIdSelect = document.getElementById('productIdSelect');
+
+    const callDateInput = document.getElementById('callDate');
+    const coachNameInput = document.getElementById('coachName');
+    const coachIdInput = document.getElementById('coachId');
+    const passwordInput = document.getElementById('password');
+
+    const coachNameDisplay = document.getElementById('coachNameDisplay');
+    const callSectionCoachNameDisplay = document.getElementById('callSectionCoachNameDisplay');
+
+    const hourlyRateInput = document.getElementById('hourlyRate');
+    const technicalDurationInput = document.getElementById('technicalDuration');
+    const callDurationSelect = document.getElementById('callDuration');
+    const unitsInput = document.getElementById('units');
+    const allocationIdInput = document.getElementById('allocationId');
+
+    const confirmationModal = document.getElementById('confirmationModal');
+    const modalMessage = document.getElementById('modalMessage');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+
+    const earningsAmountDisplay = document.getElementById('earningsAmount');
+    const callHistoryTableBody = document.getElementById('callHistoryTableBody');
+    const monthFilterSelect = document.getElementById('monthFilter');
+
+    // --- Stato runtime
+    let CURRENT_COACH_ID = null;
+    let CURRENT_COACH_NAME = null;
+    let CURRENT_ALLOCATIONS_BY_STUDENT = {}; // { studentId: [ {allocationId, productId, hourlyRate, technicalDuration, unitsLeft} ] }
+    let LAST_HISTORY = []; // cache per filtro mese
+
+    // --- Helper UI
+    function showMessage(box, message, isSuccess) {
+      box.textContent = message;
+      box.className = `mt-4 p-4 rounded-xl text-center block ${isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+    }
+    function hideMessage(box) {
+      box.className = 'mt-4 p-4 rounded-xl text-center hidden';
+      box.textContent = '';
+    }
+    function showModal(message) {
+      modalMessage.textContent = message;
+      confirmationModal.classList.remove('hidden');
+    }
+    closeModalBtn.addEventListener('click', () => {
+      confirmationModal.classList.add('hidden');
+      callForm.reset();
+      studentIdSelect.innerHTML = '<option value="" disabled selected>Caricamento ID Studenti...</option>';
+      productIdSelect.innerHTML = '<option value="" disabled selected>Seleziona prima un ID Studente</option>';
+      productIdSelect.disabled = true;
+      callSection.classList.add('hidden');
+      dashboardSection.classList.remove('hidden');
+      fetchMonthlyEarnings(); // refresh € mese
+    });
+
+    function switchSection(showId) {
+      [loginSection, dashboardSection, callSection, callHistorySection].forEach(sec => sec.classList.add('hidden'));
+      showId.classList.remove('hidden');
+    }
+
+    // --- API helpers
+    async function apiGet(action, params = {}) {
+      const url = new URL(base_url + "/get");
+      url.searchParams.set("deployment_id", deployment_id);
+      url.searchParams.set("action", action);
+      Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+      const res = await fetch(url.toString());
+      if (!res.ok) throw new Error(`GET ${action} failed: ${res.status}`);
+      return res.json();
+    }
+    
+    async function apiPost(action, body = {}) {
+      const res = await fetch(base_url + "/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ deployment_id, action, ...body }),
+      });
+      if (!res.ok) throw new Error(`POST ${action} failed: ${res.status}`);
+      return res.json();
+    }
+
+
+    // --- Login
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMessage(loginMessageBox);
+
+      const coachId = coachIdInput.value.trim();
+      const password = passwordInput.value.trim();
+      try {
+        const resp = await apiPost('login', { coachId, password });
+        if (!resp.success) throw new Error(resp.error || 'Login fallito.');
+        CURRENT_COACH_ID = resp.coachId;
+        CURRENT_COACH_NAME = resp.coachName;
+
+        coachNameDisplay.textContent = CURRENT_COACH_NAME;
+        coachNameInput.value = CURRENT_COACH_NAME;
+        callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+
+        switchSection(dashboardSection);
+        await fetchMonthlyEarnings();
+      } catch (err) {
+        showMessage(loginMessageBox, err.message, false);
+      }
+    });
+
+    // --- Logout
+    logoutBtn.addEventListener('click', () => {
+      CURRENT_COACH_ID = null;
+      CURRENT_COACH_NAME = null;
+      LAST_HISTORY = [];
+      CURRENT_ALLOCATIONS_BY_STUDENT = {};
+      loginForm.reset();
+      switchSection(loginSection);
+      hideMessage(loginMessageBox);
+    });
+
+    // --- Caricamento Studenti
+    async function loadStudentIds() {
+      studentIdSelect.innerHTML = '<option value="" disabled selected>Caricamento ID Studenti...</option>';
+      try {
+        const resp = await apiGet('getStudents');
+        const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+        studentIdSelect.innerHTML = '';
+        const def = document.createElement('option');
+        def.value = '';
+        def.disabled = true;
+        def.selected = true;
+        def.textContent = 'Seleziona uno studente';
+        studentIdSelect.appendChild(def);
+
+        arr.forEach(id => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = id;
+          studentIdSelect.appendChild(opt);
+        });
+      } catch (err) {
+        studentIdSelect.innerHTML = '<option value="" disabled selected>Errore di caricamento</option>';
+      }
+    }
+
+    // --- Selezione studente → carica allocazioni/prodotti
+    studentIdSelect.addEventListener('change', async () => {
+      const studentId = studentIdSelect.value;
+      productIdSelect.disabled = true;
+      productIdSelect.innerHTML = '<option value="" disabled selected>Caricamento prodotti...</option>';
+      hourlyRateInput.value = '';
+      technicalDurationInput.value = '';
+      allocationIdInput.value = '';
+
+      try {
+        const resp = await apiGet('getStudentAllocations', { studentId });
+        const allocations = (resp && resp.success && Array.isArray(resp.allocations)) ? resp.allocations : [];
+        CURRENT_ALLOCATIONS_BY_STUDENT[studentId] = allocations;
+
+        productIdSelect.innerHTML = '';
+        const def = document.createElement('option');
+        def.value = '';
+        def.disabled = true;
+        def.selected = true;
+        def.textContent = 'Seleziona un prodotto/allocazione';
+        productIdSelect.appendChild(def);
+
+        allocations.forEach(a => {
+          const opt = document.createElement('option');
+          opt.value = a.productId;
+          opt.textContent = `${a.productId} — ${a.allocationId}${(a.unitsLeft!==null)?` (left ${a.unitsLeft})`:''}`;
+          opt.dataset.allocationId = a.allocationId;
+          opt.dataset.hourlyRate = a.hourlyRate;
+          opt.dataset.technicalDuration = a.technicalDuration;
+          productIdSelect.appendChild(opt);
+        });
+
+        productIdSelect.disabled = false;
+      } catch (err) {
+        productIdSelect.innerHTML = '<option value="" disabled selected>Errore di caricamento</option>';
+      }
+    });
+
+    // --- Selezione prodotto → valorizza campi
+    productIdSelect.addEventListener('change', () => {
+      const opt = productIdSelect.options[productIdSelect.selectedIndex];
+      if (!opt || !opt.dataset) return;
+      hourlyRateInput.value = opt.dataset.hourlyRate || '';
+      technicalDurationInput.value = opt.dataset.technicalDuration || '';
+      allocationIdInput.value = opt.dataset.allocationId || '';
+      // Imposta callDuration di default = technicalDuration se presente
+      const tech = parseInt(technicalDurationInput.value || '60', 10);
+      if ([30,60,90,120].includes(tech)) {
+        callDurationSelect.value = String(tech);
+      } else {
+        callDurationSelect.value = '60';
+      }
+      recomputeUnits();
+    });
+
+    // --- Units = callDuration(min) / 60
+    function recomputeUnits() {
+      const mins = parseFloat(callDurationSelect.value || '60');
+      const units = isNaN(mins) ? 1 : (mins / 60);
+      unitsInput.value = units.toFixed(2);
+    }
+    callDurationSelect.addEventListener('change', recomputeUnits);
+
+    // --- Submit call
+    callForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMessage(callMessageBox);
+
+      if (!CURRENT_COACH_ID) {
+        showMessage(callMessageBox, 'Sessione scaduta. Effettua di nuovo il login.', false);
+        return;
+      }
+
+      const payload = {
+        studentId: studentIdSelect.value,
+        allocationId: allocationIdInput.value,
+        callDate: callDateInput.value,          // YYYY-MM-DD
+        callDuration: parseFloat(callDurationSelect.value), // minuti
+        units: parseFloat(unitsInput.value),    // ore
+        hourlyRate: parseFloat(hourlyRateInput.value),
+        coachId: CURRENT_COACH_ID,
+        coachName: CURRENT_COACH_NAME
+      };
+
+      // Validazioni minime
+      if (!payload.studentId || !payload.allocationId) {
+        showMessage(callMessageBox, 'Seleziona studente e prodotto/allocazione.', false);
+        return;
+      }
+
+      try {
+        const resp = await apiPost('logCall', payload);
+        if (!resp.success) throw new Error(resp.error || 'Errore nella registrazione.');
+        showModal('Call registrata con successo!');
+      } catch (err) {
+        showMessage(callMessageBox, err.message, false);
+      }
+    });
+
+    // --- Guadagno mensile
+    async function fetchMonthlyEarnings() {
+      if (!CURRENT_COACH_ID) return;
+      earningsAmountDisplay.textContent = '...';
+      try {
+        const resp = await apiGet('getMonthlyEarnings', { coachId: CURRENT_COACH_ID });
+        const value = (resp && resp.success) ? resp.earnings : 0;
+        earningsAmountDisplay.textContent = Number(value).toFixed(2);
+      } catch {
+        earningsAmountDisplay.textContent = '--';
+      }
+    }
+
+    // --- Cartella pagamenti
+    viewFolderBtn.addEventListener('click', async () => {
+      if (!CURRENT_COACH_ID) return;
+      try {
+        const resp = await apiGet('getPaymentFolderUrl', { coachId: CURRENT_COACH_ID });
+        if (resp && resp.success && resp.url) window.open(resp.url, '_blank');
+      } catch {}
+    });
+
+    // --- Log call
+    viewCallLogBtn.addEventListener('click', async () => {
+      if (!CURRENT_COACH_ID) return;
+      switchSection(callHistorySection);
+      await loadCallHistory();
+    });
+
+    backToDashboardFromHistoryBtn.addEventListener('click', () => {
+      switchSection(dashboardSection);
+    });
+
+    async function loadCallHistory() {
+      callHistoryTableBody.innerHTML = '';
+      monthFilterSelect.innerHTML = '<option value="all">Tutti i mesi</option>';
+      hideMessage(callHistoryMessageBox);
+
+      try {
+        const resp = await apiGet('getCallHistory', { coachId: CURRENT_COACH_ID });
+        const history = (resp && resp.success && Array.isArray(resp.history)) ? resp.history : [];
+        LAST_HISTORY = history;
+
+        // Popola filtro mesi (yyyy-mm)
+        const months = Array.from(new Set(history.map(h => h.dateISO.slice(0,7))));
+        months.sort((a,b) => (a < b ? 1 : -1));
+        months.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m;
+          // Etichetta leggibile (MMMM yyyy)
+          const [yy, mm] = m.split('-').map(Number);
+          const date = new Date(yy, mm - 1, 1);
+          opt.textContent = date.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+          monthFilterSelect.appendChild(opt);
+        });
+
+        renderHistoryTable('all');
+      } catch (err) {
+        showMessage(callHistoryMessageBox, 'Errore nel caricamento della cronologia.', false);
+      }
+    }
+
+    function renderHistoryTable(filterMonth) {
+      callHistoryTableBody.innerHTML = '';
+      const rows = LAST_HISTORY
+        .filter(h => filterMonth === 'all' ? true : h.dateISO.startsWith(filterMonth));
+
+      if (!rows.length) {
+        callHistoryTableBody.innerHTML = `
+          <tr><td class="py-3 px-6 text-left" colspan="4">Nessuna call.</td></tr>`;
+        return;
+      }
+
+      rows.forEach(h => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="py-3 px-6 text-left">${h.date}</td>
+          <td class="py-3 px-6 text-left">${h.studentId || ''}</td>
+          <td class="py-3 px-6 text-left">${h.allocationId || ''}</td>
+          <td class="py-3 px-6 text-left">${Number(h.earnings).toFixed(2)}€</td>
+        `;
+        callHistoryTableBody.appendChild(tr);
+      });
+    }
+
+    monthFilterSelect.addEventListener('change', () => {
+      renderHistoryTable(monthFilterSelect.value);
+    });
+
+    // --- Navigazione
+    logCallBtn.addEventListener('click', async () => {
+      if (!CURRENT_COACH_ID) return;
+      switchSection(callSection);
+      await loadStudentIds();
+    });
+
+    backToDashboardBtn.addEventListener('click', () => {
+      switchSection(dashboardSection);
+    });
+
+    // --- Init
+    (function init() {
+      // data oggi default
+      const today = new Date();
+      const iso = new Date(today.getTime() - (today.getTimezoneOffset()*60000)).toISOString().slice(0,10);
+      callDateInput.value = iso;
+      // units iniziali
+      recomputeUnits();
+    })();
+  </script>
+</body>
+</html>
