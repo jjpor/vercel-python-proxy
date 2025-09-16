@@ -103,6 +103,11 @@
           <span class="text-4xl">📖</span>
           <p class="mt-2 text-lg font-semibold">Call log</p>
         </button>
+        
+        <button id="viewReportCardsBtn" class="cube-button bg-teal-600 text-white">
+          <span class="text-4xl">📈</span>
+          <p class="mt-2 text-lg font-semibold">Report Cards</p>
+        </button>
 
         <button id="logoutBtn" class="cube-button bg-red-600 text-white sm:col-span-2 lg:col-span-1">
           <span class="text-4xl">🚪</span>
@@ -207,401 +212,424 @@
 
       <div id="callHistoryMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
     </div>
-  </div>
 
-  <!-- Modal -->
-  <div id="confirmationModal" class="modal hidden">
-    <div class="modal-content">
-      <h2 class="text-2xl font-bold text-gray-800">Success!</h2>
-      <p id="modalMessage" class="mt-4 text-gray-600"></p>
-      <button id="closeModalBtn" class="mt-6 bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">OK</button>
+    <!-- Report Cards Section -->
+    <div id="reportCardsSection" class="hidden">
+      <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Report Cards</h2>
+        <button id="backToDashboardFromReportsBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50">Back to Dashboard</button>
+      </div>
+      <div class="text-center p-8 border-2 border-dashed border-gray-300 rounded-xl text-gray-500">
+        Report Cards functionality will be added here.
+      </div>
     </div>
-  </div>
 
-  <script>
-    // URL of the Web App (Deployment -> Web app)
-    const base_url = "https://vercel-python-proxy.vercel.app/api";
-    const deployment_id = "AKfycbx1mAcW3zM-ONtMADPGq60rAqcpXcCAvnmNF-Wu84FTFKA35ULbw17L2lyzRIxh8cFF";
+    <!-- Modal -->
+    <div id="confirmationModal" class="modal hidden">
+      <div class="modal-content">
+        <h2 class="text-2xl font-bold text-gray-800">Success!</h2>
+        <p id="modalMessage" class="mt-4 text-gray-600"></p>
+        <button id="closeModalBtn" class="mt-6 bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">OK</button>
+      </div>
+    </div>
 
-    // --- DOM References
-    const loginForm = document.getElementById('loginForm');
-    const callForm = document.getElementById('callForm');
-    const loginBtn = document.getElementById('loginBtn');
+    <script>
+      // URL of the Web App (Deployment -> Web app)
+      const base_url = "https://vercel-python-proxy.vercel.app/api";
+      const deployment_id = "AKfycbx1mAcW3zM-ONtMADPGq60rAqcpXcCAvnmNF-Wu84FTFKA35ULbw17L2lyzRIxh8cFF";
 
-    const loginSection = document.getElementById('loginSection');
-    const dashboardSection = document.getElementById('dashboardSection');
-    const callSection = document.getElementById('callSection');
-    const callHistorySection = document.getElementById('callHistorySection');
+      // --- DOM References
+      const loginForm = document.getElementById('loginForm');
+      const callForm = document.getElementById('callForm');
+      const loginBtn = document.getElementById('loginBtn');
 
-    const logCallBtn = document.getElementById('logCallBtn');
-    const viewFolderBtn = document.getElementById('viewFolderBtn');
-    const viewCallLogBtn = document.getElementById('viewCallLogBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const backToDashboardBtn = document.getElementById('backToDashboardBtn');
-    const backToDashboardFromHistoryBtn = document.getElementById('backToDashboardFromHistoryBtn');
+      const loginSection = document.getElementById('loginSection');
+      const dashboardSection = document.getElementById('dashboardSection');
+      const callSection = document.getElementById('callSection');
+      const callHistorySection = document.getElementById('callHistorySection');
+      const reportCardsSection = document.getElementById('reportCardsSection');
 
-    const loginMessageBox = document.getElementById('loginMessageBox');
-    const callMessageBox = document.getElementById('callMessageBox');
-    const callHistoryMessageBox = document.getElementById('callHistoryMessageBox');
-
-    const studentIdSelect = document.getElementById('studentId');
-    const productIdSelect = document.getElementById('productIdSelect');
-
-    const callDateInput = document.getElementById('callDate');
-    const coachNameInput = document.getElementById('coachName');
-    const coachIdInput = document.getElementById('coachId');
-    const passwordInput = document.getElementById('password');
+      const logCallBtn = document.getElementById('logCallBtn');
+      const viewFolderBtn = document.getElementById('viewFolderBtn');
+      const viewCallLogBtn = document.getElementById('viewCallLogBtn');
+      const viewReportCardsBtn = document.getElementById('viewReportCardsBtn');
+      const logoutBtn = document.getElementById('logoutBtn');
+      const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+      const backToDashboardFromHistoryBtn = document.getElementById('backToDashboardFromHistoryBtn');
+      const backToDashboardFromReportsBtn = document.getElementById('backToDashboardFromReportsBtn');
 
 
-    const coachNameDisplay = document.getElementById('coachNameDisplay');
-    const callSectionCoachNameDisplay = document.getElementById('callSectionCoachNameDisplay');
+      const loginMessageBox = document.getElementById('loginMessageBox');
+      const callMessageBox = document.getElementById('callMessageBox');
+      const callHistoryMessageBox = document.getElementById('callHistoryMessageBox');
 
-    const hourlyRateInput = document.getElementById('hourlyRate');
-    const technicalDurationInput = document.getElementById('technicalDuration');
-    const callDurationSelect = document.getElementById('callDuration');
-    const unitsInput = document.getElementById('units');
-    const allocationIdInput = document.getElementById('allocationId');
+      const studentIdSelect = document.getElementById('studentId');
+      const productIdSelect = document.getElementById('productIdSelect');
 
-    const confirmationModal = document.getElementById('confirmationModal');
-    const modalMessage = document.getElementById('modalMessage');
-    const closeModalBtn = document.getElementById('closeModalBtn');
+      const callDateInput = document.getElementById('callDate');
+      const coachNameInput = document.getElementById('coachName');
+      const coachIdInput = document.getElementById('coachId');
+      const passwordInput = document.getElementById('password');
 
-    const earningsAmountDisplay = document.getElementById('earningsAmount');
-    const callHistoryTableBody = document.getElementById('callHistoryTableBody');
-    const monthFilterSelect = document.getElementById('monthFilter');
 
-    // --- Runtime State
-    let CURRENT_COACH_ID = null;
-    let CURRENT_COACH_NAME = null;
-    let CURRENT_ALLOCATIONS_BY_STUDENT = {}; // { studentId: [ {allocationId, productId, hourlyRate, technicalDuration, unitsLeft} ] }
-    let LAST_HISTORY = []; // cache for month filter
+      const coachNameDisplay = document.getElementById('coachNameDisplay');
+      const callSectionCoachNameDisplay = document.getElementById('callSectionCoachNameDisplay');
 
-    // --- UI Helpers
-    function showMessage(box, message, isSuccess) {
-      box.textContent = message;
-      box.className = `mt-4 p-4 rounded-xl text-center block ${isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
-    }
-    function hideMessage(box) {
-      box.className = 'mt-4 p-4 rounded-xl text-center hidden';
-      box.textContent = '';
-    }
-    function showModal(message) {
-      modalMessage.textContent = message;
-      confirmationModal.classList.remove('hidden');
-    }
-    closeModalBtn.addEventListener('click', () => {
-      confirmationModal.classList.add('hidden');
-      callForm.reset();
-      studentIdSelect.innerHTML = '<option value="" disabled selected>Loading Student IDs...</option>';
-      productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
-      productIdSelect.disabled = true;
-      callSection.classList.add('hidden');
-      dashboardSection.classList.remove('hidden');
-      fetchMonthlyEarnings(); // refresh monthly earnings
-    });
+      const hourlyRateInput = document.getElementById('hourlyRate');
+      const technicalDurationInput = document.getElementById('technicalDuration');
+      const callDurationSelect = document.getElementById('callDuration');
+      const unitsInput = document.getElementById('units');
+      const allocationIdInput = document.getElementById('allocationId');
 
-    function switchSection(showId) {
-      [loginSection, dashboardSection, callSection, callHistorySection].forEach(sec => sec.classList.add('hidden'));
-      showId.classList.remove('hidden');
-    }
+      const confirmationModal = document.getElementById('confirmationModal');
+      const modalMessage = document.getElementById('modalMessage');
+      const closeModalBtn = document.getElementById('closeModalBtn');
 
-    // --- API helpers
-    async function apiGet(action, params = {}) {
-      const url = new URL(base_url + "/get");
-      url.searchParams.set("deployment_id", deployment_id);
-      url.searchParams.set("action", action);
-      Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-      const res = await fetch(url.toString());
-      if (!res.ok) throw new Error(`GET ${action} failed: ${res.status}`);
-      return res.json();
-    }
-    
-    async function apiPost(action, body = {}) {
-      const res = await fetch(base_url + "/post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deployment_id, action, ...body }),
+      const earningsAmountDisplay = document.getElementById('earningsAmount');
+      const callHistoryTableBody = document.getElementById('callHistoryTableBody');
+      const monthFilterSelect = document.getElementById('monthFilter');
+
+      // --- Runtime State
+      let CURRENT_COACH_ID = null;
+      let CURRENT_COACH_NAME = null;
+      let CURRENT_ALLOCATIONS_BY_STUDENT = {}; // { studentId: [ {allocationId, productId, hourlyRate, technicalDuration, unitsLeft} ] }
+      let LAST_HISTORY = []; // cache for month filter
+
+      // --- UI Helpers
+      function showMessage(box, message, isSuccess) {
+        box.textContent = message;
+        box.className = `mt-4 p-4 rounded-xl text-center block ${isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
+      }
+      function hideMessage(box) {
+        box.className = 'mt-4 p-4 rounded-xl text-center hidden';
+        box.textContent = '';
+      }
+      function showModal(message) {
+        modalMessage.textContent = message;
+        confirmationModal.classList.remove('hidden');
+      }
+      closeModalBtn.addEventListener('click', () => {
+        confirmationModal.classList.add('hidden');
+        callForm.reset();
+        studentIdSelect.innerHTML = '<option value="" disabled selected>Loading Student IDs...</option>';
+        productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
+        productIdSelect.disabled = true;
+        callSection.classList.add('hidden');
+        dashboardSection.classList.remove('hidden');
+        fetchMonthlyEarnings(); // refresh monthly earnings
       });
-      if (!res.ok) throw new Error(`POST ${action} failed: ${res.status}`);
-      return res.json();
-    }
 
-    // --- Login
-    loginForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      hideMessage(loginMessageBox);
+      function switchSection(showId) {
+        [loginSection, dashboardSection, callSection, callHistorySection, reportCardsSection].forEach(sec => sec.classList.add('hidden'));
+        showId.classList.remove('hidden');
+      }
 
-      // Show spinner and disable button
-      const originalBtnText = loginBtn.innerHTML;
-      loginBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
-      loginBtn.disabled = true;
+      // --- API helpers
+      async function apiGet(action, params = {}) {
+        const url = new URL(base_url + "/get");
+        url.searchParams.set("deployment_id", deployment_id);
+        url.searchParams.set("action", action);
+        Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+        const res = await fetch(url.toString());
+        if (!res.ok) throw new Error(`GET ${action} failed: ${res.status}`);
+        return res.json();
+      }
+      
+      async function apiPost(action, body = {}) {
+        const res = await fetch(base_url + "/post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deployment_id, action, ...body }),
+        });
+        if (!res.ok) throw new Error(`POST ${action} failed: ${res.status}`);
+        return res.json();
+      }
 
-      const coachId = coachIdInput.value.trim();
-      const password = passwordInput.value.trim();
-      try {
-        const resp = await apiPost('login', { coachId, password });
-        if (!resp.success) throw new Error(resp.error || 'Login failed.');
-        CURRENT_COACH_ID = resp.coachId;
-        CURRENT_COACH_NAME = resp.coachName;
+      // --- Login
+      loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideMessage(loginMessageBox);
 
-        coachNameDisplay.textContent = CURRENT_COACH_NAME;
-        coachNameInput.value = CURRENT_COACH_NAME;
-        callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+        // Show spinner and disable button
+        const originalBtnText = loginBtn.innerHTML;
+        loginBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
+        loginBtn.disabled = true;
 
+        const coachId = coachIdInput.value.trim();
+        const password = passwordInput.value.trim();
+        try {
+          const resp = await apiPost('login', { coachId, password });
+          if (!resp.success) throw new Error(resp.error || 'Login failed.');
+          CURRENT_COACH_ID = resp.coachId;
+          CURRENT_COACH_NAME = resp.coachName;
+
+          coachNameDisplay.textContent = CURRENT_COACH_NAME;
+          coachNameInput.value = CURRENT_COACH_NAME;
+          callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+
+          switchSection(dashboardSection);
+          await fetchMonthlyEarnings();
+        } catch (err) {
+          showMessage(loginMessageBox, err.message, false);
+        } finally {
+          // Hide spinner and re-enable button
+          loginBtn.innerHTML = originalBtnText;
+          loginBtn.disabled = false;
+        }
+      });
+
+      // --- Logout
+      logoutBtn.addEventListener('click', () => {
+        CURRENT_COACH_ID = null;
+        CURRENT_COACH_NAME = null;
+        LAST_HISTORY = [];
+        CURRENT_ALLOCATIONS_BY_STUDENT = {};
+        loginForm.reset();
+        switchSection(loginSection);
+        hideMessage(loginMessageBox);
+      });
+
+      // --- Load Students
+      async function loadStudentIds() {
+        studentIdSelect.innerHTML = '<option value="" disabled selected>Loading Student IDs...</option>';
+        try {
+          const resp = await apiGet('getStudents');
+          const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+          studentIdSelect.innerHTML = '';
+          const def = document.createElement('option');
+          def.value = '';
+          def.disabled = true;
+          def.selected = true;
+          def.textContent = 'Select a student';
+          studentIdSelect.appendChild(def);
+
+          arr.forEach(id => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = id;
+            studentIdSelect.appendChild(opt);
+          });
+        } catch (err) {
+          studentIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
+        }
+      }
+
+      // --- Select student -> load allocations/products
+      studentIdSelect.addEventListener('change', async () => {
+        const studentId = studentIdSelect.value;
+        productIdSelect.disabled = true;
+        productIdSelect.innerHTML = '<option value="" disabled selected>Loading products...</option>';
+        hourlyRateInput.value = '';
+        technicalDurationInput.value = '';
+        allocationIdInput.value = '';
+
+        try {
+          const resp = await apiGet('getStudentAllocations', { studentId });
+          const allocations = (resp && resp.success && Array.isArray(resp.allocations)) ? resp.allocations : [];
+          CURRENT_ALLOCATIONS_BY_STUDENT[studentId] = allocations;
+
+          productIdSelect.innerHTML = '';
+          const def = document.createElement('option');
+          def.value = '';
+          def.disabled = true;
+          def.selected = true;
+          def.textContent = 'Select a product/allocation';
+          productIdSelect.appendChild(def);
+
+          allocations.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.productId;
+            opt.textContent = `${a.productId} — ${a.allocationId}${a.unitsLeft!==null? ` (remaining ${a.unitsLeft})`:''}`;
+            opt.dataset.allocationId = a.allocationId;
+            opt.dataset.hourlyRate = a.hourlyRate;
+            opt.dataset.technicalDuration = a.technicalDuration;
+            productIdSelect.appendChild(opt);
+          });
+
+          productIdSelect.disabled = false;
+        } catch (err) {
+          productIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
+        }
+      });
+
+      // --- Select product -> populate fields
+      productIdSelect.addEventListener('change', () => {
+        const opt = productIdSelect.options[productIdSelect.selectedIndex];
+        if (!opt || !opt.dataset) return;
+        hourlyRateInput.value = opt.dataset.hourlyRate || '';
+        technicalDurationInput.value = opt.dataset.technicalDuration || '';
+        allocationIdInput.value = opt.dataset.allocationId || '';
+        // Set default callDuration = technicalDuration if present
+        const tech = parseInt(technicalDurationInput.value || '60', 10);
+        if ([30,60,90,120].includes(tech)) {
+          callDurationSelect.value = String(tech);
+        } else {
+          callDurationSelect.value = '60';
+        }
+        recomputeUnits();
+      });
+
+      // --- Units = callDuration(min) / 60
+      function recomputeUnits() {
+        const mins = parseFloat(callDurationSelect.value || '60');
+        const units = isNaN(mins) ? 1 : (mins / 60);
+        unitsInput.value = units.toFixed(2);
+      }
+      callDurationSelect.addEventListener('change', recomputeUnits);
+
+      // --- Submit call
+      callForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideMessage(callMessageBox);
+
+        if (!CURRENT_COACH_ID) {
+          showMessage(callMessageBox, 'Session expired. Please log in again.', false);
+          return;
+        }
+
+        const payload = {
+          studentId: studentIdSelect.value,
+          allocationId: allocationIdInput.value,
+          callDate: callDateInput.value,          // YYYY-MM-DD
+          callDuration: parseFloat(callDurationSelect.value), // minutes
+          units: parseFloat(unitsInput.value),    // hours
+          hourlyRate: parseFloat(hourlyRateInput.value),
+          coachId: CURRENT_COACH_ID,
+          coachName: CURRENT_COACH_NAME
+        };
+
+        // Minimal validations
+        if (!payload.studentId || !payload.allocationId) {
+          showMessage(callMessageBox, 'Select student and product/allocation.', false);
+          return;
+        }
+
+        try {
+          const resp = await apiPost('logCall', payload);
+          if (!resp.success) throw new Error(resp.error || 'Error logging call.');
+          showModal('Call logged successfully!');
+        } catch (err) {
+          showMessage(callMessageBox, err.message, false);
+        }
+      });
+
+      // --- Monthly earnings
+      async function fetchMonthlyEarnings() {
+        if (!CURRENT_COACH_ID) return;
+        earningsAmountDisplay.textContent = '...';
+        try {
+          const resp = await apiGet('getMonthlyEarnings', { coachId: CURRENT_COACH_ID });
+          const value = (resp && resp.success) ? resp.earnings : 0;
+          earningsAmountDisplay.textContent = Number(value).toFixed(2);
+        } catch {
+          earningsAmountDisplay.textContent = '--';
+        }
+      }
+
+      // --- Payment folder
+      viewFolderBtn.addEventListener('click', async () => {
+        if (!CURRENT_COACH_ID) return;
+        try {
+          const resp = await apiGet('getPaymentFolderUrl', { coachId: CURRENT_COACH_ID });
+          if (resp && resp.success && resp.url) window.open(resp.url, '_blank');
+        } catch {}
+      });
+
+      // --- Call log
+      viewCallLogBtn.addEventListener('click', async () => {
+        if (!CURRENT_COACH_ID) return;
+        switchSection(callHistorySection);
+        await loadCallHistory();
+      });
+
+      backToDashboardFromHistoryBtn.addEventListener('click', () => {
         switchSection(dashboardSection);
-        await fetchMonthlyEarnings();
-      } catch (err) {
-        showMessage(loginMessageBox, err.message, false);
-      } finally {
-        // Hide spinner and re-enable button
-        loginBtn.innerHTML = originalBtnText;
-        loginBtn.disabled = false;
-      }
-    });
-
-    // --- Logout
-    logoutBtn.addEventListener('click', () => {
-      CURRENT_COACH_ID = null;
-      CURRENT_COACH_NAME = null;
-      LAST_HISTORY = [];
-      CURRENT_ALLOCATIONS_BY_STUDENT = {};
-      loginForm.reset();
-      switchSection(loginSection);
-      hideMessage(loginMessageBox);
-    });
-
-    // --- Load Students
-    async function loadStudentIds() {
-      studentIdSelect.innerHTML = '<option value="" disabled selected>Loading Student IDs...</option>';
-      try {
-        const resp = await apiGet('getStudents');
-        const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
-        studentIdSelect.innerHTML = '';
-        const def = document.createElement('option');
-        def.value = '';
-        def.disabled = true;
-        def.selected = true;
-        def.textContent = 'Select a student';
-        studentIdSelect.appendChild(def);
-
-        arr.forEach(id => {
-          const opt = document.createElement('option');
-          opt.value = id;
-          opt.textContent = id;
-          studentIdSelect.appendChild(opt);
-        });
-      } catch (err) {
-        studentIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
-      }
-    }
-
-    // --- Select student -> load allocations/products
-    studentIdSelect.addEventListener('change', async () => {
-      const studentId = studentIdSelect.value;
-      productIdSelect.disabled = true;
-      productIdSelect.innerHTML = '<option value="" disabled selected>Loading products...</option>';
-      hourlyRateInput.value = '';
-      technicalDurationInput.value = '';
-      allocationIdInput.value = '';
-
-      try {
-        const resp = await apiGet('getStudentAllocations', { studentId });
-        const allocations = (resp && resp.success && Array.isArray(resp.allocations)) ? resp.allocations : [];
-        CURRENT_ALLOCATIONS_BY_STUDENT[studentId] = allocations;
-
-        productIdSelect.innerHTML = '';
-        const def = document.createElement('option');
-        def.value = '';
-        def.disabled = true;
-        def.selected = true;
-        def.textContent = 'Select a product/allocation';
-        productIdSelect.appendChild(def);
-
-        allocations.forEach(a => {
-          const opt = document.createElement('option');
-          opt.value = a.productId;
-          opt.textContent = `${a.productId} — ${a.allocationId}${a.unitsLeft!==null? ` (remaining ${a.unitsLeft})`:''}`;
-          opt.dataset.allocationId = a.allocationId;
-          opt.dataset.hourlyRate = a.hourlyRate;
-          opt.dataset.technicalDuration = a.technicalDuration;
-          productIdSelect.appendChild(opt);
-        });
-
-        productIdSelect.disabled = false;
-      } catch (err) {
-        productIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
-      }
-    });
-
-    // --- Select product -> populate fields
-    productIdSelect.addEventListener('change', () => {
-      const opt = productIdSelect.options[productIdSelect.selectedIndex];
-      if (!opt || !opt.dataset) return;
-      hourlyRateInput.value = opt.dataset.hourlyRate || '';
-      technicalDurationInput.value = opt.dataset.technicalDuration || '';
-      allocationIdInput.value = opt.dataset.allocationId || '';
-      // Set default callDuration = technicalDuration if present
-      const tech = parseInt(technicalDurationInput.value || '60', 10);
-      if ([30,60,90,120].includes(tech)) {
-        callDurationSelect.value = String(tech);
-      } else {
-        callDurationSelect.value = '60';
-      }
-      recomputeUnits();
-    });
-
-    // --- Units = callDuration(min) / 60
-    function recomputeUnits() {
-      const mins = parseFloat(callDurationSelect.value || '60');
-      const units = isNaN(mins) ? 1 : (mins / 60);
-      unitsInput.value = units.toFixed(2);
-    }
-    callDurationSelect.addEventListener('change', recomputeUnits);
-
-    // --- Submit call
-    callForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      hideMessage(callMessageBox);
-
-      if (!CURRENT_COACH_ID) {
-        showMessage(callMessageBox, 'Session expired. Please log in again.', false);
-        return;
-      }
-
-      const payload = {
-        studentId: studentIdSelect.value,
-        allocationId: allocationIdInput.value,
-        callDate: callDateInput.value,          // YYYY-MM-DD
-        callDuration: parseFloat(callDurationSelect.value), // minutes
-        units: parseFloat(unitsInput.value),    // hours
-        hourlyRate: parseFloat(hourlyRateInput.value),
-        coachId: CURRENT_COACH_ID,
-        coachName: CURRENT_COACH_NAME
-      };
-
-      // Minimal validations
-      if (!payload.studentId || !payload.allocationId) {
-        showMessage(callMessageBox, 'Select student and product/allocation.', false);
-        return;
-      }
-
-      try {
-        const resp = await apiPost('logCall', payload);
-        if (!resp.success) throw new Error(resp.error || 'Error logging call.');
-        showModal('Call logged successfully!');
-      } catch (err) {
-        showMessage(callMessageBox, err.message, false);
-      }
-    });
-
-    // --- Monthly earnings
-    async function fetchMonthlyEarnings() {
-      if (!CURRENT_COACH_ID) return;
-      earningsAmountDisplay.textContent = '...';
-      try {
-        const resp = await apiGet('getMonthlyEarnings', { coachId: CURRENT_COACH_ID });
-        const value = (resp && resp.success) ? resp.earnings : 0;
-        earningsAmountDisplay.textContent = Number(value).toFixed(2);
-      } catch {
-        earningsAmountDisplay.textContent = '--';
-      }
-    }
-
-    // --- Payment folder
-    viewFolderBtn.addEventListener('click', async () => {
-      if (!CURRENT_COACH_ID) return;
-      try {
-        const resp = await apiGet('getPaymentFolderUrl', { coachId: CURRENT_COACH_ID });
-        if (resp && resp.success && resp.url) window.open(resp.url, '_blank');
-      } catch {}
-    });
-
-    // --- Call log
-    viewCallLogBtn.addEventListener('click', async () => {
-      if (!CURRENT_COACH_ID) return;
-      switchSection(callHistorySection);
-      await loadCallHistory();
-    });
-
-    backToDashboardFromHistoryBtn.addEventListener('click', () => {
-      switchSection(dashboardSection);
-    });
-
-    async function loadCallHistory() {
-      callHistoryTableBody.innerHTML = '';
-      monthFilterSelect.innerHTML = '<option value="all">All months</option>';
-      hideMessage(callHistoryMessageBox);
-
-      try {
-        const resp = await apiGet('getCallHistory', { coachId: CURRENT_COACH_ID });
-        const history = (resp && resp.success && Array.isArray(resp.history)) ? resp.history : [];
-        LAST_HISTORY = history;
-
-        // Populate month filter (yyyy-mm)
-        const months = Array.from(new Set(history.map(h => h.dateISO.slice(0,7))));
-        months.sort((a,b) => (a < b ? 1 : -1));
-        months.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m;
-          // Readable label (MMMM yyyy)
-          const [yy, mm] = m.split('-').map(Number);
-          const date = new Date(yy, mm - 1, 1);
-          opt.textContent = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-          monthFilterSelect.appendChild(opt);
-        });
-
-        renderHistoryTable('all');
-      } catch (err) {
-        showMessage(callHistoryMessageBox, 'Error loading history.', false);
-      }
-    }
-
-    function renderHistoryTable(filterMonth) {
-      callHistoryTableBody.innerHTML = '';
-      const rows = LAST_HISTORY
-        .filter(h => filterMonth === 'all' ? true : h.dateISO.startsWith(filterMonth));
-
-      if (!rows.length) {
-        callHistoryTableBody.innerHTML = `<tr><td class="py-3 px-6 text-left" colspan="4">No calls found.</td></tr>`;
-        return;
-      }
-
-      rows.forEach(h => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="py-3 px-6 text-left">${h.date}</td>
-          <td class="py-3 px-6 text-left">${h.studentId || ''}</td>
-          <td class="py-3 px-6 text-left">${h.allocationId || ''}</td>
-          <td class="py-3 px-6 text-left">${Number(h.earnings).toFixed(2)}€</td>
-        `;
-        callHistoryTableBody.appendChild(tr);
       });
-    }
 
-    monthFilterSelect.addEventListener('change', () => {
-      renderHistoryTable(monthFilterSelect.value);
-    });
+      async function loadCallHistory() {
+        callHistoryTableBody.innerHTML = '';
+        monthFilterSelect.innerHTML = '<option value="all">All months</option>';
+        hideMessage(callHistoryMessageBox);
 
-    // --- Navigation
-    logCallBtn.addEventListener('click', async () => {
-      if (!CURRENT_COACH_ID) return;
-      switchSection(callSection);
-      await loadStudentIds();
-    });
+        try {
+          const resp = await apiGet('getCallHistory', { coachId: CURRENT_COACH_ID });
+          const history = (resp && resp.success && Array.isArray(resp.history)) ? resp.history : [];
+          LAST_HISTORY = history;
 
-    backToDashboardBtn.addEventListener('click', () => {
-      switchSection(dashboardSection);
-    });
+          // Populate month filter (yyyy-mm)
+          const months = Array.from(new Set(history.map(h => h.dateISO.slice(0,7))));
+          months.sort((a,b) => (a < b ? 1 : -1));
+          months.forEach(m => {
+            const opt = document.createElement('option');
+            opt.value = m;
+            // Readable label (MMMM yyyy)
+            const [yy, mm] = m.split('-').map(Number);
+            const date = new Date(yy, mm - 1, 1);
+            opt.textContent = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            monthFilterSelect.appendChild(opt);
+          });
 
-    // --- Init
-    (function init() {
-      // today's date default
-      const today = new Date();
-      const iso = new Date(today.getTime() - (today.getTimezoneOffset()*60000)).toISOString().slice(0,10);
-      callDateInput.value = iso;
-      // initial units
-      recomputeUnits();
-    })();
-  </script>
+          renderHistoryTable('all');
+        } catch (err) {
+          showMessage(callHistoryMessageBox, 'Error loading history.', false);
+        }
+      }
+
+      function renderHistoryTable(filterMonth) {
+        callHistoryTableBody.innerHTML = '';
+        const rows = LAST_HISTORY
+          .filter(h => filterMonth === 'all' ? true : h.dateISO.startsWith(filterMonth));
+
+        if (!rows.length) {
+          callHistoryTableBody.innerHTML = `<tr><td class="py-3 px-6 text-left" colspan="4">No calls found.</td></tr>`;
+          return;
+        }
+
+        rows.forEach(h => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="py-3 px-6 text-left">${h.date}</td>
+            <td class="py-3 px-6 text-left">${h.studentId || ''}</td>
+            <td class="py-3 px-6 text-left">${h.allocationId || ''}</td>
+            <td class="py-3 px-6 text-left">${Number(h.earnings).toFixed(2)}€</td>
+          `;
+          callHistoryTableBody.appendChild(tr);
+        });
+      }
+
+      monthFilterSelect.addEventListener('change', () => {
+        renderHistoryTable(monthFilterSelect.value);
+      });
+
+      // --- Navigation
+      logCallBtn.addEventListener('click', async () => {
+        if (!CURRENT_COACH_ID) return;
+        switchSection(callSection);
+        await loadStudentIds();
+      });
+
+      viewReportCardsBtn.addEventListener('click', () => {
+        if (!CURRENT_COACH_ID) return;
+        switchSection(reportCardsSection);
+      });
+      
+      backToDashboardBtn.addEventListener('click', () => {
+        switchSection(dashboardSection);
+      });
+
+      backToDashboardFromReportsBtn.addEventListener('click', () => {
+        switchSection(dashboardSection);
+      });
+
+      // --- Init
+      (function init() {
+        // today's date default
+        const today = new Date();
+        const iso = new Date(today.getTime() - (today.getTimezoneOffset()*60000)).toISOString().slice(0,10);
+        callDateInput.value = iso;
+        // initial units
+        recomputeUnits();
+      })();
+    </script>
 </body>
 </html>
