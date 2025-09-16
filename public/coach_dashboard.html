@@ -829,6 +829,13 @@
                 loadStudentsDropdown();
             });
 
+            // --- Log a new call
+            logCallBtn.addEventListener('click', () => {
+                if (!CURRENT_COACH_ID) return; // sicurezza: solo se loggato
+                switchSection(callSection);
+                loadStudentIds(); // popola la tendina degli studenti
+            });
+            
             backToDashboardFromStudentsBtn.addEventListener('click', () => {
                 switchSection(dashboardSection);
             });
