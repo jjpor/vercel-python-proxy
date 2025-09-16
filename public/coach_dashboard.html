@@ -275,10 +275,6 @@
     let CURRENT_ALLOCATIONS_BY_STUDENT = {};
     let LAST_HISTORY = [];
 
-    // Loader
-    function showLoader(){ document.getElementById('loader').classList.remove('hidden'); }
-    function hideLoader(){ document.getElementById('loader').classList.add('hidden'); }
-
     // Helpers
     function showMessage(box, message, isSuccess) {
       box.textContent = message;
@@ -613,12 +609,23 @@
     // --- Init
 (function init() {
   // hide loader at startup
-  hideLoader();
   const today = new Date();
   const iso = new Date(today.getTime() - (today.getTimezoneOffset()*60000)).toISOString().slice(0,10);
   callDateInput.value = iso;
   recomputeUnits();
 })();
+document.addEventListener("DOMContentLoaded", () => {
+  hideLoader(); // forza il loader a sparire
+});
+function showLoader(){ 
+  console.log("SHOW LOADER");
+  document.getElementById('loader').classList.remove('hidden'); 
+}
+function hideLoader(){ 
+  console.log("HIDE LOADER");
+  document.getElementById('loader').classList.add('hidden'); 
+}
+
 
   </script>
 </body>
