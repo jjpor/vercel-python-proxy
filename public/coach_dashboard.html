@@ -20,6 +20,35 @@
     table { border-collapse: collapse; width:100%; }
     th, td { text-align:left; padding:12px; border-bottom:1px solid #ddd; }
     th { background-color:#f2f2f2; }
+
+    /* Spinner styles */
+    .spinner-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+    }
+    .spinner-dot {
+      width: 12px;
+      height: 12px;
+      background-color: #ffffff;
+      border-radius: 50%;
+      animation: bounce 1s ease-in-out infinite;
+    }
+    .spinner-dot:nth-child(2) {
+      animation-delay: 0.1s;
+    }
+    .spinner-dot:nth-child(3) {
+      animation-delay: 0.2s;
+    }
+    @keyframes bounce {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-10px);
+      }
+    }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
@@ -40,9 +69,18 @@
           <label for="password" class="form-label block mb-2">Password Dashboard</label>
           <input type="password" id="password" name="password" class="form-input" placeholder="Password" required autocomplete="current-password">
         </div>
-        <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-          Accedi
-        </button>
+        <div class="relative">
+          <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+            Accedi
+          </button>
+          <div id="loginSpinner" class="hidden absolute inset-0 flex items-center justify-center bg-blue-600 text-white rounded-xl">
+            <div class="spinner-container">
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+            </div>
+          </div>
+        </div>
       </form>
       <div id="loginMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
     </div>
@@ -221,6 +259,9 @@
     const coachNameInput = document.getElementById('coachName');
     const coachIdInput = document.getElementById('coachId');
     const passwordInput = document.getElementById('password');
+    const loginSpinner = document.getElementById('loginSpinner');
+    const loginBtn = document.getElementById('loginBtn');
+
 
     const coachNameDisplay = document.getElementById('coachNameDisplay');
     const callSectionCoachNameDisplay = document.getElementById('callSectionCoachNameDisplay');
@@ -274,6 +315,17 @@
       showId.classList.remove('hidden');
     }
 
+    // Helper per lo spinner di login
+    function showLoginSpinner() {
+      loginBtn.classList.add('hidden');
+      loginSpinner.classList.remove('hidden');
+    }
+
+    function hideLoginSpinner() {
+      loginBtn.classList.remove('hidden');
+      loginSpinner.classList.add('hidden');
+    }
+
     // --- API helpers
     async function apiGet(action, params = {}) {
       const url = new URL(base_url + "/get");
@@ -300,6 +352,7 @@
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideMessage(loginMessageBox);
+      showLoginSpinner();
 
       const coachId = coachIdInput.value.trim();
       const password = passwordInput.value.trim();
@@ -317,6 +370,8 @@
         await fetchMonthlyEarnings();
       } catch (err) {
         showMessage(loginMessageBox, err.message, false);
+      } finally {
+        hideLoginSpinner();
       }
     });
 
