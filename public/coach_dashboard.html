@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Call Logging Dashboard</title>
+  <title>Coach Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
@@ -20,28 +20,37 @@
     table { border-collapse: collapse; width:100%; }
     th, td { text-align:left; padding:12px; border-bottom:1px solid #ddd; }
     th { background-color:#f2f2f2; }
+    /* Loader */
+    #loader { position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.4); display:flex; justify-content:center; align-items:center; z-index:2000; }
+    .spinner { border:6px solid #f3f3f3; border-top:6px solid #3b82f6; border-radius:50%; width:50px; height:50px; animation: spin 1s linear infinite; }
+    @keyframes spin { 100% { transform: rotate(360deg); } }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+  <!-- Loader -->
+  <div id="loader" class="hidden">
+    <div class="spinner"></div>
+  </div>
 
   <div class="container bg-white p-8 md:p-12 rounded-2xl shadow-xl space-y-8 border border-gray-200">
     <!-- Login -->
     <div id="loginSection">
       <div class="text-center">
         <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Login</h1>
-        <p class="mt-2 text-gray-500">Usa le tue credenziali da coach.</p>
+        <p class="mt-2 text-gray-500">Use your coach credentials.</p>
       </div>
       <form id="loginForm" class="mt-8 space-y-4">
         <div>
-          <label for="coachId" class="form-label block mb-2">ID Coach</label>
+          <label for="coachId" class="form-label block mb-2">Coach ID</label>
           <input type="text" id="coachId" name="coachId" class="form-input" placeholder="e.g., MA" required>
         </div>
         <div>
-          <label for="password" class="form-label block mb-2">Password Dashboard</label>
+          <label for="password" class="form-label block mb-2">Dashboard Password</label>
           <input type="password" id="password" name="password" class="form-input" placeholder="Password" required autocomplete="current-password">
         </div>
         <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-          Accedi
+          Login
         </button>
       </form>
       <div id="loginMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
@@ -51,88 +60,104 @@
     <div id="dashboardSection" class="hidden">
       <div class="text-center">
         <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Dashboard</h1>
-        <p class="mt-2 text-gray-500">Benvenuto, <span id="coachNameDisplay" class="font-bold text-blue-600"></span>!</p>
+        <p class="mt-2 text-gray-500">Welcome, <span id="coachNameDisplay" class="font-bold text-blue-600"></span>!</p>
       </div>
 
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
         <div id="monthlyEarningsDisplay" class="cube-button bg-blue-600 text-white cursor-default">
-          <p class="text-lg font-medium opacity-80">Guadagno del Mese</p>
+          <p class="text-lg font-medium opacity-80">Monthly Earnings</p>
           <p class="mt-2 text-4xl sm:text-5xl font-bold"><span id="earningsAmount">--</span>€</p>
         </div>
 
         <button id="logCallBtn" class="cube-button bg-green-600 text-white">
           <span class="text-4xl">📝</span>
-          <p class="mt-2 text-lg font-semibold">Registra una nuova call</p>
+          <p class="mt-2 text-lg font-semibold">Log a new call</p>
         </button>
 
         <button id="viewFolderBtn" class="cube-button bg-gray-600 text-white">
           <span class="text-4xl">📂</span>
-          <p class="mt-2 text-lg font-semibold">La mia cartella pagamenti</p>
+          <p class="mt-2 text-lg font-semibold">My payment folder</p>
         </button>
 
         <button id="viewCallLogBtn" class="cube-button bg-purple-600 text-white">
           <span class="text-4xl">📖</span>
-          <p class="mt-2 text-lg font-semibold">Log lezioni</p>
+          <p class="mt-2 text-lg font-semibold">Call log</p>
+        </button>
+
+        <button id="reportCardsBtn" class="cube-button bg-yellow-600 text-white">
+          <span class="text-4xl">📊</span>
+          <p class="mt-2 text-lg font-semibold">Report Cards</p>
+        </button>
+
+        <button id="studentsBtn" class="cube-button bg-pink-600 text-white">
+          <span class="text-4xl">👩‍🎓</span>
+          <p class="mt-2 text-lg font-semibold">Students</p>
         </button>
 
         <button id="logoutBtn" class="cube-button bg-red-600 text-white sm:col-span-2 lg:col-span-1">
           <span class="text-4xl">🚪</span>
-          <p class="mt-2 text-lg font-semibold">Esci</p>
+          <p class="mt-2 text-lg font-semibold">Logout</p>
         </button>
       </div>
+    </div>
+
+    <!-- Students Section -->
+    <div id="studentsSection" class="hidden">
+      <div class="text-center mb-6">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800">Students</h2>
+      </div>
+      <div class="mb-6">
+        <label for="studentSelect" class="form-label block mb-2">Select Student</label>
+        <select id="studentSelect" class="form-input"></select>
+      </div>
+      <div id="studentInfoBox" class="bg-gray-50 p-6 rounded-xl shadow-md hidden"></div>
+      <button id="backToDashboardFromStudentsBtn" class="mt-6 bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">Back to Dashboard</button>
     </div>
 
     <!-- Call form -->
     <div id="callSection" class="hidden">
       <div class="text-center">
-        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Registra una nuova call</h1>
-        <p class="mt-2 text-gray-500">Accesso come <span class="font-bold text-blue-600" id="callSectionCoachNameDisplay"></span>.</p>
+        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Log a new call</h1>
+        <p class="mt-2 text-gray-500">Logged in as <span class="font-bold text-blue-600" id="callSectionCoachNameDisplay"></span>.</p>
       </div>
 
       <form id="callForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-        <!-- hidden -->
         <input type="hidden" id="coachName" name="coachName">
         <input type="hidden" id="units" name="units">
         <input type="hidden" id="allocationId" name="allocationId">
         <input type="hidden" id="productId" name="productId">
 
-        <!-- Student -->
         <div>
-          <label for="studentId" class="form-label block mb-2">ID Studente</label>
+          <label for="studentId" class="form-label block mb-2">Student ID</label>
           <select id="studentId" name="studentId" class="form-input" required>
-            <option value="" disabled selected>Caricamento ID Studenti...</option>
+            <option value="" disabled selected>Loading students...</option>
           </select>
         </div>
 
-        <!-- Product -->
         <div>
-          <label for="productIdSelect" class="form-label block mb-2">ID Prodotto</label>
+          <label for="productIdSelect" class="form-label block mb-2">Product ID</label>
           <select id="productIdSelect" name="productIdSelect" class="form-input" required disabled>
-            <option value="" disabled selected>Seleziona prima un ID Studente</option>
+            <option value="" disabled selected>Select a student first</option>
           </select>
         </div>
 
-        <!-- Date -->
         <div>
-          <label for="callDate" class="form-label block mb-2">Data</label>
+          <label for="callDate" class="form-label block mb-2">Date</label>
           <input type="date" id="callDate" name="callDate" class="form-input" required>
         </div>
 
-        <!-- € / h -->
         <div>
-          <label for="hourlyRate" class="form-label block mb-2">Tariffa Coach (€)</label>
-          <input type="number" id="hourlyRate" name="hourlyRate" class="form-input" step="0.01" placeholder="Calcolo automatico" required readonly>
+          <label for="hourlyRate" class="form-label block mb-2">Coach Rate (€)</label>
+          <input type="number" id="hourlyRate" name="hourlyRate" class="form-input" step="0.01" placeholder="Auto" required readonly>
         </div>
 
-        <!-- Technical duration -->
         <div>
-          <label for="technicalDuration" class="form-label block mb-2">Duration (minuti)</label>
-          <input type="number" id="technicalDuration" name="technicalDuration" class="form-input" step="1" placeholder="Calcolo automatico" required readonly>
+          <label for="technicalDuration" class="form-label block mb-2">Technical Duration (min)</label>
+          <input type="number" id="technicalDuration" name="technicalDuration" class="form-input" step="1" placeholder="Auto" required readonly>
         </div>
 
-        <!-- Override -->
         <div>
-          <label for="callDuration" class="form-label block mb-2">Duration Override (minuti)</label>
+          <label for="callDuration" class="form-label block mb-2">Duration Override (min)</label>
           <select id="callDuration" name="callDuration" class="form-input" required>
             <option value="30">30</option>
             <option value="60" selected>60</option>
@@ -142,8 +167,8 @@
         </div>
 
         <div class="md:col-span-2 mt-4">
-          <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">Registra Call</button>
-          <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50">Torna alla Dashboard</button>
+          <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700">Log Call</button>
+          <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:bg-gray-500">Back to Dashboard</button>
         </div>
       </form>
 
@@ -153,12 +178,12 @@
     <!-- Call history -->
     <div id="callHistorySection" class="hidden">
       <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
-        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Le mie call</h2>
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">My Calls</h2>
         <div class="flex items-center space-x-4">
           <select id="monthFilter" class="form-input w-48">
-            <option value="all">Tutti i mesi</option>
+            <option value="all">All months</option>
           </select>
-          <button id="backToDashboardFromHistoryBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50">Torna alla Dashboard</button>
+          <button id="backToDashboardFromHistoryBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">Back to Dashboard</button>
         </div>
       </div>
 
@@ -166,10 +191,10 @@
         <table class="min-w-full bg-white text-sm">
           <thead>
             <tr class="bg-gray-200 text-gray-600 uppercase text-xs leading-normal">
-              <th class="py-3 px-6 text-left">Data</th>
-              <th class="py-3 px-6 text-left">ID Studente</th>
-              <th class="py-3 px-6 text-left">ID Allocazione</th>
-              <th class="py-3 px-6 text-left">Guadagno</th>
+              <th class="py-3 px-6 text-left">Date</th>
+              <th class="py-3 px-6 text-left">Student ID</th>
+              <th class="py-3 px-6 text-left">Allocation ID</th>
+              <th class="py-3 px-6 text-left">Earnings</th>
             </tr>
           </thead>
           <tbody id="callHistoryTableBody" class="text-gray-600 text-sm font-light"></tbody>
@@ -183,18 +208,17 @@
   <!-- Modal -->
   <div id="confirmationModal" class="modal hidden">
     <div class="modal-content">
-      <h2 class="text-2xl font-bold text-gray-800">Successo!</h2>
+      <h2 class="text-2xl font-bold text-gray-800">Success!</h2>
       <p id="modalMessage" class="mt-4 text-gray-600"></p>
       <button id="closeModalBtn" class="mt-6 bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-blue-700">OK</button>
     </div>
   </div>
 
   <script>
-    // URL del Web App (Deployment → Web app)
     const base_url = "https://vercel-python-proxy.vercel.app/api";
     const deployment_id = "AKfycbx1mAcW3zM-ONtMADPGq60rAqcpXcCAvnmNF-Wu84FTFKA35ULbw17L2lyzRIxh8cFF";
 
-    // --- Riferimenti DOM
+    // DOM references
     const loginForm = document.getElementById('loginForm');
     const callForm = document.getElementById('callForm');
 
@@ -202,13 +226,17 @@
     const dashboardSection = document.getElementById('dashboardSection');
     const callSection = document.getElementById('callSection');
     const callHistorySection = document.getElementById('callHistorySection');
+    const studentsSection = document.getElementById('studentsSection');
 
     const logCallBtn = document.getElementById('logCallBtn');
     const viewFolderBtn = document.getElementById('viewFolderBtn');
     const viewCallLogBtn = document.getElementById('viewCallLogBtn');
+    const reportCardsBtn = document.getElementById('reportCardsBtn');
+    const studentsBtn = document.getElementById('studentsBtn');
     const logoutBtn = document.getElementById('logoutBtn');
     const backToDashboardBtn = document.getElementById('backToDashboardBtn');
     const backToDashboardFromHistoryBtn = document.getElementById('backToDashboardFromHistoryBtn');
+    const backToDashboardFromStudentsBtn = document.getElementById('backToDashboardFromStudentsBtn');
 
     const loginMessageBox = document.getElementById('loginMessageBox');
     const callMessageBox = document.getElementById('callMessageBox');
@@ -238,14 +266,20 @@
     const earningsAmountDisplay = document.getElementById('earningsAmount');
     const callHistoryTableBody = document.getElementById('callHistoryTableBody');
     const monthFilterSelect = document.getElementById('monthFilter');
+    const studentSelect = document.getElementById('studentSelect');
+    const studentInfoBox = document.getElementById('studentInfoBox');
 
-    // --- Stato runtime
+    // State
     let CURRENT_COACH_ID = null;
     let CURRENT_COACH_NAME = null;
-    let CURRENT_ALLOCATIONS_BY_STUDENT = {}; // { studentId: [ {allocationId, productId, hourlyRate, technicalDuration, unitsLeft} ] }
-    let LAST_HISTORY = []; // cache per filtro mese
+    let CURRENT_ALLOCATIONS_BY_STUDENT = {};
+    let LAST_HISTORY = [];
 
-    // --- Helper UI
+    // Loader
+    function showLoader(){ document.getElementById('loader').classList.remove('hidden'); }
+    function hideLoader(){ document.getElementById('loader').classList.add('hidden'); }
+
+    // Helpers
     function showMessage(box, message, isSuccess) {
       box.textContent = message;
       box.className = `mt-4 p-4 rounded-xl text-center block ${isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
@@ -261,42 +295,47 @@
     closeModalBtn.addEventListener('click', () => {
       confirmationModal.classList.add('hidden');
       callForm.reset();
-      studentIdSelect.innerHTML = '<option value="" disabled selected>Caricamento ID Studenti...</option>';
-      productIdSelect.innerHTML = '<option value="" disabled selected>Seleziona prima un ID Studente</option>';
+      studentIdSelect.innerHTML = '<option value="" disabled selected>Loading students...</option>';
+      productIdSelect.innerHTML = '<option value="" disabled selected>Select a student first</option>';
       productIdSelect.disabled = true;
       callSection.classList.add('hidden');
       dashboardSection.classList.remove('hidden');
-      fetchMonthlyEarnings(); // refresh € mese
+      fetchMonthlyEarnings();
     });
 
     function switchSection(showId) {
-      [loginSection, dashboardSection, callSection, callHistorySection].forEach(sec => sec.classList.add('hidden'));
+      [loginSection, dashboardSection, callSection, callHistorySection, studentsSection].forEach(sec => sec.classList.add('hidden'));
       showId.classList.remove('hidden');
     }
 
-    // --- API helpers
+    // API helpers
     async function apiGet(action, params = {}) {
-      const url = new URL(base_url + "/get");
-      url.searchParams.set("deployment_id", deployment_id);
-      url.searchParams.set("action", action);
-      Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
-      const res = await fetch(url.toString());
-      if (!res.ok) throw new Error(`GET ${action} failed: ${res.status}`);
-      return res.json();
+      showLoader();
+      try {
+        const url = new URL(base_url + "/get");
+        url.searchParams.set("deployment_id", deployment_id);
+        url.searchParams.set("action", action);
+        Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
+        const res = await fetch(url.toString());
+        if (!res.ok) throw new Error(`GET ${action} failed: ${res.status}`);
+        return res.json();
+      } finally { hideLoader(); }
     }
     
     async function apiPost(action, body = {}) {
-      const res = await fetch(base_url + "/post", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ deployment_id, action, ...body }),
-      });
-      if (!res.ok) throw new Error(`POST ${action} failed: ${res.status}`);
-      return res.json();
+      showLoader();
+      try {
+        const res = await fetch(base_url + "/post", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ deployment_id, action, ...body }),
+        });
+        if (!res.ok) throw new Error(`POST ${action} failed: ${res.status}`);
+        return res.json();
+      } finally { hideLoader(); }
     }
 
-
-    // --- Login
+    // Login
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideMessage(loginMessageBox);
@@ -305,7 +344,7 @@
       const password = passwordInput.value.trim();
       try {
         const resp = await apiPost('login', { coachId, password });
-        if (!resp.success) throw new Error(resp.error || 'Login fallito.');
+        if (!resp.success) throw new Error(resp.error || 'Login failed.');
         CURRENT_COACH_ID = resp.coachId;
         CURRENT_COACH_NAME = resp.coachName;
 
@@ -320,7 +359,7 @@
       }
     });
 
-    // --- Logout
+    // Logout
     logoutBtn.addEventListener('click', () => {
       CURRENT_COACH_ID = null;
       CURRENT_COACH_NAME = null;
@@ -331,9 +370,9 @@
       hideMessage(loginMessageBox);
     });
 
-    // --- Caricamento Studenti
+    // Load students for call form
     async function loadStudentIds() {
-      studentIdSelect.innerHTML = '<option value="" disabled selected>Caricamento ID Studenti...</option>';
+      studentIdSelect.innerHTML = '<option value="" disabled selected>Loading students...</option>';
       try {
         const resp = await apiGet('getStudents');
         const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
@@ -342,7 +381,7 @@
         def.value = '';
         def.disabled = true;
         def.selected = true;
-        def.textContent = 'Seleziona uno studente';
+        def.textContent = 'Select a student';
         studentIdSelect.appendChild(def);
 
         arr.forEach(id => {
@@ -352,15 +391,15 @@
           studentIdSelect.appendChild(opt);
         });
       } catch (err) {
-        studentIdSelect.innerHTML = '<option value="" disabled selected>Errore di caricamento</option>';
+        studentIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
       }
     }
 
-    // --- Selezione studente → carica allocazioni/prodotti
+    // Load allocations after student chosen
     studentIdSelect.addEventListener('change', async () => {
       const studentId = studentIdSelect.value;
       productIdSelect.disabled = true;
-      productIdSelect.innerHTML = '<option value="" disabled selected>Caricamento prodotti...</option>';
+      productIdSelect.innerHTML = '<option value="" disabled selected>Loading products...</option>';
       hourlyRateInput.value = '';
       technicalDurationInput.value = '';
       allocationIdInput.value = '';
@@ -375,7 +414,7 @@
         def.value = '';
         def.disabled = true;
         def.selected = true;
-        def.textContent = 'Seleziona un prodotto/allocazione';
+        def.textContent = 'Select a product/allocation';
         productIdSelect.appendChild(def);
 
         allocations.forEach(a => {
@@ -390,18 +429,17 @@
 
         productIdSelect.disabled = false;
       } catch (err) {
-        productIdSelect.innerHTML = '<option value="" disabled selected>Errore di caricamento</option>';
+        productIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
       }
     });
 
-    // --- Selezione prodotto → valorizza campi
+    // Product selection updates fields
     productIdSelect.addEventListener('change', () => {
       const opt = productIdSelect.options[productIdSelect.selectedIndex];
       if (!opt || !opt.dataset) return;
       hourlyRateInput.value = opt.dataset.hourlyRate || '';
       technicalDurationInput.value = opt.dataset.technicalDuration || '';
       allocationIdInput.value = opt.dataset.allocationId || '';
-      // Imposta callDuration di default = technicalDuration se presente
       const tech = parseInt(technicalDurationInput.value || '60', 10);
       if ([30,60,90,120].includes(tech)) {
         callDurationSelect.value = String(tech);
@@ -411,7 +449,6 @@
       recomputeUnits();
     });
 
-    // --- Units = callDuration(min) / 60
     function recomputeUnits() {
       const mins = parseFloat(callDurationSelect.value || '60');
       const units = isNaN(mins) ? 1 : (mins / 60);
@@ -419,43 +456,42 @@
     }
     callDurationSelect.addEventListener('change', recomputeUnits);
 
-    // --- Submit call
+    // Submit call
     callForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideMessage(callMessageBox);
 
       if (!CURRENT_COACH_ID) {
-        showMessage(callMessageBox, 'Sessione scaduta. Effettua di nuovo il login.', false);
+        showMessage(callMessageBox, 'Session expired. Please login again.', false);
         return;
       }
 
       const payload = {
         studentId: studentIdSelect.value,
         allocationId: allocationIdInput.value,
-        callDate: callDateInput.value,          // YYYY-MM-DD
-        callDuration: parseFloat(callDurationSelect.value), // minuti
-        units: parseFloat(unitsInput.value),    // ore
+        callDate: callDateInput.value,
+        callDuration: parseFloat(callDurationSelect.value),
+        units: parseFloat(unitsInput.value),
         hourlyRate: parseFloat(hourlyRateInput.value),
         coachId: CURRENT_COACH_ID,
         coachName: CURRENT_COACH_NAME
       };
 
-      // Validazioni minime
       if (!payload.studentId || !payload.allocationId) {
-        showMessage(callMessageBox, 'Seleziona studente e prodotto/allocazione.', false);
+        showMessage(callMessageBox, 'Select student and allocation.', false);
         return;
       }
 
       try {
         const resp = await apiPost('logCall', payload);
-        if (!resp.success) throw new Error(resp.error || 'Errore nella registrazione.');
-        showModal('Call registrata con successo!');
+        if (!resp.success) throw new Error(resp.error || 'Error logging call.');
+        showModal('Call logged successfully!');
       } catch (err) {
         showMessage(callMessageBox, err.message, false);
       }
     });
 
-    // --- Guadagno mensile
+    // Monthly earnings
     async function fetchMonthlyEarnings() {
       if (!CURRENT_COACH_ID) return;
       earningsAmountDisplay.textContent = '...';
@@ -468,7 +504,7 @@
       }
     }
 
-    // --- Cartella pagamenti
+    // Payment folder
     viewFolderBtn.addEventListener('click', async () => {
       if (!CURRENT_COACH_ID) return;
       try {
@@ -477,7 +513,7 @@
       } catch {}
     });
 
-    // --- Log call
+    // Call history
     viewCallLogBtn.addEventListener('click', async () => {
       if (!CURRENT_COACH_ID) return;
       switchSection(callHistorySection);
@@ -490,7 +526,7 @@
 
     async function loadCallHistory() {
       callHistoryTableBody.innerHTML = '';
-      monthFilterSelect.innerHTML = '<option value="all">Tutti i mesi</option>';
+      monthFilterSelect.innerHTML = '<option value="all">All months</option>';
       hideMessage(callHistoryMessageBox);
 
       try {
@@ -498,22 +534,20 @@
         const history = (resp && resp.success && Array.isArray(resp.history)) ? resp.history : [];
         LAST_HISTORY = history;
 
-        // Popola filtro mesi (yyyy-mm)
         const months = Array.from(new Set(history.map(h => h.dateISO.slice(0,7))));
         months.sort((a,b) => (a < b ? 1 : -1));
         months.forEach(m => {
           const opt = document.createElement('option');
           opt.value = m;
-          // Etichetta leggibile (MMMM yyyy)
           const [yy, mm] = m.split('-').map(Number);
           const date = new Date(yy, mm - 1, 1);
-          opt.textContent = date.toLocaleDateString('it-IT', { month: 'long', year: 'numeric' });
+          opt.textContent = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
           monthFilterSelect.appendChild(opt);
         });
 
         renderHistoryTable('all');
       } catch (err) {
-        showMessage(callHistoryMessageBox, 'Errore nel caricamento della cronologia.', false);
+        showMessage(callHistoryMessageBox, 'Error loading history.', false);
       }
     }
 
@@ -523,8 +557,7 @@
         .filter(h => filterMonth === 'all' ? true : h.dateISO.startsWith(filterMonth));
 
       if (!rows.length) {
-        callHistoryTableBody.innerHTML = `
-          <tr><td class="py-3 px-6 text-left" colspan="4">Nessuna call.</td></tr>`;
+        callHistoryTableBody.innerHTML = `<tr><td class="py-3 px-6 text-left" colspan="4">No calls.</td></tr>`;
         return;
       }
 
@@ -544,24 +577,44 @@
       renderHistoryTable(monthFilterSelect.value);
     });
 
-    // --- Navigazione
-    logCallBtn.addEventListener('click', async () => {
-      if (!CURRENT_COACH_ID) return;
-      switchSection(callSection);
-      await loadStudentIds();
+    // Students section
+    studentsBtn.addEventListener('click', async ()=>{
+      switchSection(studentsSection);
+      studentInfoBox.classList.add('hidden');
+      studentSelect.innerHTML = '<option disabled selected>Loading...</option>';
+      const resp = await apiGet('getStudents');
+      if(resp.success){
+        studentSelect.innerHTML = '<option disabled selected>Select a student</option>';
+        resp.students.forEach(s=>{
+          const opt=document.createElement('option');
+          opt.value=s; opt.textContent=s;
+          studentSelect.appendChild(opt);
+        });
+      }
     });
 
-    backToDashboardBtn.addEventListener('click', () => {
-      switchSection(dashboardSection);
+    studentSelect.addEventListener('change', async ()=>{
+      const id=studentSelect.value;
+      const resp=await apiGet('getStudentInfo',{studentId:id});
+      if(resp.success){
+        const info=resp.info;
+        let html='<table class="min-w-full text-sm">';
+        for(const [k,v] of Object.entries(info)){
+          html+=`<tr><th class="py-2 px-4 text-left font-medium text-gray-700">${k}</th><td class="py-2 px-4">${v||''}</td></tr>`;
+        }
+        html+='</table>';
+        studentInfoBox.innerHTML=html;
+        studentInfoBox.classList.remove('hidden');
+      }
     });
 
-    // --- Init
+    backToDashboardFromStudentsBtn.addEventListener('click', ()=>switchSection(dashboardSection));
+
+    // Init
     (function init() {
-      // data oggi default
       const today = new Date();
       const iso = new Date(today.getTime() - (today.getTimezoneOffset()*60000)).toISOString().slice(0,10);
       callDateInput.value = iso;
-      // units iniziali
       recomputeUnits();
     })();
   </script>
