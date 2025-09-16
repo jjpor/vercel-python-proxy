@@ -94,6 +94,11 @@
           <p class="mt-2 text-lg font-semibold">Log a new call</p>
         </button>
 
+        <button id="viewStudentsBtn" class="cube-button bg-orange-600 text-white">
+          <span class="text-4xl">🧑‍🎓</span>
+          <p class="mt-2 text-lg font-semibold">Students</p>
+        </button>
+
         <button id="viewFolderBtn" class="cube-button bg-gray-600 text-white">
           <span class="text-4xl">📂</span>
           <p class="mt-2 text-lg font-semibold">My payment folder</p>
@@ -184,6 +189,27 @@
       <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
     </div>
 
+    <!-- Students Section -->
+    <div id="studentsSection" class="hidden">
+      <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">My Students</h2>
+        <button id="backToDashboardFromStudentsBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50">Back to Dashboard</button>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label for="studentSelect" class="form-label block mb-2">Select a Student</label>
+          <select id="studentSelect" class="form-input">
+            <option value="" disabled selected>Loading students...</option>
+          </select>
+        </div>
+        <div id="studentDetailsContainer" class="rounded-xl shadow-lg border border-gray-200 p-6 bg-white">
+          <p class="text-gray-500 text-center">Select a student from the dropdown to view their details.</p>
+        </div>
+      </div>
+    </div>
+
+
     <!-- Call history -->
     <div id="callHistorySection" class="hidden">
       <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
@@ -246,15 +272,18 @@
       const loginSection = document.getElementById('loginSection');
       const dashboardSection = document.getElementById('dashboardSection');
       const callSection = document.getElementById('callSection');
+      const studentsSection = document.getElementById('studentsSection');
       const callHistorySection = document.getElementById('callHistorySection');
       const reportCardsSection = document.getElementById('reportCardsSection');
 
       const logCallBtn = document.getElementById('logCallBtn');
+      const viewStudentsBtn = document.getElementById('viewStudentsBtn');
       const viewFolderBtn = document.getElementById('viewFolderBtn');
       const viewCallLogBtn = document.getElementById('viewCallLogBtn');
       const viewReportCardsBtn = document.getElementById('viewReportCardsBtn');
       const logoutBtn = document.getElementById('logoutBtn');
       const backToDashboardBtn = document.getElementById('backToDashboardBtn');
+      const backToDashboardFromStudentsBtn = document.getElementById('backToDashboardFromStudentsBtn');
       const backToDashboardFromHistoryBtn = document.getElementById('backToDashboardFromHistoryBtn');
       const backToDashboardFromReportsBtn = document.getElementById('backToDashboardFromReportsBtn');
 
@@ -264,6 +293,8 @@
       const callHistoryMessageBox = document.getElementById('callHistoryMessageBox');
 
       const studentIdSelect = document.getElementById('studentId');
+      const studentSelect = document.getElementById('studentSelect');
+      const studentDetailsContainer = document.getElementById('studentDetailsContainer');
       const productIdSelect = document.getElementById('productIdSelect');
 
       const callDateInput = document.getElementById('callDate');
@@ -320,7 +351,7 @@
       });
 
       function switchSection(showId) {
-        [loginSection, dashboardSection, callSection, callHistorySection, reportCardsSection].forEach(sec => sec.classList.add('hidden'));
+        [loginSection, dashboardSection, callSection, studentsSection, callHistorySection, reportCardsSection].forEach(sec => sec.classList.add('hidden'));
         showId.classList.remove('hidden');
       }
 
@@ -389,7 +420,7 @@
         hideMessage(loginMessageBox);
       });
 
-      // --- Load Students
+      // --- Load Students (for call log)
       async function loadStudentIds() {
         studentIdSelect.innerHTML = '<option value="" disabled selected>Loading Student IDs...</option>';
         try {
@@ -601,11 +632,74 @@
         renderHistoryTable(monthFilterSelect.value);
       });
 
+      // --- Student Section Logic
+      async function loadStudentsDropdown() {
+        studentSelect.innerHTML = '<option value="" disabled selected>Loading students...</option>';
+        studentDetailsContainer.innerHTML = '<p class="text-gray-500 text-center">Select a student from the dropdown to view their details.</p>';
+        try {
+          const resp = await apiGet('getStudents');
+          const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+          studentSelect.innerHTML = '';
+          const def = document.createElement('option');
+          def.value = '';
+          def.disabled = true;
+          def.selected = true;
+          def.textContent = 'Select a student';
+          studentSelect.appendChild(def);
+          arr.forEach(id => {
+            const opt = document.createElement('option');
+            opt.value = id;
+            opt.textContent = id;
+            studentSelect.appendChild(opt);
+          });
+        } catch (err) {
+          studentSelect.innerHTML = '<option value="" disabled selected>Error loading students.</option>';
+        }
+      }
+
+      async function fetchAndRenderStudentDetails(studentId) {
+        studentDetailsContainer.innerHTML = '<p class="text-gray-500 text-center">Loading student details...</p>';
+        try {
+          const resp = await apiGet('getStudentInfo', { studentId });
+          if (!resp || !resp.success || !resp.studentInfo) {
+            throw new Error('Student not found.');
+          }
+          const info = resp.studentInfo;
+          let tableHtml = `<div class="overflow-x-auto"><table class="w-full text-sm"><tbody>`;
+          for (const [key, value] of Object.entries(info)) {
+            tableHtml += `
+              <tr class="border-b">
+                <td class="py-3 px-4 font-semibold text-gray-700">${key.replace(/([A-Z])/g, ' $1').trim()}</td>
+                <td class="py-3 px-4 text-gray-600">${value}</td>
+              </tr>
+            `;
+          }
+          tableHtml += `</tbody></table></div>`;
+          studentDetailsContainer.innerHTML = tableHtml;
+
+        } catch (err) {
+          studentDetailsContainer.innerHTML = `<p class="text-red-500 text-center">${err.message}</p>`;
+        }
+      }
+
+      studentSelect.addEventListener('change', (e) => {
+        const studentId = e.target.value;
+        if (studentId) {
+          fetchAndRenderStudentDetails(studentId);
+        }
+      });
+
       // --- Navigation
       logCallBtn.addEventListener('click', async () => {
         if (!CURRENT_COACH_ID) return;
         switchSection(callSection);
         await loadStudentIds();
+      });
+
+      viewStudentsBtn.addEventListener('click', async () => {
+        if (!CURRENT_COACH_ID) return;
+        switchSection(studentsSection);
+        await loadStudentsDropdown();
       });
 
       viewReportCardsBtn.addEventListener('click', () => {
@@ -614,6 +708,10 @@
       });
       
       backToDashboardBtn.addEventListener('click', () => {
+        switchSection(dashboardSection);
+      });
+
+      backToDashboardFromStudentsBtn.addEventListener('click', () => {
         switchSection(dashboardSection);
       });
 
