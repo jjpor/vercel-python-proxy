@@ -835,6 +835,11 @@
                 switchSection(callSection);
                 loadStudentIds(); // popola la tendina degli studenti
             });
+
+            // --- Back to Dashboard (dal call form)
+            backToDashboardBtn.addEventListener('click', () => {
+                switchSection(dashboardSection);
+            });
             
             backToDashboardFromStudentsBtn.addEventListener('click', () => {
                 switchSection(dashboardSection);
