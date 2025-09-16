@@ -250,20 +250,6 @@
             </div>
         </div>
 
-        <!-- Payment Folder Section -->
-        <div id="paymentFolderSection" class="hidden">
-          <div class="flex justify-between mb-4">
-            <h2 class="text-2xl font-bold text-gray-800">My Payment Folder</h2>
-            <button id="backToDashboardFromFolderBtn" 
-                    class="bg-gray-400 text-white px-4 py-2 rounded-xl shadow-lg hover:bg-gray-500">
-              Back to Dashboard
-            </button>
-          </div>
-          <iframe id="paymentFolderIframe" src="" 
-                  width="100%" height="600px" 
-                  style="border:none; border-radius: 12px;"></iframe>
-        </div>
-
         <!-- Modal -->
         <div id="confirmationModal" class="modal hidden">
             <div class="modal-content">
@@ -294,9 +280,6 @@
             const logCallBtn = document.getElementById('logCallBtn');
             const viewStudentsBtn = document.getElementById('viewStudentsBtn');
             const viewFolderBtn = document.getElementById('viewFolderBtn');
-            const paymentFolderSection = document.getElementById('paymentFolderSection');
-            const paymentFolderIframe = document.getElementById('paymentFolderIframe');
-            const backToDashboardFromFolderBtn = document.getElementById('backToDashboardFromFolderBtn');
             const viewCallLogBtn = document.getElementById('viewCallLogBtn');
             const viewReportCardsBtn = document.getElementById('viewReportCardsBtn');
             const logoutBtn = document.getElementById('logoutBtn');
@@ -587,26 +570,14 @@
                 }
             }
 
-            // --- Payment folder (iframe)
+            // --- Payment folder
             viewFolderBtn.addEventListener('click', async () => {
                 if (!CURRENT_COACH_ID) return;
                 try {
                     const resp = await apiGet('getPaymentFolderUrl', { coachId: CURRENT_COACH_ID });
-                    if (resp && resp.success && resp.url) {
-                        // Usa /preview al posto di /view per migliore embed
-                        const folderUrl = resp.url.replace(/\/view.*$/, '/preview');
-                        paymentFolderIframe.src = folderUrl;
-                        switchSection(paymentFolderSection);
-                    }
-                } catch (err) {
-                    alert("Errore caricando la cartella");
-                }
+                    if (resp && resp.success && resp.url) window.open(resp.url, '_blank');
+                } catch {}
             });
-
-backToDashboardFromFolderBtn.addEventListener('click', () => {
-    switchSection(dashboardSection);
-});
-
 
             // --- Call log
             viewCallLogBtn.addEventListener('click', async () => {
@@ -863,11 +834,6 @@ backToDashboardFromFolderBtn.addEventListener('click', () => {
                 if (!CURRENT_COACH_ID) return; // sicurezza: solo se loggato
                 switchSection(callSection);
                 loadStudentIds(); // popola la tendina degli studenti
-            });
-
-            // --- Back to Dashboard (dal call form)
-            backToDashboardBtn.addEventListener('click', () => {
-                switchSection(dashboardSection);
             });
             
             backToDashboardFromStudentsBtn.addEventListener('click', () => {
