@@ -21,7 +21,7 @@
     th, td { text-align:left; padding:12px; border-bottom:1px solid #ddd; }
     th { background-color:#f2f2f2; }
 
-    /* Spinner styles */
+    /* Stili per lo spinner */
     .spinner-container {
       display: flex;
       justify-content: center;
@@ -69,18 +69,9 @@
           <label for="password" class="form-label block mb-2">Password Dashboard</label>
           <input type="password" id="password" name="password" class="form-input" placeholder="Password" required autocomplete="current-password">
         </div>
-        <div class="relative">
-          <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-            Accedi
-          </button>
-          <div id="loginSpinner" class="hidden absolute inset-0 flex items-center justify-center bg-blue-600 text-white rounded-xl">
-            <div class="spinner-container">
-              <div class="spinner-dot"></div>
-              <div class="spinner-dot"></div>
-              <div class="spinner-dot"></div>
-            </div>
-          </div>
-        </div>
+        <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-blue-400 disabled:cursor-not-allowed">
+          Accedi
+        </button>
       </form>
       <div id="loginMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
     </div>
@@ -235,6 +226,7 @@
     // --- Riferimenti DOM
     const loginForm = document.getElementById('loginForm');
     const callForm = document.getElementById('callForm');
+    const loginBtn = document.getElementById('loginBtn');
 
     const loginSection = document.getElementById('loginSection');
     const dashboardSection = document.getElementById('dashboardSection');
@@ -259,8 +251,6 @@
     const coachNameInput = document.getElementById('coachName');
     const coachIdInput = document.getElementById('coachId');
     const passwordInput = document.getElementById('password');
-    const loginSpinner = document.getElementById('loginSpinner');
-    const loginBtn = document.getElementById('loginBtn');
 
 
     const coachNameDisplay = document.getElementById('coachNameDisplay');
@@ -315,17 +305,6 @@
       showId.classList.remove('hidden');
     }
 
-    // Helper per lo spinner di login
-    function showLoginSpinner() {
-      loginBtn.classList.add('hidden');
-      loginSpinner.classList.remove('hidden');
-    }
-
-    function hideLoginSpinner() {
-      loginBtn.classList.remove('hidden');
-      loginSpinner.classList.add('hidden');
-    }
-
     // --- API helpers
     async function apiGet(action, params = {}) {
       const url = new URL(base_url + "/get");
@@ -347,12 +326,15 @@
       return res.json();
     }
 
-
     // --- Login
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       hideMessage(loginMessageBox);
-      showLoginSpinner();
+
+      // Mostra lo spinner e disabilita il pulsante
+      const originalBtnText = loginBtn.innerHTML;
+      loginBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
+      loginBtn.disabled = true;
 
       const coachId = coachIdInput.value.trim();
       const password = passwordInput.value.trim();
@@ -371,7 +353,9 @@
       } catch (err) {
         showMessage(loginMessageBox, err.message, false);
       } finally {
-        hideLoginSpinner();
+        // Nascondi lo spinner e riabilita il pulsante
+        loginBtn.innerHTML = originalBtnText;
+        loginBtn.disabled = false;
       }
     });
 
