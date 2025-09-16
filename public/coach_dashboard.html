@@ -268,6 +268,7 @@
       const loginForm = document.getElementById('loginForm');
       const callForm = document.getElementById('callForm');
       const loginBtn = document.getElementById('loginBtn');
+      const submitBtn = document.getElementById('submitBtn');
 
       const loginSection = document.getElementById('loginSection');
       const dashboardSection = document.getElementById('dashboardSection');
@@ -518,6 +519,11 @@
           return;
         }
 
+        // Show spinner and disable button
+        const originalBtnText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
+        submitBtn.disabled = true;
+
         const payload = {
           studentId: studentIdSelect.value,
           allocationId: allocationIdInput.value,
@@ -532,6 +538,9 @@
         // Minimal validations
         if (!payload.studentId || !payload.allocationId) {
           showMessage(callMessageBox, 'Select student and product/allocation.', false);
+          // Restore button state
+          submitBtn.innerHTML = originalBtnText;
+          submitBtn.disabled = false;
           return;
         }
 
@@ -541,6 +550,10 @@
           showModal('Call logged successfully!');
         } catch (err) {
           showMessage(callMessageBox, err.message, false);
+        } finally {
+          // Hide spinner and re-enable button
+          submitBtn.innerHTML = originalBtnText;
+          submitBtn.disabled = false;
         }
       });
 
