@@ -468,6 +468,26 @@
                 hideMessage(loginMessageBox);
             });
 
+            async function loadCoachBookings() {
+              try {
+                const resp = await apiGet('getCoachBookings', { coachId: CURRENT_COACH_ID });
+                if (!resp.success) throw new Error(resp.error || 'Unable to load bookings.');
+            
+                const bookings = resp.bookings || [];
+                if (!bookings.length) {
+                  console.log("No bookings in the next 7 days.");
+                  return;
+                }
+            
+                bookings.forEach(b => {
+                  console.log(`Booking: ${b.title} — ${b.start} to ${b.end}`);
+                });
+              } catch (err) {
+                console.error("Error loading bookings:", err.message);
+              }
+            }
+
+            
             // --- Load Students (for call log)
             async function loadStudentIds() {
                 studentIdSelect.innerHTML = '<option value="" disabled selected>Loading Student IDs...</option>';
