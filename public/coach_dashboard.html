@@ -782,17 +782,29 @@ document.addEventListener('click', (e) => {
     const name = e.target.dataset.name;
     const surname = e.target.dataset.surname;
 
-    // Popola hidden inputs
-    document.getElementById('rcStudentId').value = studentId;
-    document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
-    document.getElementById('rcClientId').value = ''; // opzionale
+    // controlla se c'è già una bozza per questo studente
+    const d = LAST_DRAFTS.find(x => x.studentId === studentId);
 
-    // Reset form
     reportCardForm.reset();
+
+    if (d) {
+      // apri in edit mode
+      document.getElementById('rcStudentId').value = d.studentId;
+      document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
+      document.getElementById('rcClientId').value = '';
+      document.getElementById('rcAttendance').value = d.attendance || '';
+      document.getElementById('rcReport').value = d.report || '';
+    } else {
+      // nuova bozza
+      document.getElementById('rcStudentId').value = studentId;
+      document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
+      document.getElementById('rcClientId').value = '';
+    }
 
     switchSection(reportCardFormSection);
   }
 });
+
 
             document.addEventListener('click', (e) => {
   if (e.target.classList.contains('editDraftBtn')) {
