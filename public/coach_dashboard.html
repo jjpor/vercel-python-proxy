@@ -239,17 +239,20 @@
             <div id="callHistoryMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
         </div>
 
-        <!-- Report Cards Section -->
+                <!-- Report Cards Section -->
         <div id="reportCardsSection" class="hidden">
             <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
                 <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Report Cards</h2>
                 <button id="backToDashboardFromReportsBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-opacity-50">Back to Dashboard</button>
             </div>
             <div id="reportCardsContainer" class="space-y-4 text-gray-700">
-            <p class="text-gray-500 text-center">Loading report card tasks...</p>
+                <p class="text-gray-500 text-center">Loading report card tasks...</p>
+            </div>
+        
+            <!-- NUOVO contenitore bozze -->
+            <div id="reportCardDraftsContainer" class="space-y-4 text-gray-700"></div>
         </div>
 
-        </div>
 
         <!-- Report Card Form -->
         <div id="reportCardFormSection" class="hidden">
@@ -393,9 +396,12 @@
             });
 
             function switchSection(showId) {
-                [loginSection, dashboardSection, callSection, studentsSection, callHistorySection, reportCardsSection].forEach(sec => sec.classList.add('hidden'));
-                showId.classList.remove('hidden');
-            }
+              [loginSection, dashboardSection, callSection, studentsSection,
+               callHistorySection, reportCardsSection, reportCardFormSection]
+                   .forEach(sec => sec.classList.add('hidden'));
+          showId.classList.remove('hidden');
+        }
+
 
             // --- API helpers
             async function apiGet(action, params = {}) {
@@ -686,6 +692,7 @@
                 renderHistoryTable(monthFilterSelect.value);
             });
 
+// --- Report Card Tasks (quelli da fare)
 async function loadReportCardTasks() {
     reportCardsContainer.innerHTML = '<p class="text-gray-500 text-center">Loading report card tasks...</p>';
     try {
@@ -698,29 +705,68 @@ async function loadReportCardTasks() {
             return;
         }
 
-        let html = '<div class="grid gap-4">';
+        let html = '<h3 class="text-xl font-semibold text-gray-800">Tasks</h3><div class="grid gap-4">';
         tasks.forEach(t => {
-          html += `
-            <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
-              <h3 class="text-lg font-semibold text-gray-800">${t.name} ${t.surname} (${t.studentId})</h3>
-              <p class="text-gray-600"><strong>Cadency:</strong> ${t.cadencyMonths} month(s)</p>
-              <p class="text-gray-600"><strong>Calls:</strong> ${t.calls}</p>
-              <button 
-                class="writeReportBtn mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-                data-student="${t.studentId}" 
-                data-name="${t.name}" 
-                data-surname="${t.surname}">
-                Write Report
-              </button>
-            </div>
-          `;
+            html += `
+              <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-800">${t.name} ${t.surname} (${t.studentId})</h3>
+                <p class="text-gray-600"><strong>Cadency:</strong> ${t.cadencyMonths} month(s)</p>
+                <p class="text-gray-600"><strong>Calls:</strong> ${t.calls}</p>
+                <button 
+                  class="writeReportBtn mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                  data-student="${t.studentId}" 
+                  data-name="${t.name}" 
+                  data-surname="${t.surname}">
+                  Write Report
+                </button>
+              </div>
+            `;
         });
-
         html += '</div>';
         reportCardsContainer.innerHTML = html;
 
     } catch (err) {
         reportCardsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
+    }
+}
+
+// --- Report Card Drafts (bozze salvate)
+let LAST_DRAFTS = [];
+
+async function loadReportCardDrafts() {
+    const draftsContainer = document.getElementById('reportCardDraftsContainer');
+    draftsContainer.innerHTML = '<p class="text-gray-500 text-center">Loading drafts...</p>';
+    try {
+        const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
+        if (!resp.success) throw new Error(resp.error || 'Unable to load drafts.');
+        LAST_DRAFTS = resp.drafts || [];
+
+        if (!LAST_DRAFTS.length) {
+            draftsContainer.innerHTML = '<p class="text-gray-500 text-center">No drafts yet.</p>';
+            return;
+        }
+
+        let html = '<h3 class="text-xl font-semibold text-gray-800">Your Drafts</h3><div class="grid gap-4">';
+        LAST_DRAFTS.forEach(d => {
+            html += `
+              <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
+                <div class="flex justify-between">
+                  <div>
+                    <p class="font-semibold text-gray-800">${d.name} ${d.surname} (${d.studentId})</p>
+                    <p class="text-gray-600 text-sm">${d.dateISO || ''} • Attendance: ${d.attendance || '-'}</p>
+                    <p class="text-gray-600 text-sm mt-1">${(d.report || '').substring(0,100)}${d.report.length>100?'…':''}</p>
+                  </div>
+                  <button class="editDraftBtn bg-indigo-600 text-white px-3 py-1 rounded" data-student="${d.studentId}">
+                    Edit
+                  </button>
+                </div>
+              </div>
+            `;
+        });
+        html += '</div>';
+        draftsContainer.innerHTML = html;
+    } catch (err) {
+        draftsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
     }
 }
 
@@ -747,6 +793,23 @@ document.addEventListener('click', (e) => {
     switchSection(reportCardFormSection);
   }
 });
+
+            document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('editDraftBtn')) {
+    const sid = e.target.dataset.student;
+    const d = LAST_DRAFTS.find(x => x.studentId === sid);
+    if (!d) return;
+
+    document.getElementById('rcStudentId').value = d.studentId;
+    document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
+    document.getElementById('rcClientId').value = '';
+    document.getElementById('rcAttendance').value = d.attendance || '';
+    document.getElementById('rcReport').value = d.report || '';
+
+    switchSection(reportCardFormSection);
+  }
+});
+
 
 backToReportCardsBtn.addEventListener('click', () => {
   switchSection(reportCardsSection);
@@ -976,6 +1039,8 @@ reportCardForm.addEventListener('submit', async (e) => {
                 if (!CURRENT_COACH_ID) return;
                 switchSection(reportCardsSection);
                 loadReportCardTasks();
+                loadReportCardDrafts(); // carica anche le bozze
+
             });
 
         </script>
