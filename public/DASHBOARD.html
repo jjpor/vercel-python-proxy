@@ -376,6 +376,28 @@
             const callHistoryTableBody = document.getElementById('callHistoryTableBody');
             const monthFilterSelect = document.getElementById('monthFilter');
 
+            // Riferimenti per call type e container
+            const callTypeRadios = document.querySelectorAll('input[name="callType"]');
+            const groupStudentsContainer = document.getElementById('groupStudentsContainer');
+            
+            // Toggle tra IND e GROUP
+            callTypeRadios.forEach(radio => {
+              radio.addEventListener('change', () => {
+                if (radio.value === "GROUP" && radio.checked) {
+                  // flusso GROUP
+                  studentIdSelect.disabled = true; 
+                  studentIdSelect.innerHTML = '<option value="" disabled selected>Not used in GROUP mode</option>';
+                  groupStudentsContainer.classList.remove('hidden');
+                  loadGroupProducts();
+                } else if (radio.value === "IND" && radio.checked) {
+                  // flusso IND
+                  groupStudentsContainer.classList.add('hidden');
+                  loadStudentIds();
+                }
+              });
+            });
+
+
             // --- Runtime State
             let CURRENT_COACH_ID = null;
             let CURRENT_COACH_NAME = null;
