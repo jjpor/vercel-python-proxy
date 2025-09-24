@@ -147,11 +147,20 @@
 
                 <!-- Product -->
                 <div>
-                    <label for="productIdSelect" class="form-label block mb-2">Product ID</label>
-                    <select id="productIdSelect" name="productIdSelect" class="form-input" required disabled>
-                        <option value="" disabled selected>Select a Student ID first</option>
-                    </select>
+                  <label for="productIdSelect" class="form-label block mb-2">Product ID</label>
+                  <select id="productIdSelect" name="productIdSelect" class="form-input" required disabled>
+                    <option value="" disabled selected>Select a Student ID first</option>
+                  </select>
                 </div>
+                
+                <!-- Group student multi-select (solo per call GROUP) -->
+                <div id="groupStudentsContainer" class="hidden md:col-span-2">
+                  <label for="groupStudentIds" class="form-label block mb-2">Select Students</label>
+                  <select id="groupStudentIds" name="groupStudentIds" class="form-input" multiple>
+                    <option value="" disabled>Select a product first</option>
+                  </select>
+                </div>
+
 
                 <!-- Date -->
                 <div>
@@ -515,6 +524,36 @@
                 }
             }
 
+            async function loadGroupProducts() {
+    productIdSelect.disabled = true;
+    productIdSelect.innerHTML = '<option value="" disabled selected>Loading group products...</option>';
+
+    try {
+        const resp = await apiGet('getGroupProducts');
+        const prods = (resp && resp.success && Array.isArray(resp.products)) ? resp.products : [];
+
+        productIdSelect.innerHTML = '';
+        const def = document.createElement('option');
+        def.value = '';
+        def.disabled = true;
+        def.selected = true;
+        def.textContent = 'Select a group product';
+        productIdSelect.appendChild(def);
+
+        prods.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.productId;
+            opt.textContent = `${p.productName} (${p.productId})`;
+            productIdSelect.appendChild(opt);
+        });
+
+        productIdSelect.disabled = false;
+    } catch (err) {
+        productIdSelect.innerHTML = '<option value="" disabled selected>Error loading group products</option>';
+    }
+}
+
+
             // --- Select student -> load allocations/products
             studentIdSelect.addEventListener('change', async () => {
                 const studentId = studentIdSelect.value;
@@ -553,22 +592,42 @@
                 }
             });
 
-            // --- Select product -> populate fields
-            productIdSelect.addEventListener('change', () => {
-                const opt = productIdSelect.options[productIdSelect.selectedIndex];
-                if (!opt || !opt.dataset) return;
-                hourlyRateInput.value = opt.dataset.hourlyRate || '';
-                technicalDurationInput.value = opt.dataset.technicalDuration || '';
-                allocationIdInput.value = opt.dataset.allocationId || '';
-                // Set default callDuration = technicalDuration if present
-                const tech = parseInt(technicalDurationInput.value || '60', 10);
-                if ([30,60,90,120].includes(tech)) {
-                    callDurationSelect.value = String(tech);
-                } else {
-                    callDurationSelect.value = '60';
-                }
-                recomputeUnits();
+            productIdSelect.addEventListener('change', async () => {
+    const callType = document.querySelector('input[name="callType"]:checked').value;
+
+    if (callType === "GROUP") {
+        const productId = productIdSelect.value;
+        try {
+            const resp = await apiGet('getGroupStudents', { productId });
+            const students = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+
+            const groupSelect = document.getElementById('groupStudentIds');
+            groupSelect.innerHTML = '';
+            students.forEach(sid => {
+                const opt = document.createElement('option');
+                opt.value = sid;
+                opt.textContent = sid;
+                groupSelect.appendChild(opt);
             });
+        } catch (err) {
+            console.error("Error loading group students", err.message);
+        }
+    } else {
+        const opt = productIdSelect.options[productIdSelect.selectedIndex];
+        if (!opt || !opt.dataset) return;
+        hourlyRateInput.value = opt.dataset.hourlyRate || '';
+        technicalDurationInput.value = opt.dataset.technicalDuration || '';
+        allocationIdInput.value = opt.dataset.allocationId || '';
+        const tech = parseInt(technicalDurationInput.value || '60', 10);
+        if ([30,60,90,120].includes(tech)) {
+            callDurationSelect.value = String(tech);
+        } else {
+            callDurationSelect.value = '60';
+        }
+        recomputeUnits();
+    }
+});
+
 
             // --- Units = callDuration(min) / 60
             function recomputeUnits() {
@@ -593,16 +652,26 @@
                 submitBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
                 submitBtn.disabled = true;
 
-                const payload = {
-                    studentId: studentIdSelect.value,
-                    allocationId: allocationIdInput.value,
-                    callDate: callDateInput.value,        // YYYY-MM-DD
-                    callDuration: parseFloat(callDurationSelect.value), // minutes
-                    units: parseFloat(unitsInput.value),      // hours
-                    hourlyRate: parseFloat(hourlyRateInput.value),
-                    coachId: CURRENT_COACH_ID,
-                    coachName: CURRENT_COACH_NAME
-                };
+                const callType = document.querySelector('input[name="callType"]:checked').value;
+let payload = {
+    callDate: callDateInput.value,
+    callDuration: parseFloat(callDurationSelect.value),
+    units: parseFloat(unitsInput.value),
+    hourlyRate: parseFloat(hourlyRateInput.value),
+    coachId: CURRENT_COACH_ID,
+    coachName: CURRENT_COACH_NAME,
+    productId: productIdSelect.value
+};
+
+if (callType === "IND") {
+    payload.studentId = studentIdSelect.value;
+    payload.contractId = allocationIdInput.value;
+} else {
+    const selected = Array.from(document.getElementById('groupStudentIds').selectedOptions).map(opt => opt.value);
+    payload.studentIds = selected;
+    payload.contractId = null; // lo gestisce il backend
+}
+
 
                 // Minimal validations
                 if (!payload.studentId || !payload.allocationId) {
@@ -1058,10 +1127,20 @@ reportCardForm.addEventListener('submit', async (e) => {
 
             // --- Log a new call
             logCallBtn.addEventListener('click', () => {
-                if (!CURRENT_COACH_ID) return; // sicurezza: solo se loggato
-                switchSection(callSection);
-                loadStudentIds(); // popola la tendina degli studenti
-            });
+    if (!CURRENT_COACH_ID) return; 
+    switchSection(callSection);
+
+    const callType = document.querySelector('input[name="callType"]:checked').value;
+
+    if (callType === "IND") {
+        loadStudentIds(); // flusso singolo
+        document.getElementById('groupStudentsContainer').classList.add('hidden');
+    } else {
+        loadGroupProducts(); // nuovo flusso per group
+        document.getElementById('groupStudentsContainer').classList.remove('hidden');
+    }
+});
+
             
             backToDashboardFromStudentsBtn.addEventListener('click', () => {
                 switchSection(dashboardSection);
