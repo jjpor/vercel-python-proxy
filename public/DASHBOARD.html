@@ -102,6 +102,7 @@
         <select id="productIdSelect" name="productIdSelect" class="form-input" required disabled>
           <option value="" disabled selected>Select a Student ID first</option>
         </select>
+        <div id="remainingCalls" class="mt-2 p-2 rounded-lg text-sm bg-gray-200 text-gray-700 hidden"></div>
       </div>
 
       <!-- Group students -->
@@ -131,8 +132,9 @@
       <div>
         <label for="callDuration" class="form-label block mb-2">Duration Override</label>
         <select id="callDuration" class="form-input">
+          <option value="" selected disabled>Select duration</option>
           <option value="30">30</option>
-          <option value="60" selected>60</option>
+          <option value="60">60</option>
           <option value="90">90</option>
           <option value="120">120</option>
         </select>
@@ -196,6 +198,7 @@
   const callMessageBox = document.getElementById('callMessageBox');
 
   const callTypeRadios = document.querySelectorAll('input[name="callType"]');
+  const remainingCallsDisplay = document.getElementById('remainingCalls');
 
   // runtime
   let CURRENT_COACH_ID = null;
@@ -256,8 +259,6 @@
       callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
       // show dashboard
       switchSection(dashboardSection);
-      // set default date to today
-      callDateInput.value = new Date().toISOString().slice(0,10);
       // fetch earnings and preload students
       await fetchMonthlyEarnings();
       await loadStudentIds(); // preload available students for IND
@@ -320,6 +321,7 @@
       });
       productIdSelect.disabled = true;
       productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
+      remainingCallsDisplay.classList.add('hidden');
     } catch (err) {
       studentIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
     }
@@ -334,6 +336,7 @@
     technicalDurationInput.value = '';
     contractIdInput.value = '';
     productIdInput.value = '';
+    remainingCallsDisplay.classList.add('hidden');
     try {
       const resp = await apiGet('getStudentContracts', { studentId });
       const contracts = (resp && resp.success && Array.isArray(resp.contracts)) ? resp.contracts : [];
@@ -347,14 +350,15 @@
       def.textContent = 'Select a product/allocation';
       productIdSelect.appendChild(def);
       contracts.forEach(c => {
-        const prodName = (c.product && c.product.productName) ? c.product.productName : c.productId;
-        const label = `${prodName} (${c.productId}) — ${c.contractId}` + (c.leftCalls !== null && c.leftCalls !== undefined ? ` • remaining ${c.leftCalls}` : '');
+        // Extract product name before the first underscore
+        const prodName = (c.product && c.product.productName) ? c.product.productName.split('_')[0] : c.productId;
         const opt = document.createElement('option');
         opt.value = c.productId;
-        opt.textContent = label;
+        opt.textContent = prodName;
         opt.dataset.contractId = c.contractId;
         // store product details in dataset as JSON for quick access
         opt.dataset.product = JSON.stringify(c.product || {});
+        opt.dataset.remainingCalls = c.leftCalls;
         productIdSelect.appendChild(opt);
       });
       productIdSelect.disabled = false;
@@ -378,9 +382,11 @@
       def.textContent = 'Select a group product';
       productIdSelect.appendChild(def);
       prods.forEach(p => {
+        // Extract product name before the first underscore
+        const prodName = (p.productName) ? p.productName.split('_')[0] : p.productId;
         const opt = document.createElement('option');
         opt.value = p.productId;
-        opt.textContent = `${p.productName} (${p.productId})`;
+        opt.textContent = `${prodName} (${p.productId})`;
         productIdSelect.appendChild(opt);
       });
       productIdSelect.disabled = false;
@@ -397,6 +403,7 @@
     hourlyRateInput.value = '';
     technicalDurationInput.value = '';
     contractIdInput.value = '';
+    remainingCallsDisplay.classList.add('hidden');
 
     if (callType === "GROUP") {
       // Load students for this group product
@@ -418,10 +425,12 @@
           if (match && match.product) {
             const prod = match.product;
             technicalDurationInput.value = prod.duration || '';
-            // rates object may be in prod.rates (as backend returns rates structure)
             let displayRate = 0;
+            // Use coach's role to get correct rate
             if (prod.rates && CURRENT_COACH_ROLE) {
-              displayRate = Number(prod.rates[CURRENT_COACH_ROLE] || prod.rates['Coach'] || 0);
+              displayRate = prod.rates[CURRENT_COACH_ROLE] || 0;
+            } else if (prod[CURRENT_COACH_ROLE.toLowerCase()]) { // fallback to legacy keys
+               displayRate = prod[CURRENT_COACH_ROLE.toLowerCase()];
             } else {
               // fallback: try any numeric property
               const keys = Object.keys(prod);
@@ -429,7 +438,6 @@
                 if (typeof prod[k] === 'number' && prod[k] > 0) { displayRate = prod[k]; break; }
               }
             }
-            // divide by number of selected students later; for display show rate per-student if we know attendees
             hourlyRateInput.value = displayRate || '';
             recomputeUnits();
           }
@@ -441,19 +449,34 @@
       // IND: the option's dataset includes contractId and product info
       const opt = productIdSelect.options[productIdSelect.selectedIndex];
       if (!opt) return;
+      
       const contractId = opt.dataset.contractId || '';
       contractIdInput.value = contractId;
+
+      // Display remaining calls
+      const remaining = opt.dataset.remainingCalls;
+      if (remaining && remaining !== 'null' && remaining !== 'undefined') {
+        remainingCallsDisplay.textContent = `Remaining: ${remaining} calls`;
+        remainingCallsDisplay.classList.remove('hidden');
+      } else {
+        remainingCallsDisplay.classList.add('hidden');
+      }
+      
       // parse stored product JSON
       let prod = {};
       try { prod = opt.dataset.product ? JSON.parse(opt.dataset.product) : {}; } catch (e) { prod = {}; }
       technicalDurationInput.value = prod.duration || '';
-      // determine hourly rate by coach role if present
+
+      // determine hourly rate by coach role
       let displayRate = '';
       if (prod.rates && CURRENT_COACH_ROLE) {
-        displayRate = Number(prod.rates[CURRENT_COACH_ROLE] || prod.rates['Coach'] || 0);
+        displayRate = Number(prod.rates[CURRENT_COACH_ROLE] || 0);
       } else if (prod.senior || prod.junior || prod.head) {
         // legacy keys mapping
-        displayRate = prod.senior || prod.head || prod.junior || '';
+        if (CURRENT_COACH_ROLE.toLowerCase().includes('senior')) displayRate = prod.senior;
+        else if (CURRENT_COACH_ROLE.toLowerCase().includes('junior')) displayRate = prod.junior;
+        else if (CURRENT_COACH_ROLE.toLowerCase().includes('head')) displayRate = prod.head;
+        else displayRate = prod.senior || prod.head || prod.junior || '';
       } else {
         // try to extract numeric rate from product object
         for (const k in prod) {
@@ -467,9 +490,9 @@
 
   // recompute units when call duration override changes
   function recomputeUnits() {
-    const mins = parseFloat(callDurationSelect.value || '60');
-    const units = isNaN(mins) ? 1 : (mins / 60);
-    unitsInput.value = units.toFixed(2);
+    const mins = parseFloat(callDurationSelect.value || '0');
+    const units = isNaN(mins) || mins === 0 ? '' : (mins / 60).toFixed(2);
+    unitsInput.value = units;
   }
   callDurationSelect.addEventListener('change', recomputeUnits);
 
@@ -480,6 +503,7 @@
         studentIdSelect.disabled = true;
         studentIdSelect.innerHTML = '<option value="">Not used in GROUP</option>';
         groupStudentsContainer.classList.remove('hidden');
+        remainingCallsDisplay.classList.add('hidden');
         loadGroupProducts();
       } else if (radio.value === "IND" && radio.checked) {
         studentIdSelect.disabled = false;
@@ -493,6 +517,8 @@
       technicalDurationInput.value = '';
       contractIdInput.value = '';
       productIdInput.value = '';
+      callDurationSelect.value = ''; // reset duration override
+      unitsInput.value = '';
     });
   });
 
@@ -511,7 +537,7 @@
       const payload = {
         callDate: callDateInput.value,
         callDuration: parseFloat(callDurationSelect.value),
-        units: parseFloat(unitsInput.value || (callDurationSelect.value/60)),
+        units: parseFloat(unitsInput.value),
         hourlyRate: parseFloat(hourlyRateInput.value) || 0,
         coachId: CURRENT_COACH_ID,
         coachName: CURRENT_COACH_NAME,
@@ -528,6 +554,10 @@
       }
 
       // validations
+      if (!payload.callDate) {
+         showMessage(callMessageBox, 'Select a date.', false);
+         return;
+      }
       if (callType === "IND") {
         if (!payload.studentId || !payload.contractId) {
           showMessage(callMessageBox, 'Select student and product/allocation.', false);
@@ -554,6 +584,7 @@
       productIdInput.value = '';
       hourlyRateInput.value = '';
       technicalDurationInput.value = '';
+      remainingCallsDisplay.classList.add('hidden');
       // refresh earnings
       await fetchMonthlyEarnings();
     } catch (err) {
@@ -587,11 +618,15 @@
     }
     // set date to today
     callDateInput.value = new Date().toISOString().slice(0,10);
+    // reset form
+    document.getElementById('callForm').reset();
+    remainingCallsDisplay.classList.add('hidden');
   });
 
-  // initial load (if you want to prefetch something uncomment)
-  // loadStudentIds();
-
+  // Back to dashboard button
+  document.getElementById('backToDashboardBtn').addEventListener('click', () => {
+    switchSection(dashboardSection);
+  });
 </script>
 </body>
 </html>
