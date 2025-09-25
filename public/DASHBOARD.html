@@ -579,7 +579,7 @@
         });
     });
 
-    // Log call submit
+     // Log call submit
     document.getElementById('callForm').addEventListener('submit', async (e) => {
         e.preventDefault();
         hideMessage(callMessageBox);
@@ -593,9 +593,9 @@
             const callType = document.querySelector('input[name="callType"]:checked').value;
             const payload = {
                 callDate: callDateInput.value,
-                callDuration: parseFloat(callDurationSelect.value),
-                units: parseFloat(unitsInput.value),
-                hourlyRate: parseFloat(hourlyRateInput.value) || 0,
+                callDuration: parseFloat(callDurationSelect.value),     // minutes override
+                units: parseFloat(unitsInput.value),                    // Units Used
+                hourlyRate: parseFloat(hourlyRateInput.value) || 0,     // Coach Rate
                 coachId: CURRENT_COACH_ID,
                 coachName: CURRENT_COACH_NAME,
                 productId: productIdInput.value || productIdSelect.value || ''
@@ -628,38 +628,6 @@
             submitBtn.innerHTML = orig;
             submitBtn.disabled = false;
         }
-    });
-
-    // Open payment folder
-    viewFolderBtn.addEventListener('click', async () => {
-        if (!CURRENT_COACH_ID) return;
-        try {
-            const resp = await apiGet('getPaymentFolderUrl', { coachId: CURRENT_COACH_ID });
-            if (resp && resp.success && resp.url) window.open(resp.url, '_blank');
-        } catch (err) { /* silent */ }
-    });
-
-    // log call button -> go to call section
-    logCallBtn.addEventListener('click', () => {
-        if (!CURRENT_COACH_ID) return;
-        switchSection(callSection);
-        const callType = document.querySelector('input[name="callType"]:checked').value;
-        if (callType === "IND") {
-            loadStudentIds();
-            groupStudentsContainer.classList.add('hidden');
-        } else {
-            loadGroupProducts();
-            groupStudentsContainer.classList.remove('hidden');
-        }
-        callDateInput.value = new Date().toISOString().slice(0,10);
-        document.getElementById('callForm').reset();
-        remainingCallsDisplay.classList.add('hidden');
-        updateFormState();
-    });
-
-    // Back to dashboard button
-    document.getElementById('backToDashboardBtn').addEventListener('click', () => {
-        switchSection(dashboardSection);
     });
 </script>
 </body>
