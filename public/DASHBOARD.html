@@ -431,7 +431,7 @@
     let prod = {};
     try { 
       prod = JSON.parse(opt.dataset.product);
-      console.log('Parsed product data:', prod); // Log the parsed data for debugging
+      console.log('Parsed product data:', prod);
     } catch (e) { 
       console.error('Error parsing product data:', e);
       hourlyRateInput.value = '';
@@ -449,11 +449,11 @@
     };
     
     const rateKey = rateKeys[CURRENT_COACH_ROLE];
-    // CORRECTION: Access the 'rates' property on the product object
-    if (rateKey && prod.hasOwnProperty('rates') && prod.rates.hasOwnProperty(rateKey)) {
+    if (CURRENT_COACH_ROLE && prod.hasOwnProperty('rates') && prod.rates.hasOwnProperty(rateKey)) {
       displayRate = prod.rates[rateKey];
     } else {
       console.error(`Rate key '${rateKey}' not found in product data or invalid coach role.`);
+      showMessage(callMessageBox, `Error: Coach role ('${CURRENT_COACH_ROLE}') is invalid or missing in product data.`, false);
     }
 
     technicalDurationInput.value = prod.duration || '';
@@ -490,7 +490,6 @@
     } else {
       hourlyRateInput.value = '';
       callDurationSelect.disabled = true;
-      showMessage(callMessageBox, `Error: Could not find a valid rate for your role ('${CURRENT_COACH_ROLE}') and this product.`, false);
     }
     
     recomputeUnits();
