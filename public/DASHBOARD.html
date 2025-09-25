@@ -317,9 +317,14 @@
   // --- STUDENT / PRODUCTS loading for IND ---
   async function loadStudentIds() {
     studentIdSelect.innerHTML = '<option value="" disabled selected>Loading Student IDs...</option>';
+    productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
+    productIdSelect.disabled = true;
+    remainingCallsDisplay.classList.add('hidden');
+    
     try {
       const resp = await apiGet('getStudents');
       const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+      
       studentIdSelect.innerHTML = '';
       const def = document.createElement('option');
       def.value = '';
@@ -327,22 +332,25 @@
       def.selected = true;
       def.textContent = 'Select a student';
       studentIdSelect.appendChild(def);
+      
       arr.forEach(id => {
         const opt = document.createElement('option');
         opt.value = id;
         opt.textContent = id;
         studentIdSelect.appendChild(opt);
       });
-      productIdSelect.disabled = true;
-      productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
-      remainingCallsDisplay.classList.add('hidden');
+
+      // Automatically select the first student and load their products
+      if (arr.length > 0) {
+        studentIdSelect.value = arr[0];
+        loadStudentContracts(arr[0]);
+      }
     } catch (err) {
       studentIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
     }
   }
-
-  studentIdSelect.addEventListener('change', async () => {
-    const studentId = studentIdSelect.value;
+  
+  async function loadStudentContracts(studentId) {
     productIdSelect.disabled = true;
     productIdSelect.innerHTML = '<option value="" disabled selected>Loading products...</option>';
     hourlyRateInput.value = '';
@@ -377,6 +385,11 @@
     } catch (err) {
       productIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
     }
+  }
+
+  studentIdSelect.addEventListener('change', () => {
+    const studentId = studentIdSelect.value;
+    loadStudentContracts(studentId);
   });
 
   // --- GROUP PRODUCTS loading ---
@@ -442,18 +455,13 @@
     }
 
     let displayRate = 0;
-    const rateKeys = {
-      'Head Coach': 'Head Coach',
-      'Senior Coach': 'Senior Coach',
-      'Junior Coach': 'Junior Coach'
-    };
-    
-    const rateKey = rateKeys[CURRENT_COACH_ROLE];
-    if (CURRENT_COACH_ROLE && prod.hasOwnProperty('rates') && prod.rates.hasOwnProperty(rateKey)) {
+    // Use CURRENT_COACH_ROLE directly as the key to look up the rate
+    const rateKey = CURRENT_COACH_ROLE;
+    if (rateKey && prod.rates && prod.rates.hasOwnProperty(rateKey)) {
       displayRate = prod.rates[rateKey];
     } else {
       console.error(`Rate key '${rateKey}' not found in product data or invalid coach role.`);
-      showMessage(callMessageBox, `Error: Coach role ('${CURRENT_COACH_ROLE}') is invalid or missing in product data.`, false);
+      showMessage(callMessageBox, `Error: Coach role ('${rateKey}') is invalid or missing in product data.`, false);
     }
 
     technicalDurationInput.value = prod.duration || '';
