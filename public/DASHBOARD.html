@@ -417,23 +417,44 @@
     contractIdInput.value = '';
     remainingCallsDisplay.classList.add('hidden');
     hideMessage(callMessageBox);
+    updateFormState();
 
-    // Get the product data from the selected option
     const opt = productIdSelect.options[productIdSelect.selectedIndex];
-    if (!opt) { updateFormState(); return; }
+    if (!opt || !opt.dataset.product) {
+      hourlyRateInput.value = '';
+      technicalDurationInput.value = '';
+      callDurationSelect.disabled = true;
+      updateFormState();
+      return;
+    }
 
     let prod = {};
-    try { prod = opt.dataset.product ? JSON.parse(opt.dataset.product) : {}; } catch (e) { prod = {}; }
+    try { 
+      prod = JSON.parse(opt.dataset.product);
+      console.log('Parsed product data:', prod); // Log the parsed data for debugging
+    } catch (e) { 
+      console.error('Error parsing product data:', e);
+      hourlyRateInput.value = '';
+      technicalDurationInput.value = '';
+      callDurationSelect.disabled = true;
+      updateFormState();
+      return;
+    }
 
     let displayRate = 0;
-    if (CURRENT_COACH_ROLE === 'Head Coach') {
-      displayRate = prod['Head Coach'] || 0;
-    } else if (CURRENT_COACH_ROLE === 'Senior Coach') {
-      displayRate = prod['Senior Coach'] || 0;
-    } else if (CURRENT_COACH_ROLE === 'Junior Coach') {
-      displayRate = prod['Junior Coach'] || 0;
-    }
+    const rateKeys = {
+      'Head Coach': 'Head Coach',
+      'Senior Coach': 'Senior Coach',
+      'Junior Coach': 'Junior Coach'
+    };
     
+    const rateKey = rateKeys[CURRENT_COACH_ROLE];
+    if (rateKey && prod.hasOwnProperty(rateKey)) {
+      displayRate = prod[rateKey];
+    } else {
+      console.error(`Rate key '${rateKey}' not found in product data or invalid coach role.`);
+    }
+
     technicalDurationInput.value = prod.duration || '';
 
     if (callType === "IND") {
@@ -447,7 +468,6 @@
         remainingCallsDisplay.classList.add('hidden');
       }
     } else if (callType === "GROUP") {
-      // Load students for this group product
       try {
         const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
         const studs = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
@@ -469,7 +489,7 @@
     } else {
       hourlyRateInput.value = '';
       callDurationSelect.disabled = true;
-      showMessage(callMessageBox, 'Error: Could not find a valid rate for your role and this product.', false);
+      showMessage(callMessageBox, `Error: Could not find a valid rate for your role ('${CURRENT_COACH_ROLE}') and this product.`, false);
     }
     
     recomputeUnits();
