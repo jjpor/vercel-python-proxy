@@ -141,21 +141,18 @@
       </div>
 
       <div class="md:col-span-2 mt-4">
-        <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700">Log Call</button>
+        <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed">Log Call</button>
         <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white py-3 px-6 rounded-xl hover:bg-gray-500">Back to Dashboard</button>
       </div>
     </form>
     <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
   </div>
 
-  <!-- (STUDENTS, HISTORY, REPORTS → restano identici al tuo) -->
-  <!-- Students, CallHistory, ReportCards sections (omitted here for brevity because unchanged) -->
-  <!-- But they still exist in the real file; the main change was the JS logic above. -->
-
+  <!-- (STUDENTS, HISTORY, REPORTS sections omitted for brevity) -->
 </div>
 
 <script>
-  // API proxy (keeps same base_url / deployment_id pattern you used previously)
+  // API proxy
   const base_url = "https://vercel-python-proxy.vercel.app/api";
   const deployment_id = "AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD";
 
@@ -203,8 +200,8 @@
   // runtime
   let CURRENT_COACH_ID = null;
   let CURRENT_COACH_NAME = null;
-  let CURRENT_COACH_ROLE = null; // comes from login resp.rateRole
-  let CURRENT_ALLOCATIONS_BY_STUDENT = {}; // cached from getStudentContracts
+  let CURRENT_COACH_ROLE = null;
+  let CURRENT_ALLOCATIONS_BY_STUDENT = {};
 
   // Helper: show/hide messages
   function showMessage(box, message, isSuccess = true) {
@@ -216,7 +213,7 @@
     box.className = 'mt-4 p-4 rounded-xl text-center hidden';
   }
 
-  // API helpers: use the proxy endpoints like you had
+  // API helpers
   async function apiGet(action, params = {}) {
     const url = new URL(base_url + "/get");
     url.searchParams.set("deployment_id", deployment_id);
@@ -239,6 +236,25 @@
     return res.json();
   }
 
+  // Form state helper
+  function updateFormState() {
+      const selectedStudent = studentIdSelect.value;
+      const selectedProduct = productIdSelect.value;
+      const selectedDuration = callDurationSelect.value;
+      const isInd = document.querySelector('input[name="callType"]:checked').value === 'IND';
+      const isGroup = document.querySelector('input[name="callType"]:checked').value === 'GROUP';
+      const hourlyRate = parseFloat(hourlyRateInput.value);
+      const groupStudentsSelected = groupStudentIds.selectedOptions.length > 0;
+
+      let isValid = false;
+      if (isInd) {
+          isValid = selectedStudent && selectedProduct && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
+      } else if (isGroup) {
+          isValid = selectedProduct && groupStudentsSelected && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
+      }
+      submitBtn.disabled = !isValid;
+  }
+
   // login logic
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -257,11 +273,9 @@
       CURRENT_COACH_ROLE = resp.rateRole || resp.role || "";
       coachNameDisplay.textContent = CURRENT_COACH_NAME;
       callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
-      // show dashboard
       switchSection(dashboardSection);
-      // fetch earnings and preload students
       await fetchMonthlyEarnings();
-      await loadStudentIds(); // preload available students for IND
+      await loadStudentIds();
     } catch (err) {
       showMessage(loginMessageBox, err.message || String(err), false);
     } finally {
@@ -327,7 +341,6 @@
     }
   }
 
-  // When student changes: load their contracts (allocations) and populate product select
   studentIdSelect.addEventListener('change', async () => {
     const studentId = studentIdSelect.value;
     productIdSelect.disabled = true;
@@ -337,11 +350,12 @@
     contractIdInput.value = '';
     productIdInput.value = '';
     remainingCallsDisplay.classList.add('hidden');
+    updateFormState();
+
     try {
       const resp = await apiGet('getStudentContracts', { studentId });
       const contracts = (resp && resp.success && Array.isArray(resp.contracts)) ? resp.contracts : [];
       CURRENT_ALLOCATIONS_BY_STUDENT[studentId] = contracts;
-      // populate select
       productIdSelect.innerHTML = '';
       const def = document.createElement('option');
       def.value = '';
@@ -350,13 +364,11 @@
       def.textContent = 'Select a product/allocation';
       productIdSelect.appendChild(def);
       contracts.forEach(c => {
-        // Use the full product name
         const prodName = (c.product && c.product.productName) ? c.product.productName : c.productId;
         const opt = document.createElement('option');
         opt.value = c.productId;
         opt.textContent = prodName;
         opt.dataset.contractId = c.contractId;
-        // store product details in dataset as JSON for quick access
         opt.dataset.product = JSON.stringify(c.product || {});
         opt.dataset.remainingCalls = c.leftCalls;
         productIdSelect.appendChild(opt);
@@ -382,11 +394,11 @@
       def.textContent = 'Select a group product';
       productIdSelect.appendChild(def);
       prods.forEach(p => {
-        // Use the full product name
         const prodName = (p.productName) ? p.productName : p.productId;
         const opt = document.createElement('option');
         opt.value = p.productId;
         opt.textContent = `${prodName} (${p.productId})`;
+        opt.dataset.product = JSON.stringify(p); // Store product details for rate/duration lookup
         productIdSelect.appendChild(opt);
       });
       productIdSelect.disabled = false;
@@ -395,7 +407,7 @@
     }
   }
 
-  // When product changes: for GROUP -> load students for product; for IND -> set hourly/duration/contract
+  // When product changes: set hourly/duration
   productIdSelect.addEventListener('change', async () => {
     const callType = document.querySelector('input[name="callType"]:checked').value;
     const selectedProductId = productIdSelect.value;
@@ -404,8 +416,37 @@
     technicalDurationInput.value = '';
     contractIdInput.value = '';
     remainingCallsDisplay.classList.add('hidden');
+    hideMessage(callMessageBox);
 
-    if (callType === "GROUP") {
+    // Get the product data from the selected option
+    const opt = productIdSelect.options[productIdSelect.selectedIndex];
+    if (!opt) { updateFormState(); return; }
+
+    let prod = {};
+    try { prod = opt.dataset.product ? JSON.parse(opt.dataset.product) : {}; } catch (e) { prod = {}; }
+
+    let displayRate = 0;
+    if (CURRENT_COACH_ROLE === 'Head Coach') {
+      displayRate = prod['Head Coach'] || 0;
+    } else if (CURRENT_COACH_ROLE === 'Senior Coach') {
+      displayRate = prod['Senior Coach'] || 0;
+    } else if (CURRENT_COACH_ROLE === 'Junior Coach') {
+      displayRate = prod['Junior Coach'] || 0;
+    }
+    
+    technicalDurationInput.value = prod.duration || '';
+
+    if (callType === "IND") {
+      const contractId = opt.dataset.contractId || '';
+      contractIdInput.value = contractId;
+      const remaining = opt.dataset.remainingCalls;
+      if (remaining && remaining !== 'null' && remaining !== 'undefined') {
+        remainingCallsDisplay.textContent = `Remaining: ${remaining} calls`;
+        remainingCallsDisplay.classList.remove('hidden');
+      } else {
+        remainingCallsDisplay.classList.add('hidden');
+      }
+    } else if (callType === "GROUP") {
       // Load students for this group product
       try {
         const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
@@ -417,64 +458,22 @@
           o.textContent = sid;
           groupStudentIds.appendChild(o);
         });
-        // Determine product details by requesting getStudentContracts for first student who has the product
-        if (studs.length) {
-          const prodDetailsResp = await apiGet('getStudentContracts', { studentId: studs[0] });
-          const contracts = (prodDetailsResp && prodDetailsResp.success && Array.isArray(prodDetailsResp.contracts)) ? prodDetailsResp.contracts : [];
-          const match = contracts.find(c => String(c.productId) === String(selectedProductId));
-          if (match && match.product) {
-            const prod = match.product;
-            technicalDurationInput.value = prod.duration || '';
-            let displayRate = 0;
-            // Use coach's role to get correct rate
-            if (CURRENT_COACH_ROLE === 'Head Coach') {
-              displayRate = prod['Head Coach'] || prod.head || 0;
-            } else if (CURRENT_COACH_ROLE === 'Senior Coach') {
-              displayRate = prod['Senior Coach'] || prod.senior || 0;
-            } else if (CURRENT_COACH_ROLE === 'Junior Coach') {
-              displayRate = prod['Junior Coach'] || prod.junior || 0;
-            }
-            hourlyRateInput.value = displayRate;
-            recomputeUnits();
-          }
-        }
       } catch (err) {
         console.error("Error loading group students", err);
       }
-    } else {
-      // IND: the option's dataset includes contractId and product info
-      const opt = productIdSelect.options[productIdSelect.selectedIndex];
-      if (!opt) return;
-      
-      const contractId = opt.dataset.contractId || '';
-      contractIdInput.value = contractId;
-
-      // Display remaining calls
-      const remaining = opt.dataset.remainingCalls;
-      if (remaining && remaining !== 'null' && remaining !== 'undefined') {
-        remainingCallsDisplay.textContent = `Remaining: ${remaining} calls`;
-        remainingCallsDisplay.classList.remove('hidden');
-      } else {
-        remainingCallsDisplay.classList.add('hidden');
-      }
-      
-      // parse stored product JSON
-      let prod = {};
-      try { prod = opt.dataset.product ? JSON.parse(opt.dataset.product) : {}; } catch (e) { prod = {}; }
-      technicalDurationInput.value = prod.duration || '';
-
-      // determine hourly rate by coach role
-      let displayRate = '';
-      if (CURRENT_COACH_ROLE === 'Head Coach') {
-        displayRate = prod['Head Coach'] || prod.head || 0;
-      } else if (CURRENT_COACH_ROLE === 'Senior Coach') {
-        displayRate = prod['Senior Coach'] || prod.senior || 0;
-      } else if (CURRENT_COACH_ROLE === 'Junior Coach') {
-        displayRate = prod['Junior Coach'] || prod.junior || 0;
-      }
-      hourlyRateInput.value = displayRate;
-      recomputeUnits();
     }
+
+    if (displayRate > 0) {
+      hourlyRateInput.value = displayRate;
+      callDurationSelect.disabled = false;
+    } else {
+      hourlyRateInput.value = '';
+      callDurationSelect.disabled = true;
+      showMessage(callMessageBox, 'Error: Could not find a valid rate for your role and this product.', false);
+    }
+    
+    recomputeUnits();
+    updateFormState();
   });
 
   // recompute units when call duration override changes
@@ -482,8 +481,10 @@
     const mins = parseFloat(callDurationSelect.value || '0');
     const units = isNaN(mins) || mins === 0 ? '' : (mins / 60).toFixed(2);
     unitsInput.value = units;
+    updateFormState();
   }
   callDurationSelect.addEventListener('change', recomputeUnits);
+  groupStudentIds.addEventListener('change', updateFormState);
 
   // toggle call type radios
   callTypeRadios.forEach(radio => {
@@ -499,15 +500,15 @@
         groupStudentsContainer.classList.add('hidden');
         loadStudentIds();
       }
-      // reset product select state
       productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
       productIdSelect.disabled = true;
       hourlyRateInput.value = '';
       technicalDurationInput.value = '';
       contractIdInput.value = '';
       productIdInput.value = '';
-      callDurationSelect.value = ''; // reset duration override
+      callDurationSelect.value = '';
       unitsInput.value = '';
+      updateFormState();
     });
   });
 
@@ -539,42 +540,20 @@
       } else {
         const selected = Array.from(groupStudentIds.selectedOptions).map(o => o.value);
         payload.studentIds = selected;
-        payload.contractId = null; // backend matches productId
+        payload.contractId = null;
       }
-
-      // validations
-      if (!payload.callDate) {
-         showMessage(callMessageBox, 'Select a date.', false);
-         return;
-      }
-      if (callType === "IND") {
-        if (!payload.studentId || !payload.contractId) {
-          showMessage(callMessageBox, 'Select student and product/allocation.', false);
-          return;
-        }
-      } else {
-        if (!payload.productId) {
-          showMessage(callMessageBox, 'Select a group product first.', false);
-          return;
-        }
-        if (!payload.studentIds || payload.studentIds.length === 0) {
-          showMessage(callMessageBox, 'Select at least one student for the group call.', false);
-          return;
-        }
-      }
-
+      
       const resp = await apiPost('logCall', payload);
       if (!resp.success) throw new Error(resp.error || 'Error logging call.');
-      // success
+      
       showMessage(callMessageBox, 'Call logged successfully!', true);
-      // reset some fields
       document.getElementById('callForm').reset();
       contractIdInput.value = '';
       productIdInput.value = '';
       hourlyRateInput.value = '';
       technicalDurationInput.value = '';
       remainingCallsDisplay.classList.add('hidden');
-      // refresh earnings
+      updateFormState();
       await fetchMonthlyEarnings();
     } catch (err) {
       showMessage(callMessageBox, err.message || String(err), false);
@@ -605,11 +584,10 @@
       loadGroupProducts();
       groupStudentsContainer.classList.remove('hidden');
     }
-    // set date to today
     callDateInput.value = new Date().toISOString().slice(0,10);
-    // reset form
     document.getElementById('callForm').reset();
     remainingCallsDisplay.classList.add('hidden');
+    updateFormState();
   });
 
   // Back to dashboard button
