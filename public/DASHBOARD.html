@@ -629,6 +629,29 @@
             submitBtn.disabled = false;
         }
     });
+    // log call button -> go to call section
+logCallBtn.addEventListener('click', () => {
+    if (!CURRENT_COACH_ID) return;
+    switchSection(callSection);
+    const callType = document.querySelector('input[name="callType"]:checked').value;
+    if (callType === "IND") {
+        loadStudentIds();
+        groupStudentsContainer.classList.add('hidden');
+    } else {
+        loadGroupProducts();
+        groupStudentsContainer.classList.remove('hidden');
+    }
+    callDateInput.value = new Date().toISOString().slice(0,10);
+    document.getElementById('callForm').reset();
+    remainingCallsDisplay.classList.add('hidden');
+    updateFormState();
+});
+
+// Back to dashboard button
+document.getElementById('backToDashboardBtn').addEventListener('click', () => {
+    switchSection(dashboardSection);
+});
+
 </script>
 </body>
 </html>
