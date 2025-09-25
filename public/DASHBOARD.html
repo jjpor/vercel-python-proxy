@@ -197,7 +197,7 @@
   const callTypeRadios = document.querySelectorAll('input[name="callType"]');
   const remainingCallsDisplay = document.getElementById('remainingCalls');
 
-  // runtime
+  // Variabili globali per lo stato dell'applicazione
   let CURRENT_COACH_ID = null;
   let CURRENT_COACH_NAME = null;
   let CURRENT_COACH_ROLE = null;
@@ -268,11 +268,22 @@
     try {
       const resp = await apiPost('login', { coachId, password });
       if (!resp.success) throw new Error(resp.error || 'Login failed');
+      
+      // Determina il ruolo del coach al login e memorizzalo in una variabile globale
+      const coachRole = resp.rateRole || resp.role;
+      if (!coachRole) {
+          throw new Error('Il tuo ruolo da coach non è stato trovato nei dati di accesso. Contatta l\'amministratore per assistenza.');
+      }
+      
       CURRENT_COACH_ID = String(resp.coachId);
       CURRENT_COACH_NAME = resp.coachName || CURRENT_COACH_ID;
-      CURRENT_COACH_ROLE = resp.rateRole || resp.role || "";
+      CURRENT_COACH_ROLE = coachRole;
+      
+      // Aggiorna l'interfaccia con i dati del coach
       coachNameDisplay.textContent = CURRENT_COACH_NAME;
       callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+
+      // Passa alla dashboard e carica i dati
       switchSection(dashboardSection);
       await fetchMonthlyEarnings();
       await loadStudentIds();
@@ -340,11 +351,6 @@
         studentIdSelect.appendChild(opt);
       });
 
-      // Automatically select the first student and load their products
-      if (arr.length > 0) {
-        studentIdSelect.value = arr[0];
-        loadStudentContracts(arr[0]);
-      }
     } catch (err) {
       studentIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
     }
@@ -455,13 +461,13 @@
     }
 
     let displayRate = 0;
-    // Use CURRENT_COACH_ROLE directly as the key to look up the rate
+    // Usa la variabile globale CURRENT_COACH_ROLE
     const rateKey = CURRENT_COACH_ROLE;
     if (rateKey && prod.rates && prod.rates.hasOwnProperty(rateKey)) {
       displayRate = prod.rates[rateKey];
     } else {
       console.error(`Rate key '${rateKey}' not found in product data or invalid coach role.`);
-      showMessage(callMessageBox, `Error: Coach role ('${rateKey}') is invalid or missing in product data.`, false);
+      showMessage(callMessageBox, `Errore: Il ruolo ('${rateKey}') non è valido o manca nei dati del prodotto.`, false);
     }
 
     technicalDurationInput.value = prod.duration || '';
