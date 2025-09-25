@@ -350,8 +350,8 @@
       def.textContent = 'Select a product/allocation';
       productIdSelect.appendChild(def);
       contracts.forEach(c => {
-        // Extract product name before the first underscore
-        const prodName = (c.product && c.product.productName) ? c.product.productName.split('_')[0] : c.productId;
+        // Use the full product name
+        const prodName = (c.product && c.product.productName) ? c.product.productName : c.productId;
         const opt = document.createElement('option');
         opt.value = c.productId;
         opt.textContent = prodName;
@@ -382,8 +382,8 @@
       def.textContent = 'Select a group product';
       productIdSelect.appendChild(def);
       prods.forEach(p => {
-        // Extract product name before the first underscore
-        const prodName = (p.productName) ? p.productName.split('_')[0] : p.productId;
+        // Use the full product name
+        const prodName = (p.productName) ? p.productName : p.productId;
         const opt = document.createElement('option');
         opt.value = p.productId;
         opt.textContent = `${prodName} (${p.productId})`;
@@ -427,18 +427,14 @@
             technicalDurationInput.value = prod.duration || '';
             let displayRate = 0;
             // Use coach's role to get correct rate
-            if (prod.rates && CURRENT_COACH_ROLE) {
-              displayRate = prod.rates[CURRENT_COACH_ROLE] || 0;
-            } else if (prod[CURRENT_COACH_ROLE.toLowerCase()]) { // fallback to legacy keys
-               displayRate = prod[CURRENT_COACH_ROLE.toLowerCase()];
-            } else {
-              // fallback: try any numeric property
-              const keys = Object.keys(prod);
-              for (const k of keys) {
-                if (typeof prod[k] === 'number' && prod[k] > 0) { displayRate = prod[k]; break; }
-              }
+            if (CURRENT_COACH_ROLE === 'Head Coach') {
+              displayRate = prod['Head Coach'] || prod.head || 0;
+            } else if (CURRENT_COACH_ROLE === 'Senior Coach') {
+              displayRate = prod['Senior Coach'] || prod.senior || 0;
+            } else if (CURRENT_COACH_ROLE === 'Junior Coach') {
+              displayRate = prod['Junior Coach'] || prod.junior || 0;
             }
-            hourlyRateInput.value = displayRate || '';
+            hourlyRateInput.value = displayRate;
             recomputeUnits();
           }
         }
@@ -469,21 +465,14 @@
 
       // determine hourly rate by coach role
       let displayRate = '';
-      if (prod.rates && CURRENT_COACH_ROLE) {
-        displayRate = Number(prod.rates[CURRENT_COACH_ROLE] || 0);
-      } else if (prod.senior || prod.junior || prod.head) {
-        // legacy keys mapping
-        if (CURRENT_COACH_ROLE.toLowerCase().includes('senior')) displayRate = prod.senior;
-        else if (CURRENT_COACH_ROLE.toLowerCase().includes('junior')) displayRate = prod.junior;
-        else if (CURRENT_COACH_ROLE.toLowerCase().includes('head')) displayRate = prod.head;
-        else displayRate = prod.senior || prod.head || prod.junior || '';
-      } else {
-        // try to extract numeric rate from product object
-        for (const k in prod) {
-          if (typeof prod[k] === 'number' && prod[k] > 0) { displayRate = prod[k]; break; }
-        }
+      if (CURRENT_COACH_ROLE === 'Head Coach') {
+        displayRate = prod['Head Coach'] || prod.head || 0;
+      } else if (CURRENT_COACH_ROLE === 'Senior Coach') {
+        displayRate = prod['Senior Coach'] || prod.senior || 0;
+      } else if (CURRENT_COACH_ROLE === 'Junior Coach') {
+        displayRate = prod['Junior Coach'] || prod.junior || 0;
       }
-      hourlyRateInput.value = displayRate || '';
+      hourlyRateInput.value = displayRate;
       recomputeUnits();
     }
   });
