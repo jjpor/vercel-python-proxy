@@ -563,30 +563,35 @@
   callDurationSelect.addEventListener('change', recomputeUnits);
 
   // Toggle IND/GROUP
-  callTypeRadios.forEach(radio => {
-    radio.addEventListener('change', () => {
-      if (radio.value === "GROUP" && radio.checked) {
-        studentIdSelect.disabled = true;
-        studentIdSelect.innerHTML = '<option value="">Not used in GROUP</option>';
-        groupStudentsContainer.classList.remove('hidden');
-        remainingCallsDisplay.classList.add('hidden');
-        loadGroupProducts();
-      } else if (radio.value === "IND" && radio.checked) {
-        studentIdSelect.disabled = false;
-        groupStudentsContainer.classList.add('hidden');
-        loadStudentIds();
-      }
-      productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
-      productIdSelect.disabled = true;
-      hourlyRateInput.value = '';
-      technicalDurationInput.value = '';
-      contractIdInput.value = '';
-      productIdInput.value = '';
-      callDurationSelect.value = '';
-      unitsInput.value = '';
-      updateFormState();
-    });
+callTypeRadios.forEach(radio => {
+  radio.addEventListener('change', () => {
+    if (radio.value === "GROUP" && radio.checked) {
+      // nascondi il campo Student ID
+      studentIdContainer.classList.add('hidden');
+
+      groupStudentsContainer.classList.remove('hidden');
+      remainingCallsDisplay.classList.add('hidden');
+      loadGroupProducts();
+    } else if (radio.value === "IND" && radio.checked) {
+      // mostra di nuovo il campo Student ID
+      studentIdContainer.classList.remove('hidden');
+
+      groupStudentsContainer.classList.add('hidden');
+      loadStudentIds();
+    }
+
+    productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+    productIdSelect.disabled = true;
+    hourlyRateInput.value = '';
+    technicalDurationInput.value = '';
+    contractIdInput.value = '';
+    productIdInput.value = '';
+    callDurationSelect.value = '';
+    unitsInput.value = '';
+    updateFormState();
   });
+});
+
 
   // Apri form: un SOLO listener, con reset e default IND
   logCallBtn.addEventListener('click', () => {
