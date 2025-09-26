@@ -393,6 +393,7 @@
     loadStudentContracts(studentId);
   } else {
     productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
+    opt.dataset.unlimited = c.unlimited ? "true" : "false";
     productIdSelect.disabled = true;
     hourlyRateInput.value = '';
     technicalDurationInput.value = '';
@@ -497,11 +498,18 @@
       const contractId = opt.dataset.contractId || '';
       contractIdInput.value = contractId;
 
+    if (opt.dataset.unlimited === "true") {
+      remainingCallsDisplay.classList.add('hidden');
+    } else {
       const remaining = opt.dataset.remainingCalls;
-      if (remaining && remaining !== 'null' && remaining !== 'undefined') {
+      if (remaining !== undefined && remaining !== null && remaining !== "" && remaining !== "null" && remaining !== "undefined") {
         remainingCallsDisplay.textContent = `Remaining: ${remaining} calls`;
         remainingCallsDisplay.classList.remove('hidden');
+      } else {
+        remainingCallsDisplay.classList.add('hidden');
       }
+    }
+      
     } else {
   // GROUP: carica studenti del prodotto
   try {
