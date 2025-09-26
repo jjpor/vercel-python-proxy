@@ -175,7 +175,6 @@
   const studentIdSelect = document.getElementById('studentId');
   const productIdSelect = document.getElementById('productIdSelect');
   const groupStudentsContainer = document.getElementById('groupStudentsContainer');
-  const groupStudentIds = document.getElementById('groupStudentIds');
 
   const callDateInput = document.getElementById('callDate');
   const hourlyRateInput = document.getElementById('hourlyRate');
@@ -562,7 +561,6 @@
     updateFormState();
   }
   callDurationSelect.addEventListener('change', recomputeUnits);
-  groupStudentIds.addEventListener('change', updateFormState);
 
   // Toggle IND/GROUP
   callTypeRadios.forEach(radio => {
