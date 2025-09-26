@@ -100,13 +100,12 @@
         <div id="remainingCalls" class="mt-2 p-2 rounded-lg text-sm bg-gray-200 text-gray-700 hidden"></div>
       </div>
 
-      <!-- Group students -->
-      <div id="groupStudentsContainer" class="hidden md:col-span-2">
-        <label for="groupStudentIds" class="form-label block mb-2">Select Students</label>
-        <select id="groupStudentIds" class="form-input" multiple>
-          <option value="" disabled>Select a product first</option>
-        </select>
-      </div>
+        <!-- Group students -->
+  <div id="groupStudentsContainer" class="hidden md:col-span-2">
+    <label class="form-label block mb-2">Select Students</label>
+    <div id="groupStudentsDynamic" class="space-y-2"></div>
+  </div>
+
 
       <!-- Date -->
       <div>
@@ -239,18 +238,26 @@
     const selectedProduct = productIdSelect.value;
     const selectedDuration = callDurationSelect.value;
     const isInd = document.querySelector('input[name="callType"]:checked').value === 'IND';
-    const isGroup = !isInd;
+    const isGroup = document.querySelector('input[name="callType"]:checked').value === 'GROUP';
     const hourlyRate = parseFloat(hourlyRateInput.value);
-    const groupStudentsSelected = groupStudentIds.selectedOptions.length > 0;
 
     let isValid = false;
     if (isInd) {
-      isValid = selectedStudent && selectedProduct && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
-    } else {
-      isValid = selectedProduct && groupStudentsSelected && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
+        isValid = selectedStudent && selectedProduct && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
+    } else if (isGroup) {
+        const selects = groupStudentsDynamic.querySelectorAll('select');
+        const chosen = Array.from(selects).map(s => s.value).filter(Boolean);
+        const unique = new Set(chosen);
+
+        isValid = selectedProduct
+          && chosen.length === selects.length       // tutti compilati
+          && unique.size === chosen.length          // no duplicati
+          && selectedDuration
+          && !isNaN(hourlyRate) && hourlyRate > 0;
     }
     submitBtn.disabled = !isValid;
-  }
+}
+
 
   // Login
   loginForm.addEventListener('submit', async (e) => {
@@ -496,21 +503,44 @@
         remainingCallsDisplay.classList.remove('hidden');
       }
     } else {
-      // GROUP: carica studenti del prodotto
-      try {
-        const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
-        const studs = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
-        groupStudentIds.innerHTML = '';
-        studs.forEach(sid => {
-          const o = document.createElement('option');
-          o.value = sid;
-          o.textContent = sid;
-          groupStudentIds.appendChild(o);
-        });
-      } catch (err) {
-        console.error("Error loading group students", err);
-      }
+  // GROUP: carica studenti del prodotto
+  try {
+    const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
+    const studs = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+
+    // numero partecipanti dal prodotto
+    const n = prod.participants || 2;
+    groupStudentsDynamic.innerHTML = '';
+
+    for (let i = 0; i < n; i++) {
+      const sel = document.createElement('select');
+      sel.className = 'form-input';
+      sel.required = true;
+
+      const def = document.createElement('option');
+      def.value = '';
+      def.disabled = true;
+      def.selected = true;
+      def.textContent = `Select student ${i + 1}`;
+      sel.appendChild(def);
+
+      studs.forEach(sid => {
+        const o = document.createElement('option');
+        o.value = sid;
+        o.textContent = sid;
+        sel.appendChild(o);
+      });
+
+      groupStudentsDynamic.appendChild(sel);
+
+      // aggiorna la validazione al cambio
+      sel.addEventListener('change', updateFormState);
     }
+  } catch (err) {
+    console.error("Error loading group students", err);
+  }
+}
+
 
     if (displayRate > 0) {
       hourlyRateInput.value = displayRate;
@@ -609,11 +639,12 @@
       if (callType === "IND") {
         payload.studentId = studentIdSelect.value;
         payload.contractId = contractIdInput.value || '';
-      } else {
-        const selected = Array.from(groupStudentIds.selectedOptions).map(o => o.value);
-        payload.studentIds = selected;
-        payload.contractId = null;
-      }
+        } else {
+      const selects = groupStudentsDynamic.querySelectorAll('select');
+      payload.studentIds = Array.from(selects).map(s => s.value);
+      payload.contractId = null;
+        }
+
 
       const resp = await apiPost('logCall', payload);
       if (!resp.success) throw new Error(resp.error || 'Error logging call.');
