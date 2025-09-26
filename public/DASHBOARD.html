@@ -663,6 +663,10 @@ callTypeRadios.forEach(radio => {
 
       showMessage(callMessageBox, 'Call logged successfully!', true);
       document.getElementById('callForm').reset();
+      
+      // reinserisci la data di oggi anche dopo il reset
+      callDateInput.value = new Date().toISOString().slice(0,10);
+      
       contractIdInput.value = '';
       productIdInput.value = '';
       hourlyRateInput.value = '';
@@ -670,6 +674,7 @@ callTypeRadios.forEach(radio => {
       remainingCallsDisplay.classList.add('hidden');
       updateFormState();
       await fetchMonthlyEarnings();
+
     } catch (err) {
       showMessage(callMessageBox, err.message || String(err), false);
     } finally {
