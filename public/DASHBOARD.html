@@ -386,21 +386,23 @@
     }
   }
 
-  studentIdSelect.addEventListener('change', () => {
-    const studentId = studentIdSelect.value;
-    if (studentId) {
-      loadStudentContracts(studentId);
-    } else {
-      productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
-      productIdSelect.disabled = true;
-      hourlyRateInput.value = '';
-      technicalDurationInput.value = '';
-      contractIdInput.value = '';
-      productIdInput.value = '';
-      remainingCallsDisplay.classList.add('hidden');
-      updateFormState();
-    }
-  });
+ studentIdSelect.addEventListener('change', () => {
+  const studentId = studentIdSelect.value;
+  if (studentId) {
+    // carica contratti solo se lo studente è cambiato
+    loadStudentContracts(studentId);
+  } else {
+    productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
+    productIdSelect.disabled = true;
+    hourlyRateInput.value = '';
+    technicalDurationInput.value = '';
+    contractIdInput.value = '';
+    productIdInput.value = '';
+    remainingCallsDisplay.classList.add('hidden');
+  }
+  updateFormState();
+});
+
 
   // --- GROUP: load products & students ---
   async function loadGroupProducts() {
@@ -592,23 +594,23 @@ callTypeRadios.forEach(radio => {
 });
 
 
-  // Apri form: un SOLO listener, con reset e default IND
-  logCallBtn.addEventListener('click', () => {
-    if (!CURRENT_COACH_ID) return;
-    switchSection(callSection);
+  // Apri form: reset senza azzerare subito le select
+    logCallBtn.addEventListener('click', async () => {
+      if (!CURRENT_COACH_ID) return;
+      switchSection(callSection);
+    
+      document.getElementById('callForm').reset();
+      document.querySelector('input[name="callType"][value="IND"]').checked = true;
+    
+      // carica lista studenti
+      await loadStudentIds();
+    
+      groupStudentsContainer.classList.add('hidden');
+      callDateInput.value = new Date().toISOString().slice(0,10);
+      remainingCallsDisplay.classList.add('hidden');
+      updateFormState();
+    });
 
-    document.getElementById('callForm').reset();
-    // forza default su IND
-    document.querySelector('input[name="callType"][value="IND"]').checked = true;
-
-    // carica per IND
-    loadStudentIds();
-    groupStudentsContainer.classList.add('hidden');
-
-    callDateInput.value = new Date().toISOString().slice(0,10);
-    remainingCallsDisplay.classList.add('hidden');
-    updateFormState();
-  });
 
   // Back
   document.getElementById('backToDashboardBtn').addEventListener('click', () => {
