@@ -1,666 +1,640 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Call Logging Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
-        .container { max-width: 900px; }
-        .form-input { width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 8px; font-size: 1rem; background-color: #fff; transition: all 0.2s; }
-        .form-input:focus { outline: none; border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2); }
-        .form-label { font-weight: 500; color: #4b5563; }
-        .hidden { display: none; }
-        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background-color: rgba(0,0,0,0.5); display:flex; justify-content:center; align-items:center; z-index:1000; }
-        .modal-content { background-color:white; padding:2rem; border-radius:1rem; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.1); }
-        .cube-button { display:flex; flex-direction:column; justify-content:center; align-items:center; padding:24px; border-radius:12px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,0.1); transition: all 0.3s ease; cursor:pointer; }
-        .cube-button:hover { transform: translateY(-4px); box-shadow:0 6px 10px rgba(0,0,0,0.15); }
-        table { border-collapse: collapse; width:100%; }
-        th, td { text-align:left; padding:12px; border-bottom:1px solid #ddd; }
-        th { background-color:#f2f2f2; }
-        .spinner-container { display: flex; justify-content: center; align-items: center; gap: 8px; }
-        .spinner-dot { width: 12px; height: 12px; background-color: #ffffff; border-radius: 50%; animation: bounce 1s ease-in-out infinite; }
-        .spinner-dot:nth-child(2) { animation-delay: 0.1s; }
-        .spinner-dot:nth-child(3) { animation-delay: 0.2s; }
-        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-    </style>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Call Logging Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family:'Inter',sans-serif; background:#f3f4f6; }
+    .container { max-width: 900px; }
+    .form-input { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:1rem; background:#fff; transition:all .2s; }
+    .form-input:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,.2); }
+    .form-label { font-weight:500; color:#4b5563; }
+    .cube-button { display:flex; flex-direction:column; justify-content:center; align-items:center; padding:24px; border-radius:12px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,.1); transition:all .3s; cursor:pointer; }
+    .cube-button:hover { transform:translateY(-4px); box-shadow:0 6px 10px rgba(0,0,0,.15); }
+    .spinner-container { display:flex; justify-content:center; align-items:center; gap:8px; }
+    .spinner-dot { width:12px; height:12px; background:#fff; border-radius:50%; animation:bounce 1s ease-in-out infinite; }
+    .spinner-dot:nth-child(2){ animation-delay:.1s; }
+    .spinner-dot:nth-child(3){ animation-delay:.2s; }
+    @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-10px);} }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
-
 <div class="container bg-white p-8 md:p-12 rounded-2xl shadow-xl space-y-8 border border-gray-200">
-    <!-- LOGIN -->
-    <div id="loginSection">
-        <div class="text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Login</h1>
-            <p class="mt-2 text-gray-500">Use your coach credentials.</p>
-        </div>
-        <form id="loginForm" class="mt-8 space-y-4">
-            <div>
-                <label for="coachId" class="form-label block mb-2">Coach ID</label>
-                <input type="text" id="coachId" name="coachId" class="form-input" placeholder="e.g., MA" required>
-            </div>
-            <div>
-                <label for="password" class="form-label block mb-2">Dashboard Password</label>
-                <input type="password" id="password" name="password" class="form-input" placeholder="Password" required autocomplete="current-password">
-            </div>
-            <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-blue-400 disabled:cursor-not-allowed">Log in</button>
-        </form>
-        <div id="loginMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
+
+  <!-- LOGIN -->
+  <div id="loginSection">
+    <div class="text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Login</h1>
+      <p class="mt-2 text-gray-500">Use your coach credentials.</p>
+    </div>
+    <form id="loginForm" class="mt-8 space-y-4">
+      <div>
+        <label for="coachId" class="form-label block mb-2">Coach ID</label>
+        <input id="coachId" class="form-input" placeholder="e.g., MA" required>
+      </div>
+      <div>
+        <label for="password" class="form-label block mb-2">Dashboard Password</label>
+        <input id="password" type="password" class="form-input" placeholder="Password" required autocomplete="current-password">
+      </div>
+      <button type="submit" id="loginBtn" class="w-full bg-blue-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 disabled:bg-blue-400 disabled:cursor-not-allowed">
+        Log in
+      </button>
+    </form>
+    <div id="loginMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboardSection" class="hidden">
+    <div class="text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Dashboard</h1>
+      <p class="mt-2 text-gray-500">Welcome, <span id="coachNameDisplay" class="font-bold text-blue-600"></span>!</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+      <div id="monthlyEarningsDisplay" class="cube-button bg-blue-600 text-white cursor-default">
+        <p class="text-lg font-medium opacity-80">Monthly Earnings</p>
+        <p class="mt-2 text-4xl sm:text-5xl font-bold"><span id="earningsAmount">--</span>€</p>
+      </div>
+      <button id="logCallBtn" class="cube-button bg-green-600 text-white"><span class="text-4xl">📝</span><p class="mt-2 text-lg font-semibold">Log a new call</p></button>
+      <button id="viewStudentsBtn" class="cube-button bg-orange-600 text-white"><span class="text-4xl">🧑‍🎓</span><p class="mt-2 text-lg font-semibold">Students</p></button>
+      <button id="viewFolderBtn" class="cube-button bg-gray-600 text-white"><span class="text-4xl">📂</span><p class="mt-2 text-lg font-semibold">My payment folder</p></button>
+      <button id="viewCallLogBtn" class="cube-button bg-purple-600 text-white"><span class="text-4xl">📖</span><p class="mt-2 text-lg font-semibold">Call log</p></button>
+      <button id="viewReportCardsBtn" class="cube-button bg-teal-600 text-white"><span class="text-4xl">📈</span><p class="mt-2 text-lg font-semibold">Report Cards</p></button>
+      <button id="logoutBtn" class="cube-button bg-red-600 text-white sm:col-span-2 lg:col-span-1"><span class="text-4xl">🚪</span><p class="mt-2 text-lg font-semibold">Log out</p></button>
+    </div>
+  </div>
+
+  <!-- CALL FORM -->
+  <div id="callSection" class="hidden">
+    <div class="text-center">
+      <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Log a new call</h1>
+      <p class="mt-2 text-gray-500">Logged in as <span id="callSectionCoachNameDisplay" class="font-bold text-blue-600"></span>.</p>
     </div>
 
-    <!-- DASHBOARD -->
-    <div id="dashboardSection" class="hidden">
-        <div class="text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Dashboard</h1>
-            <p class="mt-2 text-gray-500">Welcome, <span id="coachNameDisplay" class="font-bold text-blue-600"></span>!</p>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            <div id="monthlyEarningsDisplay" class="cube-button bg-blue-600 text-white cursor-default">
-                <p class="text-lg font-medium opacity-80">Monthly Earnings</p>
-                <p class="mt-2 text-4xl sm:text-5xl font-bold"><span id="earningsAmount">--</span>€</p>
-            </div>
-            <button id="logCallBtn" class="cube-button bg-green-600 text-white"><span class="text-4xl">📝</span><p class="mt-2 text-lg font-semibold">Log a new call</p></button>
-            <button id="viewStudentsBtn" class="cube-button bg-orange-600 text-white"><span class="text-4xl">🧑‍🎓</span><p class="mt-2 text-lg font-semibold">Students</p></button>
-            <button id="viewFolderBtn" class="cube-button bg-gray-600 text-white"><span class="text-4xl">📂</span><p class="mt-2 text-lg font-semibold">My payment folder</p></button>
-            <button id="viewCallLogBtn" class="cube-button bg-purple-600 text-white"><span class="text-4xl">📖</span><p class="mt-2 text-lg font-semibold">Call log</p></button>
-            <button id="viewReportCardsBtn" class="cube-button bg-teal-600 text-white"><span class="text-4xl">📈</span><p class="mt-2 text-lg font-semibold">Report Cards</p></button>
-            <button id="logoutBtn" class="cube-button bg-red-600 text-white sm:col-span-2 lg:col-span-1"><span class="text-4xl">🚪</span><p class="mt-2 text-lg font-semibold">Log out</p></button>
-        </div>
+    <div class="flex gap-6 items-center mt-4">
+      <label class="flex items-center gap-2"><input type="radio" name="callType" value="IND" checked> IND</label>
+      <label class="flex items-center gap-2"><input type="radio" name="callType" value="GROUP"> GROUP</label>
     </div>
 
-    <!-- CALL FORM -->
-    <div id="callSection" class="hidden">
-        <div class="text-center">
-            <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Log a new call</h1>
-            <p class="mt-2 text-gray-500">Logged in as <span id="callSectionCoachNameDisplay" class="font-bold text-blue-600"></span>.</p>
-        </div>
+    <form id="callForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+      <input type="hidden" id="units">
+      <input type="hidden" id="contractId">
+      <input type="hidden" id="productId">
 
-        <div class="flex gap-6 items-center mt-4">
-            <label class="flex items-center gap-2"><input type="radio" name="callType" value="IND" checked> IND</label>
-            <label class="flex items-center gap-2"><input type="radio" name="callType" value="GROUP"> GROUP</label>
-        </div>
+      <!-- Student (IND only) -->
+      <div id="studentIdContainer">
+        <label for="studentId" class="form-label block mb-2">Student ID</label>
+        <select id="studentId" class="form-input">
+          <option value="" disabled selected>Loading Student IDs...</option>
+        </select>
+      </div>
 
-        <form id="callForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
-            <input type="hidden" id="coachName" name="coachName">
-            <input type="hidden" id="units" name="units">
-            <input type="hidden" id="contractId" name="contractId">
-            <input type="hidden" id="productId" name="productId">
+      <!-- Product -->
+      <div>
+        <label for="productIdSelect" class="form-label block mb-2">Product</label>
+        <select id="productIdSelect" class="form-input" required disabled>
+          <option value="" disabled selected>Select a Student ID first</option>
+        </select>
+        <div id="remainingCalls" class="mt-2 p-2 rounded-lg text-sm bg-gray-200 text-gray-700 hidden"></div>
+      </div>
 
-            <!-- Student (IND only) -->
-            <div id="studentIdContainer">
-                <label for="studentId" class="form-label block mb-2">Student ID</label>
-                <select id="studentId" name="studentId" class="form-input">
-                    <option value="" disabled selected>Loading Student IDs...</option>
-                </select>
-            </div>
+      <!-- Group students -->
+      <div id="groupStudentsContainer" class="hidden md:col-span-2">
+        <label for="groupStudentIds" class="form-label block mb-2">Select Students</label>
+        <select id="groupStudentIds" class="form-input" multiple>
+          <option value="" disabled>Select a product first</option>
+        </select>
+      </div>
 
-            <!-- Product -->
-            <div>
-                <label for="productIdSelect" class="form-label block mb-2">Product</label>
-                <select id="productIdSelect" name="productIdSelect" class="form-input" required disabled>
-                    <option value="" disabled selected>Select a Student ID first</option>
-                </select>
-                <div id="remainingCalls" class="mt-2 p-2 rounded-lg text-sm bg-gray-200 text-gray-700 hidden"></div>
-            </div>
+      <!-- Date -->
+      <div>
+        <label for="callDate" class="form-label block mb-2">Date</label>
+        <input type="date" id="callDate" class="form-input" required>
+      </div>
+      <!-- Rate -->
+      <div>
+        <label for="hourlyRate" class="form-label block mb-2">Coach Rate (€)</label>
+        <input type="number" id="hourlyRate" class="form-input" readonly>
+      </div>
+      <!-- Duration native -->
+      <div>
+        <label for="technicalDuration" class="form-label block mb-2">Duration (minutes)</label>
+        <input type="number" id="technicalDuration" class="form-input" readonly>
+      </div>
+      <!-- Override -->
+      <div>
+        <label for="callDuration" class="form-label block mb-2">Duration Override</label>
+        <select id="callDuration" class="form-input" required>
+          <option value="" selected disabled>Select duration</option>
+          <option value="30">30</option>
+          <option value="60">60</option>
+          <option value="90">90</option>
+          <option value="120">120</option>
+        </select>
+      </div>
 
-            <!-- Group students -->
-            <div id="groupStudentsContainer" class="hidden md:col-span-2">
-                <label for="groupStudentIds" class="form-label block mb-2">Select Students</label>
-                <select id="groupStudentIds" name="groupStudentIds" class="form-input" multiple>
-                    <option value="" disabled>Select a product first</option>
-                </select>
-            </div>
+      <div class="md:col-span-2 mt-4">
+        <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed">Log Call</button>
+        <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white py-3 px-6 rounded-xl hover:bg-gray-500">Back to Dashboard</button>
+      </div>
+    </form>
+    <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
+  </div>
 
-            <!-- Date -->
-            <div>
-                <label for="callDate" class="form-label block mb-2">Date</label>
-                <input type="date" id="callDate" name="callDate" class="form-input" required>
-            </div>
-            <!-- Rate -->
-            <div>
-                <label for="hourlyRate" class="form-label block mb-2">Coach Rate (€)</label>
-                <input type="number" id="hourlyRate" class="form-input" readonly>
-            </div>
-            <!-- Duration -->
-            <div>
-                <label for="technicalDuration" class="form-label block mb-2">Duration (minutes)</label>
-                <input type="number" id="technicalDuration" class="form-input" readonly>
-            </div>
-            <!-- Override -->
-            <div>
-                <label for="callDuration" class="form-label block mb-2">Duration Override</label>
-                <select id="callDuration" class="form-input" required>
-                    <option value="" selected disabled>Select duration</option>
-                    <option value="30">30</option>
-                    <option value="60">60</option>
-                    <option value="90">90</option>
-                    <option value="120">120</option>
-                </select>
-            </div>
-
-            <div class="md:col-span-2 mt-4">
-                <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed">Log Call</button>
-                <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white py-3 px-6 rounded-xl hover:bg-gray-500">Back to Dashboard</button>
-            </div>
-        </form>
-        <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
-    </div>
-
-    <!-- (STUDENTS, HISTORY, REPORTS sections omitted for brevity) -->
 </div>
 
 <script>
-    // API proxy
-    const base_url = "https://vercel-python-proxy.vercel.app/api";
-    const deployment_id = "AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD";
+  // API proxy
+  const base_url = "https://vercel-python-proxy.vercel.app/api";
+  const deployment_id = "AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD";
 
-    // DOM refs
-    const loginForm = document.getElementById('loginForm');
-    const loginBtn = document.getElementById('loginBtn');
-    const loginMessageBox = document.getElementById('loginMessageBox');
+  // DOM refs
+  const loginForm = document.getElementById('loginForm');
+  const loginBtn = document.getElementById('loginBtn');
+  const loginMessageBox = document.getElementById('loginMessageBox');
 
-    const loginSection = document.getElementById('loginSection');
-    const dashboardSection = document.getElementById('dashboardSection');
-    const callSection = document.getElementById('callSection');
+  const loginSection = document.getElementById('loginSection');
+  const dashboardSection = document.getElementById('dashboardSection');
+  const callSection = document.getElementById('callSection');
 
-    const coachIdInput = document.getElementById('coachId');
-    const passwordInput = document.getElementById('password');
-    const coachNameDisplay = document.getElementById('coachNameDisplay');
-    const callSectionCoachNameDisplay = document.getElementById('callSectionCoachNameDisplay');
+  const coachIdInput = document.getElementById('coachId');
+  const passwordInput = document.getElementById('password');
+  const coachNameDisplay = document.getElementById('coachNameDisplay');
+  const callSectionCoachNameDisplay = document.getElementById('callSectionCoachNameDisplay');
 
-    const earningsAmountDisplay = document.getElementById('earningsAmount');
+  const earningsAmountDisplay = document.getElementById('earningsAmount');
 
-    const logCallBtn = document.getElementById('logCallBtn');
-    const viewStudentsBtn = document.getElementById('viewStudentsBtn');
-    const viewFolderBtn = document.getElementById('viewFolderBtn');
-    const viewCallLogBtn = document.getElementById('viewCallLogBtn');
-    const viewReportCardsBtn = document.getElementById('viewReportCardsBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
+  const logCallBtn = document.getElementById('logCallBtn');
+  const viewStudentsBtn = document.getElementById('viewStudentsBtn');
+  const viewFolderBtn = document.getElementById('viewFolderBtn');
+  const viewCallLogBtn = document.getElementById('viewCallLogBtn');
+  const viewReportCardsBtn = document.getElementById('viewReportCardsBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
 
-    const studentIdSelect = document.getElementById('studentId');
-    const productIdSelect = document.getElementById('productIdSelect');
-    const groupStudentsContainer = document.getElementById('groupStudentsContainer');
-    const groupStudentIds = document.getElementById('groupStudentIds');
+  const studentIdSelect = document.getElementById('studentId');
+  const productIdSelect = document.getElementById('productIdSelect');
+  const groupStudentsContainer = document.getElementById('groupStudentsContainer');
+  const groupStudentIds = document.getElementById('groupStudentIds');
 
-    const callDateInput = document.getElementById('callDate');
-    const hourlyRateInput = document.getElementById('hourlyRate');
-    const technicalDurationInput = document.getElementById('technicalDuration');
-    const callDurationSelect = document.getElementById('callDuration');
-    const unitsInput = document.getElementById('units');
-    const contractIdInput = document.getElementById('contractId');
-    const productIdInput = document.getElementById('productId');
-    const submitBtn = document.getElementById('submitBtn');
-    const callMessageBox = document.getElementById('callMessageBox');
+  const callDateInput = document.getElementById('callDate');
+  const hourlyRateInput = document.getElementById('hourlyRate');
+  const technicalDurationInput = document.getElementById('technicalDuration');
+  const callDurationSelect = document.getElementById('callDuration');
+  const unitsInput = document.getElementById('units');
+  const contractIdInput = document.getElementById('contractId');
+  const productIdInput = document.getElementById('productId');
+  const submitBtn = document.getElementById('submitBtn');
+  const callMessageBox = document.getElementById('callMessageBox');
 
-    const callTypeRadios = document.querySelectorAll('input[name="callType"]');
-    const remainingCallsDisplay = document.getElementById('remainingCalls');
+  const callTypeRadios = document.querySelectorAll('input[name="callType"]');
+  const remainingCallsDisplay = document.getElementById('remainingCalls');
 
-    // Variabili globali per lo stato dell'applicazione
-    let CURRENT_COACH_ID = null;
-    let CURRENT_COACH_NAME = null;
-    let CURRENT_COACH_ROLE = null;
-    let CURRENT_ALLOCATIONS_BY_STUDENT = {};
+  // Stato
+  let CURRENT_COACH_ID = null;
+  let CURRENT_COACH_NAME = null;
+  let CURRENT_COACH_ROLE = null;
+  let CURRENT_ALLOCATIONS_BY_STUDENT = {};
 
-    // Helper: show/hide messages
-    function showMessage(box, message, isSuccess = true) {
-        box.textContent = message;
-        box.className = 'mt-4 p-4 rounded-xl text-center block ' + (isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+  // Helpers UI
+  function showMessage(box, message, isSuccess = true) {
+    box.textContent = message;
+    box.className = 'mt-4 p-4 rounded-xl text-center block ' + (isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+  }
+  function hideMessage(box) {
+    box.textContent = '';
+    box.className = 'mt-4 p-4 rounded-xl text-center hidden';
+  }
+  function switchSection(showEl) {
+    [loginSection, dashboardSection, callSection].forEach(el => el.classList.add('hidden'));
+    showEl.classList.remove('hidden');
+  }
+
+  // API helpers
+  async function apiGet(action, params = {}) {
+    const url = new URL(base_url + "/get");
+    url.searchParams.set("deployment_id", deployment_id);
+    url.searchParams.set("action", action);
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) url.searchParams.set(k, v);
+    });
+    const res = await fetch(url.toString());
+    if (!res.ok) throw new Error(`GET ${action} failed: ${res.status}`);
+    return res.json();
+  }
+  async function apiPost(action, body = {}) {
+    const res = await fetch(base_url + "/post", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ deployment_id, action, ...body })
+    });
+    if (!res.ok) throw new Error(`POST ${action} failed: ${res.status}`);
+    return res.json();
+  }
+
+  // Validazione form
+  function updateFormState() {
+    const selectedStudent = studentIdSelect.value;
+    const selectedProduct = productIdSelect.value;
+    const selectedDuration = callDurationSelect.value;
+    const isInd = document.querySelector('input[name="callType"]:checked').value === 'IND';
+    const isGroup = !isInd;
+    const hourlyRate = parseFloat(hourlyRateInput.value);
+    const groupStudentsSelected = groupStudentIds.selectedOptions.length > 0;
+
+    let isValid = false;
+    if (isInd) {
+      isValid = selectedStudent && selectedProduct && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
+    } else {
+      isValid = selectedProduct && groupStudentsSelected && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
     }
-    function hideMessage(box) {
-        box.textContent = '';
-        box.className = 'mt-4 p-4 rounded-xl text-center hidden';
+    submitBtn.disabled = !isValid;
+  }
+
+  // Login
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMessage(loginMessageBox);
+    const orig = loginBtn.innerHTML;
+    loginBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
+    loginBtn.disabled = true;
+
+    try {
+      const coachId = coachIdInput.value.trim();
+      const password = passwordInput.value.trim();
+      const resp = await apiPost('login', { coachId, password });
+      if (!resp.success) throw new Error(resp.error || 'Login failed');
+
+      CURRENT_COACH_ID = String(resp.coachId);
+      CURRENT_COACH_NAME = resp.coachName || CURRENT_COACH_ID;
+      CURRENT_COACH_ROLE = resp.rateRole || resp.role;
+      if (!CURRENT_COACH_ROLE) throw new Error("Ruolo coach non trovato. Contatta l'amministratore.");
+
+      coachNameDisplay.textContent = CURRENT_COACH_NAME;
+      callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+
+      switchSection(dashboardSection);
+      await fetchMonthlyEarnings();
+      await loadStudentIds();
+    } catch (err) {
+      showMessage(loginMessageBox, err.message || String(err), false);
+    } finally {
+      loginBtn.innerHTML = orig;
+      loginBtn.disabled = false;
+    }
+  });
+
+  // Logout
+  logoutBtn.addEventListener('click', () => {
+    CURRENT_COACH_ID = null;
+    CURRENT_COACH_NAME = null;
+    CURRENT_COACH_ROLE = null;
+    CURRENT_ALLOCATIONS_BY_STUDENT = {};
+    coachIdInput.value = "";
+    passwordInput.value = "";
+    switchSection(loginSection);
+    hideMessage(loginMessageBox);
+  });
+
+  // Earnings
+  async function fetchMonthlyEarnings() {
+    if (!CURRENT_COACH_ID) return;
+    earningsAmountDisplay.textContent = '...';
+    try {
+      const resp = await apiGet('getMonthlyEarnings', { coachId: CURRENT_COACH_ID });
+      const value = (resp && resp.success) ? resp.earnings : 0;
+      earningsAmountDisplay.textContent = Number(value).toFixed(2);
+    } catch (err) {
+      earningsAmountDisplay.textContent = '--';
+    }
+  }
+
+  // --- IND: load students & contracts ---
+  async function loadStudentIds() {
+    studentIdSelect.innerHTML = '<option value="" disabled selected>Loading Student IDs...</option>';
+    productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
+    productIdSelect.disabled = true;
+    remainingCallsDisplay.classList.add('hidden');
+
+    try {
+      const resp = await apiGet('getStudents');
+      const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+
+      studentIdSelect.innerHTML = '';
+      const def = document.createElement('option');
+      def.value = '';
+      def.disabled = true;
+      def.selected = true;
+      def.textContent = 'Select a student';
+      studentIdSelect.appendChild(def);
+
+      arr.forEach(id => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = id;
+        studentIdSelect.appendChild(opt);
+      });
+      studentIdSelect.disabled = false;
+    } catch (err) {
+      studentIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
+    }
+  }
+
+  async function loadStudentContracts(studentId) {
+    productIdSelect.disabled = true;
+    productIdSelect.innerHTML = '<option value="" disabled selected>Loading products...</option>';
+    hourlyRateInput.value = '';
+    technicalDurationInput.value = '';
+    contractIdInput.value = '';
+    productIdInput.value = '';
+    remainingCallsDisplay.classList.add('hidden');
+    updateFormState();
+
+    try {
+      const resp = await apiGet('getStudentContracts', { studentId });
+      const contracts = (resp && resp.success && Array.isArray(resp.contracts)) ? resp.contracts : [];
+      CURRENT_ALLOCATIONS_BY_STUDENT[studentId] = contracts;
+
+      productIdSelect.innerHTML = '';
+      const def = document.createElement('option');
+      def.value = '';
+      def.disabled = true;
+      def.selected = true;
+      def.textContent = 'Select a product/allocation';
+      productIdSelect.appendChild(def);
+
+      contracts.forEach(c => {
+        const prodName = (c.product && c.product.productName) ? c.product.productName : c.productId;
+        const opt = document.createElement('option');
+        opt.value = c.productId;
+        opt.textContent = prodName;
+        opt.dataset.contractId = c.contractId;
+        opt.dataset.product = JSON.stringify(c.product || {});
+        opt.dataset.remainingCalls = c.leftCalls;
+        productIdSelect.appendChild(opt);
+      });
+
+      productIdSelect.disabled = false;
+    } catch (err) {
+      productIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
+    }
+  }
+
+  studentIdSelect.addEventListener('change', () => {
+    const studentId = studentIdSelect.value;
+    if (studentId) {
+      loadStudentContracts(studentId);
+    } else {
+      productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
+      productIdSelect.disabled = true;
+      hourlyRateInput.value = '';
+      technicalDurationInput.value = '';
+      contractIdInput.value = '';
+      productIdInput.value = '';
+      remainingCallsDisplay.classList.add('hidden');
+      updateFormState();
+    }
+  });
+
+  // --- GROUP: load products & students ---
+  async function loadGroupProducts() {
+    productIdSelect.disabled = true;
+    productIdSelect.innerHTML = '<option value="" disabled selected>Loading group products...</option>';
+    try {
+      const resp = await apiGet('getGroupProducts');
+      const prods = (resp && resp.success && Array.isArray(resp.products)) ? resp.products : [];
+
+      productIdSelect.innerHTML = '';
+      const def = document.createElement('option');
+      def.value = '';
+      def.disabled = true;
+      def.selected = true;
+      def.textContent = 'Select a group product';
+      productIdSelect.appendChild(def);
+
+      prods.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.productId;
+        opt.textContent = `${p.productName || p.productId} (${p.productId})`;
+        opt.dataset.product = JSON.stringify(p); // contiene duration + rates
+        productIdSelect.appendChild(opt);
+      });
+
+      productIdSelect.disabled = false;
+    } catch (err) {
+      productIdSelect.innerHTML = '<option value="" disabled selected>Error loading group products</option>';
+    }
+  }
+
+  // Product change -> set rate/duration + (IND) contract + remaining
+  productIdSelect.addEventListener('change', async () => {
+    const callType = document.querySelector('input[name="callType"]:checked').value;
+    const selectedProductId = productIdSelect.value;
+    productIdInput.value = selectedProductId || '';
+    hourlyRateInput.value = '';
+    technicalDurationInput.value = '';
+    contractIdInput.value = '';
+    remainingCallsDisplay.classList.add('hidden');
+    hideMessage(callMessageBox);
+    updateFormState();
+
+    const opt = productIdSelect.options[productIdSelect.selectedIndex];
+    if (!opt || !opt.dataset.product) {
+      callDurationSelect.disabled = true;
+      return;
     }
 
-    // API helpers
-    async function apiGet(action, params = {}) {
-        const url = new URL(base_url + "/get");
-        url.searchParams.set("deployment_id", deployment_id);
-        url.searchParams.set("action", action);
-        Object.entries(params).forEach(([k, v]) => {
-            if (v !== undefined && v !== null) url.searchParams.set(k, v);
+    let prod = {};
+    try {
+      prod = JSON.parse(opt.dataset.product);
+    } catch (e) {
+      console.error('Error parsing product data', e);
+      callDurationSelect.disabled = true;
+      return;
+    }
+
+    // rate per ruolo
+    const rateKey = CURRENT_COACH_ROLE;
+    let displayRate = 0;
+    if (rateKey && prod.rates && Object.prototype.hasOwnProperty.call(prod.rates, rateKey)) {
+      displayRate = Number(prod.rates[rateKey] || 0);
+    } else {
+      showMessage(callMessageBox, `Errore: ruolo '${rateKey}' mancante nel prodotto.`, false);
+    }
+
+    // durata nativa
+    const nativeDuration = prod.duration || '';
+    technicalDurationInput.value = nativeDuration;
+
+    // set default in override (aggiungi se mancante)
+    if (nativeDuration) {
+      let found = false;
+      for (let i = 0; i < callDurationSelect.options.length; i++) {
+        if (callDurationSelect.options[i].value == nativeDuration) {
+          callDurationSelect.value = nativeDuration;
+          found = true;
+          break;
+        }
+      }
+      if (!found) {
+        const newOption = document.createElement('option');
+        newOption.value = nativeDuration;
+        newOption.textContent = nativeDuration;
+        callDurationSelect.appendChild(newOption);
+        callDurationSelect.value = nativeDuration;
+      }
+    }
+
+    if (callType === "IND") {
+      const contractId = opt.dataset.contractId || '';
+      contractIdInput.value = contractId;
+
+      const remaining = opt.dataset.remainingCalls;
+      if (remaining && remaining !== 'null' && remaining !== 'undefined') {
+        remainingCallsDisplay.textContent = `Remaining: ${remaining} calls`;
+        remainingCallsDisplay.classList.remove('hidden');
+      }
+    } else {
+      // GROUP: carica studenti del prodotto
+      try {
+        const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
+        const studs = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+        groupStudentIds.innerHTML = '';
+        studs.forEach(sid => {
+          const o = document.createElement('option');
+          o.value = sid;
+          o.textContent = sid;
+          groupStudentIds.appendChild(o);
         });
-        const res = await fetch(url.toString());
-        if (!res.ok) throw new Error(`GET ${action} failed: ${res.status}`);
-        return res.json();
+      } catch (err) {
+        console.error("Error loading group students", err);
+      }
     }
 
-    async function apiPost(action, body = {}) {
-        const res = await fetch(base_url + "/post", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ deployment_id, action, ...body })
-        });
-        if (!res.ok) throw new Error(`POST ${action} failed: ${res.status}`);
-        return res.json();
+    if (displayRate > 0) {
+      hourlyRateInput.value = displayRate;
+      callDurationSelect.disabled = false;
+    } else {
+      hourlyRateInput.value = '';
+      callDurationSelect.disabled = true;
     }
 
-    // Form state helper
-    function updateFormState() {
-        const selectedStudent = studentIdSelect.value;
-        const selectedProduct = productIdSelect.value;
-        const selectedDuration = callDurationSelect.value;
-        const isInd = document.querySelector('input[name="callType"]:checked').value === 'IND';
-        const isGroup = document.querySelector('input[name="callType"]:checked').value === 'GROUP';
-        const hourlyRate = parseFloat(hourlyRateInput.value);
-        const groupStudentsSelected = groupStudentIds.selectedOptions.length > 0;
+    recomputeUnits();
+    updateFormState();
+  });
 
-        let isValid = false;
-        if (isInd) {
-            isValid = selectedStudent && selectedProduct && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
-        } else if (isGroup) {
-            isValid = selectedProduct && groupStudentsSelected && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
-        }
-        submitBtn.disabled = !isValid;
-    }
+  // Override duration -> recompute units
+  function recomputeUnits() {
+    const mins = parseFloat(callDurationSelect.value || '0');
+    const units = (isNaN(mins) || mins <= 0) ? '' : (mins / 60).toFixed(2);
+    unitsInput.value = units;
+    updateFormState();
+  }
+  callDurationSelect.addEventListener('change', recomputeUnits);
+  groupStudentIds.addEventListener('change', updateFormState);
 
-    // login logic
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        hideMessage(loginMessageBox);
-        const orig = loginBtn.innerHTML;
-        loginBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
-        loginBtn.disabled = true;
-
-        const coachId = coachIdInput.value.trim();
-        const password = passwordInput.value.trim();
-        try {
-            const resp = await apiPost('login', { coachId, password });
-            if (!resp.success) throw new Error(resp.error || 'Login failed');
-            
-            // Determina il ruolo del coach al login e memorizzalo in una variabile globale
-            const coachRole = resp.rateRole || resp.role;
-            if (!coachRole) {
-                throw new Error('Il tuo ruolo da coach non è stato trovato nei dati di accesso. Contatta l\'amministratore per assistenza.');
-            }
-            
-            CURRENT_COACH_ID = String(resp.coachId);
-            CURRENT_COACH_NAME = resp.coachName || CURRENT_COACH_ID;
-            CURRENT_COACH_ROLE = coachRole;
-            
-            // Aggiorna l'interfaccia con i dati del coach
-            coachNameDisplay.textContent = CURRENT_COACH_NAME;
-            callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
-
-            // Passa alla dashboard e carica i dati
-            switchSection(dashboardSection);
-            await fetchMonthlyEarnings();
-            await loadStudentIds();
-        } catch (err) {
-            showMessage(loginMessageBox, err.message || String(err), false);
-        } finally {
-            loginBtn.innerHTML = orig;
-            loginBtn.disabled = false;
-        }
-    });
-
-    // logout
-    logoutBtn.addEventListener('click', () => {
-        CURRENT_COACH_ID = null;
-        CURRENT_COACH_NAME = null;
-        CURRENT_COACH_ROLE = null;
-        CURRENT_ALLOCATIONS_BY_STUDENT = {};
-        coachIdInput.value = "";
-        passwordInput.value = "";
-        switchSection(loginSection);
-        hideMessage(loginMessageBox);
-    });
-
-    function switchSection(showEl) {
-        [loginSection, dashboardSection, callSection].forEach(el => el.classList.add('hidden'));
-        showEl.classList.remove('hidden');
-    }
-
-    // fetch monthly earnings
-    async function fetchMonthlyEarnings() {
-        if (!CURRENT_COACH_ID) return;
-        earningsAmountDisplay.textContent = '...';
-        try {
-            const resp = await apiGet('getMonthlyEarnings', { coachId: CURRENT_COACH_ID });
-            const value = (resp && resp.success) ? resp.earnings : 0;
-            earningsAmountDisplay.textContent = Number(value).toFixed(2);
-        } catch (err) {
-            earningsAmountDisplay.textContent = '--';
-        }
-    }
-
-    // --- STUDENT / PRODUCTS loading for IND ---
-    async function loadStudentIds() {
-        studentIdSelect.innerHTML = '<option value="" disabled selected>Loading Student IDs...</option>';
-        productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
-        productIdSelect.disabled = true;
+  // Toggle IND/GROUP
+  callTypeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (radio.value === "GROUP" && radio.checked) {
+        studentIdSelect.disabled = true;
+        studentIdSelect.innerHTML = '<option value="">Not used in GROUP</option>';
+        groupStudentsContainer.classList.remove('hidden');
         remainingCallsDisplay.classList.add('hidden');
-        
-        try {
-            const resp = await apiGet('getStudents');
-            const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
-            
-            studentIdSelect.innerHTML = '';
-            const def = document.createElement('option');
-            def.value = '';
-            def.disabled = true;
-            def.selected = true;
-            def.textContent = 'Select a student';
-            studentIdSelect.appendChild(def);
-            
-            arr.forEach(id => {
-                const opt = document.createElement('option');
-                opt.value = id;
-                opt.textContent = id;
-                studentIdSelect.appendChild(opt);
-            });
-            studentIdSelect.disabled = false;
-        } catch (err) {
-            studentIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
-        }
+        loadGroupProducts();
+      } else if (radio.value === "IND" && radio.checked) {
+        studentIdSelect.disabled = false;
+        groupStudentsContainer.classList.add('hidden');
+        loadStudentIds();
+      }
+      productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+      productIdSelect.disabled = true;
+      hourlyRateInput.value = '';
+      technicalDurationInput.value = '';
+      contractIdInput.value = '';
+      productIdInput.value = '';
+      callDurationSelect.value = '';
+      unitsInput.value = '';
+      updateFormState();
+    });
+  });
+
+  // Apri form: un SOLO listener, con reset e default IND
+  logCallBtn.addEventListener('click', () => {
+    if (!CURRENT_COACH_ID) return;
+    switchSection(callSection);
+
+    document.getElementById('callForm').reset();
+    // forza default su IND
+    document.querySelector('input[name="callType"][value="IND"]').checked = true;
+
+    // carica per IND
+    loadStudentIds();
+    groupStudentsContainer.classList.add('hidden');
+
+    callDateInput.value = new Date().toISOString().slice(0,10);
+    remainingCallsDisplay.classList.add('hidden');
+    updateFormState();
+  });
+
+  // Back
+  document.getElementById('backToDashboardBtn').addEventListener('click', () => {
+    switchSection(dashboardSection);
+  });
+
+  // Submit call
+  document.getElementById('callForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMessage(callMessageBox);
+    if (!CURRENT_COACH_ID) { showMessage(callMessageBox, 'Session expired. Please log in again.', false); return; }
+
+    const orig = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
+    submitBtn.disabled = true;
+
+    try {
+      const callType = document.querySelector('input[name="callType"]:checked').value;
+
+      const payload = {
+        callDate: callDateInput.value,
+        callDuration: parseFloat(callDurationSelect.value), // minuti (override)
+        units: parseFloat(unitsInput.value),                // Units Used (per debug/compat)
+        hourlyRate: parseFloat(hourlyRateInput.value) || 0, // Coach Rate (per debug/compat)
+        coachId: CURRENT_COACH_ID,
+        coachName: CURRENT_COACH_NAME,
+        productId: productIdInput.value || productIdSelect.value || ''
+      };
+
+      if (callType === "IND") {
+        payload.studentId = studentIdSelect.value;
+        payload.contractId = contractIdInput.value || '';
+      } else {
+        const selected = Array.from(groupStudentIds.selectedOptions).map(o => o.value);
+        payload.studentIds = selected;
+        payload.contractId = null;
+      }
+
+      const resp = await apiPost('logCall', payload);
+      if (!resp.success) throw new Error(resp.error || 'Error logging call.');
+
+      showMessage(callMessageBox, 'Call logged successfully!', true);
+      document.getElementById('callForm').reset();
+      contractIdInput.value = '';
+      productIdInput.value = '';
+      hourlyRateInput.value = '';
+      technicalDurationInput.value = '';
+      remainingCallsDisplay.classList.add('hidden');
+      updateFormState();
+      await fetchMonthlyEarnings();
+    } catch (err) {
+      showMessage(callMessageBox, err.message || String(err), false);
+    } finally {
+      submitBtn.innerHTML = orig;
+      submitBtn.disabled = false;
     }
-    
-    async function loadStudentContracts(studentId) {
-        productIdSelect.disabled = true;
-        productIdSelect.innerHTML = '<option value="" disabled selected>Loading products...</option>';
-        hourlyRateInput.value = '';
-        technicalDurationInput.value = '';
-        contractIdInput.value = '';
-        productIdInput.value = '';
-        remainingCallsDisplay.classList.add('hidden');
-        updateFormState();
+  });
 
-        try {
-            const resp = await apiGet('getStudentContracts', { studentId });
-            const contracts = (resp && resp.success && Array.isArray(resp.contracts)) ? resp.contracts : [];
-            CURRENT_ALLOCATIONS_BY_STUDENT[studentId] = contracts;
-            productIdSelect.innerHTML = '';
-            const def = document.createElement('option');
-            def.value = '';
-            def.disabled = true;
-            def.selected = true;
-            def.textContent = 'Select a product/allocation';
-            productIdSelect.appendChild(def);
-            contracts.forEach(c => {
-                const prodName = (c.product && c.product.productName) ? c.product.productName : c.productId;
-                const opt = document.createElement('option');
-                opt.value = c.productId;
-                opt.textContent = prodName;
-                opt.dataset.contractId = c.contractId;
-                opt.dataset.product = JSON.stringify(c.product || {});
-                opt.dataset.remainingCalls = c.leftCalls;
-                productIdSelect.appendChild(opt);
-            });
-            productIdSelect.disabled = false;
-        } catch (err) {
-            productIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
-        }
-    }
-
-    studentIdSelect.addEventListener('change', () => {
-        const studentId = studentIdSelect.value;
-        if (studentId) {
-            loadStudentContracts(studentId);
-        } else {
-            productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
-            productIdSelect.disabled = true;
-            hourlyRateInput.value = '';
-            technicalDurationInput.value = '';
-            contractIdInput.value = '';
-            productIdInput.value = '';
-            remainingCallsDisplay.classList.add('hidden');
-            updateFormState();
-        }
-    });
-
-    // --- GROUP PRODUCTS loading ---
-    async function loadGroupProducts() {
-        productIdSelect.disabled = true;
-        productIdSelect.innerHTML = '<option value="" disabled selected>Loading group products...</option>';
-        try {
-            const resp = await apiGet('getGroupProducts');
-            const prods = (resp && resp.success && Array.isArray(resp.products)) ? resp.products : [];
-            productIdSelect.innerHTML = '';
-            const def = document.createElement('option');
-            def.value = '';
-            def.disabled = true;
-            def.selected = true;
-            def.textContent = 'Select a group product';
-            productIdSelect.appendChild(def);
-            prods.forEach(p => {
-                const prodName = (p.productName) ? p.productName : p.productId;
-                const opt = document.createElement('option');
-                opt.value = p.productId;
-                opt.textContent = `${prodName} (${p.productId})`;
-                opt.dataset.product = JSON.stringify(p); // Store product details for rate/duration lookup
-                productIdSelect.appendChild(opt);
-            });
-            productIdSelect.disabled = false;
-        } catch (err) {
-            productIdSelect.innerHTML = '<option value="" disabled selected>Error loading group products</option>';
-        }
-    }
-
-    // When product changes: set hourly/duration
-    productIdSelect.addEventListener('change', async () => {
-        const callType = document.querySelector('input[name="callType"]:checked').value;
-        const selectedProductId = productIdSelect.value;
-        productIdInput.value = selectedProductId || '';
-        hourlyRateInput.value = '';
-        technicalDurationInput.value = '';
-        contractIdInput.value = '';
-        remainingCallsDisplay.classList.add('hidden');
-        hideMessage(callMessageBox);
-        updateFormState();
-
-        const opt = productIdSelect.options[productIdSelect.selectedIndex];
-        if (!opt || !opt.dataset.product) {
-            hourlyRateInput.value = '';
-            technicalDurationInput.value = '';
-            callDurationSelect.disabled = true;
-            updateFormState();
-            return;
-        }
-
-        let prod = {};
-        try { 
-            prod = JSON.parse(opt.dataset.product);
-            console.log('Parsed product data:', prod);
-        } catch (e) { 
-            console.error('Error parsing product data:', e);
-            hourlyRateInput.value = '';
-            technicalDurationInput.value = '';
-            callDurationSelect.disabled = true;
-            updateFormState();
-            return;
-        }
-
-        let displayRate = 0;
-        // Usa la variabile globale CURRENT_COACH_ROLE
-        const rateKey = CURRENT_COACH_ROLE;
-        if (rateKey && prod.rates && prod.rates.hasOwnProperty(rateKey)) {
-            displayRate = prod.rates[rateKey];
-        } else {
-            console.error(`Rate key '${rateKey}' not found in product data or invalid coach role.`);
-            showMessage(callMessageBox, `Errore: Il ruolo ('${rateKey}') non è valido o manca nei dati del prodotto.`, false);
-        }
-
-        technicalDurationInput.value = prod.duration || '';
-
-        // Imposta la durata predefinita nel campo callDuration
-        const nativeDuration = prod.duration;
-        if (callDurationSelect.options.length > 0) {
-            let optionFound = false;
-            for (let i = 0; i < callDurationSelect.options.length; i++) {
-                if (callDurationSelect.options[i].value == nativeDuration) {
-                    callDurationSelect.value = nativeDuration;
-                    optionFound = true;
-                    break;
-                }
-            }
-            if (!optionFound) {
-                // Se la durata nativa non è tra le opzioni, seleziona la prima opzione
-                // O potremmo aggiungere l'opzione dinamicamente
-                const newOption = document.createElement('option');
-                newOption.value = nativeDuration;
-                newOption.textContent = nativeDuration;
-                callDurationSelect.appendChild(newOption);
-                callDurationSelect.value = nativeDuration;
-            }
-        }
-        
-        if (callType === "IND") {
-            const contractId = opt.dataset.contractId || '';
-            contractIdInput.value = contractId;
-            const remaining = opt.dataset.remainingCalls;
-            if (remaining && remaining !== 'null' && remaining !== 'undefined') {
-                remainingCallsDisplay.textContent = `Remaining: ${remaining} calls`;
-                remainingCallsDisplay.classList.remove('hidden');
-            } else {
-                remainingCallsDisplay.classList.add('hidden');
-            }
-        } else if (callType === "GROUP") {
-            try {
-                const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
-                const studs = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
-                groupStudentIds.innerHTML = '';
-                studs.forEach(sid => {
-                    const o = document.createElement('option');
-                    o.value = sid;
-                    o.textContent = sid;
-                    groupStudentIds.appendChild(o);
-                });
-            } catch (err) {
-                console.error("Error loading group students", err);
-            }
-        }
-
-        if (displayRate > 0) {
-            hourlyRateInput.value = displayRate;
-            callDurationSelect.disabled = false;
-        } else {
-            hourlyRateInput.value = '';
-            callDurationSelect.disabled = true;
-        }
-        
-        recomputeUnits();
-        updateFormState();
-    });
-
-    // recompute units when call duration override changes
-    function recomputeUnits() {
-        const mins = parseFloat(callDurationSelect.value || '0');
-        const units = isNaN(mins) || mins === 0 ? '' : (mins / 60).toFixed(2);
-        unitsInput.value = units;
-        updateFormState();
-    }
-    callDurationSelect.addEventListener('change', recomputeUnits);
-    groupStudentIds.addEventListener('change', updateFormState);
-
-    // toggle call type radios
-    callTypeRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-            if (radio.value === "GROUP" && radio.checked) {
-                studentIdSelect.disabled = true;
-                studentIdSelect.innerHTML = '<option value="">Not used in GROUP</option>';
-                groupStudentsContainer.classList.remove('hidden');
-                remainingCallsDisplay.classList.add('hidden');
-                loadGroupProducts();
-            } else if (radio.value === "IND" && radio.checked) {
-                studentIdSelect.disabled = false;
-                groupStudentsContainer.classList.add('hidden');
-                loadStudentIds();
-            }
-            productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
-            productIdSelect.disabled = true;
-            hourlyRateInput.value = '';
-            technicalDurationInput.value = '';
-            contractIdInput.value = '';
-            productIdInput.value = '';
-            callDurationSelect.value = '';
-            unitsInput.value = '';
-            updateFormState();
-        });
-    });
-
-    // Log call submit
-    document.getElementById('callForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        hideMessage(callMessageBox);
-        if (!CURRENT_COACH_ID) { showMessage(callMessageBox, 'Session expired. Please log in again.', false); return; }
-
-        const orig = submitBtn.innerHTML;
-        submitBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
-        submitBtn.disabled = true;
-
-        try {
-            const callType = document.querySelector('input[name="callType"]:checked').value;
-            const payload = {
-                callDate: callDateInput.value,
-                callDuration: parseFloat(callDurationSelect.value),
-                units: parseFloat(unitsInput.value),
-                hourlyRate: parseFloat(hourlyRateInput.value) || 0,
-                coachId: CURRENT_COACH_ID,
-                coachName: CURRENT_COACH_NAME,
-                productId: productIdInput.value || productIdSelect.value || ''
-            };
-
-            if (callType === "IND") {
-                payload.studentId = studentIdSelect.value;
-                payload.contractId = contractIdInput.value || '';
-            } else {
-                const selected = Array.from(groupStudentIds.selectedOptions).map(o => o.value);
-                payload.studentIds = selected;
-                payload.contractId = null;
-            }
-            
-            const resp = await apiPost('logCall', payload);
-            if (!resp.success) throw new Error(resp.error || 'Error logging call.');
-            
-            showMessage(callMessageBox, 'Call logged successfully!', true);
-            document.getElementById('callForm').reset();
-            contractIdInput.value = '';
-            productIdInput.value = '';
-            hourlyRateInput.value = '';
-            technicalDurationInput.value = '';
-            remainingCallsDisplay.classList.add('hidden');
-            updateFormState();
-            await fetchMonthlyEarnings();
-        } catch (err) {
-            showMessage(callMessageBox, err.message || String(err), false);
-        } finally {
-            submitBtn.innerHTML = orig;
-            submitBtn.disabled = false;
-        }
-    });
-
-    // Open payment folder
-    viewFolderBtn.addEventListener('click', async () => {
-        if (!CURRENT_COACH_ID) return;
-        try {
-            const resp = await apiGet('getPaymentFolderUrl', { coachId: CURRENT_COACH_ID });
-            if (resp && resp.success && resp.url) window.open(resp.url, '_blank');
-        } catch (err) { /* silent */ }
-    });
-
-    // log call button -> go to call section
-    logCallBtn.addEventListener('click', () => {
-        if (!CURRENT_COACH_ID) return;
-        switchSection(callSection);
-        const callType = document.querySelector('input[name="callType"]:checked').value;
-        if (callType === "IND") {
-            loadStudentIds();
-            groupStudentsContainer.classList.add('hidden');
-        } else {
-            loadGroupProducts();
-            groupStudentsContainer.classList.remove('hidden');
-        }
-        callDateInput.value = new Date().toISOString().slice(0,10);
-        document.getElementById('callForm').reset();
-        remainingCallsDisplay.classList.add('hidden');
-        updateFormState();
-    });
-
-    // Back to dashboard button
-    document.getElementById('backToDashboardBtn').addEventListener('click', () => {
-        switchSection(dashboardSection);
-    });
 </script>
 </body>
 </html>
