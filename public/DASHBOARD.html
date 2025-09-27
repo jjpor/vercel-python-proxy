@@ -592,16 +592,22 @@ function recomputeUnitsAndRate() {
   // aggiorna campo hidden Units
   unitsInput.value = units ? units.toFixed(2) : '';
 
-// calcola Coach Rate effettiva (per studente)
-const perStudentBase = attendees > 0 ? (baseRateTotal / attendees) : baseRateTotal;
-const effectiveRatePerStudent = perStudentBase * units;
+  // dati base
+  const baseRateTotal = parseFloat(hourlyRateInput.dataset.baseRate || '0');
+  const attendees = parseInt(hourlyRateInput.dataset.attendees || '1', 10) || 1;
+  const callType = document.querySelector('input[name="callType"]:checked').value;
 
-// valore da mostrare = totale gruppo
-const effectiveRateTotal = effectiveRatePerStudent * attendees;
+  // calcoli
+  const perStudentBase = attendees > 0 ? (baseRateTotal / attendees) : baseRateTotal;
+  const ratePerStudent = perStudentBase * units;
+  const rateTotal = ratePerStudent * attendees;
 
-// aggiorna il campo visibile Coach Rate
-hourlyRateInput.value = effectiveRateTotal > 0 ? effectiveRateTotal.toFixed(2) : '';
-
+  // mostra
+  if (callType === "IND") {
+    hourlyRateInput.value = ratePerStudent > 0 ? ratePerStudent.toFixed(2) : '';
+  } else {
+    hourlyRateInput.value = rateTotal > 0 ? rateTotal.toFixed(2) : '';
+  }
 
   updateFormState();
 }
