@@ -302,6 +302,69 @@
     }
   });
 
+// Students
+viewStudentsBtn.addEventListener('click', async () => {
+  if (!CURRENT_COACH_ID) return;
+  try {
+    const resp = await apiGet('getStudents');
+    if (resp.success) {
+      alert("Students:\n" + resp.students.join(", "));
+    } else {
+      alert("Error loading students");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+});
+
+// My payment folder
+viewFolderBtn.addEventListener('click', async () => {
+  if (!CURRENT_COACH_ID) return;
+  try {
+    const resp = await apiGet('getPaymentFolderUrl', { coachId: CURRENT_COACH_ID });
+    if (resp.success && resp.url) {
+      window.open(resp.url, "_blank");
+    } else {
+      alert("No folder found");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+});
+
+// Call log
+viewCallLogBtn.addEventListener('click', async () => {
+  if (!CURRENT_COACH_ID) return;
+  try {
+    const resp = await apiGet('getCallHistory', { coachId: CURRENT_COACH_ID });
+    if (resp.success && resp.history) {
+      const lines = resp.history.map(h => `${h.date} - ${h.studentId} (${h.earnings}€)`);
+      alert("Call History:\n" + lines.join("\n"));
+    } else {
+      alert("No call history found");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+});
+
+// Report Cards
+viewReportCardsBtn.addEventListener('click', async () => {
+  if (!CURRENT_COACH_ID) return;
+  try {
+    const resp = await apiGet('getReportCardTasks', { coachId: CURRENT_COACH_ID });
+    if (resp.success && resp.tasks.length) {
+      const lines = resp.tasks.map(t => `${t.studentId} - ${t.name} ${t.surname} (${t.calls} calls)`);
+      alert("Report Card Tasks:\n" + lines.join("\n"));
+    } else {
+      alert("No report card tasks found");
+    }
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+});
+
+  
   // Logout
   logoutBtn.addEventListener('click', () => {
     CURRENT_COACH_ID = null;
