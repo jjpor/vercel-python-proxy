@@ -192,14 +192,61 @@
   <button id="backFromCallHistoryBtn" class="mt-4 bg-gray-400 text-white py-2 px-6 rounded-lg hover:bg-gray-500">Back to Dashboard</button>
 </div>
 
-<!-- REPORT CARDS -->
+<!-- REPORT CARDS SECTION -->
 <div id="reportCardsSection" class="hidden">
-  <div class="text-center mb-6">
-    <h1 class="text-3xl font-bold text-gray-800">Report Cards</h1>
-    <p class="mt-2 text-gray-500">Pending tasks</p>
+  <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
+    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Report Cards</h2>
+    <button id="backToDashboardFromReportsBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
+      Back to Dashboard
+    </button>
   </div>
-  <ul id="reportCardsList" class="list-disc list-inside text-gray-700"></ul>
-  <button id="backFromReportCardsBtn" class="mt-4 bg-gray-400 text-white py-2 px-6 rounded-lg hover:bg-gray-500">Back to Dashboard</button>
+  <div id="reportCardsContainer" class="space-y-4 text-gray-700">
+    <p class="text-gray-500 text-center">Loading report card tasks...</p>
+  </div>
+
+  <!-- no-shows per Head Coach -->
+  <div id="reportCardNoShowsContainer" class="space-y-4 text-gray-700 mt-6 hidden"></div>
+
+  <!-- drafts -->
+  <div id="reportCardDraftsContainer" class="space-y-4 text-gray-700 mt-6"></div>
+</div>
+
+<!-- REPORT CARD FORM -->
+<div id="reportCardFormSection" class="hidden">
+  <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
+    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Write Report Card</h2>
+    <button id="backToReportCardsBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
+      Back
+    </button>
+  </div>
+
+  <form id="reportCardForm" class="space-y-4">
+    <input type="hidden" id="rcStudentId" name="studentId">
+    <input type="hidden" id="rcContractId" name="contractId">
+    <input type="hidden" id="rcCoachId" name="coachId">
+
+    <div>
+      <label class="form-label block mb-2">Attendance</label>
+      <select id="rcAttendance" class="form-input" required>
+        <option value="">Select...</option>
+        <option value="Excellent">Excellent</option>
+        <option value="Good">Good</option>
+        <option value="Average">Average</option>
+        <option value="Poor">Poor</option>
+      </select>
+    </div>
+
+    <div>
+      <label class="form-label block mb-2">Report</label>
+      <textarea id="rcReport" class="form-input" rows="6" placeholder="Write your notes here..." required></textarea>
+    </div>
+
+    <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700">
+      Save Draft
+    </button>
+  </form>
+
+  <div id="reportCardMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
 </div>
 
   
@@ -845,6 +892,181 @@ callTypeRadios.forEach(radio => {
     switchSection(dashboardSection);
   });
 
+// --- Report Cards
+const reportCardsSection = document.getElementById('reportCardsSection');
+const reportCardsContainer = document.getElementById('reportCardsContainer');
+const reportCardDraftsContainer = document.getElementById('reportCardDraftsContainer');
+const reportCardNoShowsContainer = document.getElementById('reportCardNoShowsContainer');
+const reportCardFormSection = document.getElementById('reportCardFormSection');
+const reportCardForm = document.getElementById('reportCardForm');
+const backToReportCardsBtn = document.getElementById('backToReportCardsBtn');
+const reportCardMessageBox = document.getElementById('reportCardMessageBox');
+
+document.getElementById('viewReportCardsBtn').addEventListener('click', async () => {
+  if (!CURRENT_COACH_ID) return;
+  switchSection(reportCardsSection);
+  await loadReportCardTasks();
+  await loadReportCardDrafts();
+});
+
+document.getElementById('backToDashboardFromReportsBtn').addEventListener('click', () => {
+  switchSection(dashboardSection);
+});
+
+backToReportCardsBtn.addEventListener('click', () => {
+  switchSection(reportCardsSection);
+});
+
+// carica tasks
+async function loadReportCardTasks() {
+  reportCardsContainer.innerHTML = '<p class="text-gray-500 text-center">Loading report card tasks...</p>';
+  reportCardNoShowsContainer.classList.add('hidden');
+
+  try {
+    const resp = await apiGet('getReportCardTasks', { coachId: CURRENT_COACH_ID });
+    if (!resp.success) throw new Error(resp.error || 'Unable to load tasks.');
+
+    const tasks = resp.tasks || [];
+    if (tasks.length === 0) {
+      reportCardsContainer.innerHTML = '<p class="text-gray-500 text-center">No report cards due this month 🎉</p>';
+    } else {
+      let html = '<h3 class="text-xl font-semibold text-gray-800">Tasks</h3><div class="grid gap-4">';
+      tasks.forEach(t => {
+        html += `
+          <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-800">${t.name} ${t.surname} (${t.studentId})</h3>
+            <p class="text-gray-600"><strong>Cadency:</strong> ${t.cadencyMonths} month(s)</p>
+            <p class="text-gray-600"><strong>Calls:</strong> ${t.calls}</p>
+            <button 
+              class="writeReportBtn mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              data-student="${t.studentId}" 
+              data-contract="${t.contractId}">
+              Write Report
+            </button>
+          </div>
+        `;
+      });
+      html += '</div>';
+      reportCardsContainer.innerHTML = html;
+    }
+
+    // mostra no-shows solo a Head Coach
+    if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
+      let html = '<h3 class="text-xl font-semibold text-red-600">No-show Students</h3><div class="grid gap-4">';
+      resp.noShows.forEach(ns => {
+        html += `
+          <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
+            <p class="font-semibold">${ns.name} ${ns.surname} (${ns.studentId}) — Contract ${ns.contractId}</p>
+            <p class="text-gray-600">Cadency: ${ns.cadencyMonths} month(s)</p>
+          </div>
+        `;
+      });
+      html += '</div>';
+      reportCardNoShowsContainer.innerHTML = html;
+      reportCardNoShowsContainer.classList.remove('hidden');
+    }
+
+  } catch (err) {
+    reportCardsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
+  }
+}
+
+// carica drafts
+async function loadReportCardDrafts() {
+  reportCardDraftsContainer.innerHTML = '<p class="text-gray-500 text-center">Loading drafts...</p>';
+  try {
+    const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
+    if (!resp.success) throw new Error(resp.error || 'Unable to load drafts.');
+    const drafts = resp.drafts || [];
+
+    if (!drafts.length) {
+      reportCardDraftsContainer.innerHTML = '<p class="text-gray-500 text-center">No drafts yet.</p>';
+      return;
+    }
+
+    let html = '<h3 class="text-xl font-semibold text-gray-800">Your Drafts</h3><div class="grid gap-4">';
+    drafts.forEach(d => {
+      html += `
+        <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
+          <div class="flex justify-between">
+            <div>
+              <p class="font-semibold text-gray-800">${d.name} ${d.surname} (${d.studentId})</p>
+              <p class="text-gray-600 text-sm">${d.dateISO || ''} • Attendance: ${d.attendance || '-'}</p>
+              <p class="text-gray-600 text-sm mt-1">${(d.report || '').substring(0,100)}${d.report && d.report.length>100?'…':''}</p>
+            </div>
+            <button class="editDraftBtn bg-indigo-600 text-white px-3 py-1 rounded" 
+              data-student="${d.studentId}" 
+              data-contract="${d.contractId}">
+              Edit
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    reportCardDraftsContainer.innerHTML = html;
+  } catch (err) {
+    reportCardDraftsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
+  }
+}
+
+// click write/edit
+document.addEventListener('click', (e) => {
+  if (e.target.classList.contains('writeReportBtn') || e.target.classList.contains('editDraftBtn')) {
+    const studentId = e.target.dataset.student;
+    const contractId = e.target.dataset.contract;
+
+    document.getElementById('rcStudentId').value = studentId;
+    document.getElementById('rcContractId').value = contractId;
+    document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
+
+    // se è edit, recupera bozza
+    if (e.target.classList.contains('editDraftBtn')) {
+      const draft = (LAST_DRAFTS || []).find(x => x.studentId === studentId && x.contractId === contractId);
+      if (draft) {
+        document.getElementById('rcAttendance').value = draft.attendance || '';
+        document.getElementById('rcReport').value = draft.report || '';
+      }
+    } else {
+      // reset per nuova bozza
+      reportCardForm.reset();
+      document.getElementById('rcStudentId').value = studentId;
+      document.getElementById('rcContractId').value = contractId;
+      document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
+    }
+
+    switchSection(reportCardFormSection);
+  }
+});
+
+// submit report card
+reportCardForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideMessage(reportCardMessageBox);
+
+  const payload = {
+    studentId: document.getElementById('rcStudentId').value,
+    contractId: document.getElementById('rcContractId').value,
+    coachId: CURRENT_COACH_ID,
+    attendance: document.getElementById('rcAttendance').value,
+    report: document.getElementById('rcReport').value
+  };
+
+  try {
+    const resp = await apiPost('submitReportCard', payload);
+    if (!resp.success) throw new Error(resp.error || 'Error saving report.');
+    showMessage(reportCardMessageBox, 'Report card saved as draft!', true);
+    setTimeout(() => {
+      switchSection(reportCardsSection);
+      loadReportCardTasks();
+      loadReportCardDrafts();
+    }, 1200);
+  } catch (err) {
+    showMessage(reportCardMessageBox, err.message, false);
+  }
+});
+
+  
   // Submit call
   document.getElementById('callForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -880,6 +1102,7 @@ callTypeRadios.forEach(radio => {
         }
 
 
+      
       const resp = await apiPost('logCall', payload);
       if (!resp.success) throw new Error(resp.error || 'Error logging call.');
 
