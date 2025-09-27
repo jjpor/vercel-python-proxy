@@ -193,6 +193,8 @@
   let CURRENT_COACH_NAME = null;
   let CURRENT_COACH_ROLE = null;
   let CURRENT_ALLOCATIONS_BY_STUDENT = {};
+  let LAST_SELECTED_STUDENT = null;
+
 
   // Helpers UI
   function showMessage(box, message, isSuccess = true) {
@@ -386,14 +388,16 @@
     }
   }
 
- studentIdSelect.addEventListener('change', () => {
+studentIdSelect.addEventListener('change', () => {
   const studentId = studentIdSelect.value;
+  LAST_SELECTED_STUDENT = studentId || null;
+
   if (studentId) {
-    // carica contratti solo se lo studente è cambiato
+    // carica i contratti per questo studente
     loadStudentContracts(studentId);
   } else {
+    // reset UI se nessuno studente selezionato
     productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
-    opt.dataset.unlimited = c.unlimited ? "true" : "false";
     productIdSelect.disabled = true;
     hourlyRateInput.value = '';
     technicalDurationInput.value = '';
@@ -401,8 +405,10 @@
     productIdInput.value = '';
     remainingCallsDisplay.classList.add('hidden');
   }
+
   updateFormState();
 });
+
 
 
   // --- GROUP: load products & students ---
