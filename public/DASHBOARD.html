@@ -306,9 +306,13 @@ const historyMonthSelect = document.getElementById('historyMonth');
 
 
 const reportCardsSection = document.getElementById('reportCardsSection');
-const reportCardsList = document.getElementById('reportCardsList');
-const backFromReportCardsBtn = document.getElementById('backFromReportCardsBtn');
-
+const reportCardsContainer = document.getElementById('reportCardsContainer');
+const reportCardDraftsContainer = document.getElementById('reportCardDraftsContainer');
+const reportCardNoShowsContainer = document.getElementById('reportCardNoShowsContainer');
+const reportCardFormSection = document.getElementById('reportCardFormSection');
+const reportCardForm = document.getElementById('reportCardForm');
+const backToReportCardsBtn = document.getElementById('backToReportCardsBtn');
+const reportCardMessageBox = document.getElementById('reportCardMessageBox');
 
   // Stato
   let CURRENT_COACH_ID = null;
@@ -316,6 +320,7 @@ const backFromReportCardsBtn = document.getElementById('backFromReportCardsBtn')
   let CURRENT_COACH_ROLE = null;
   let CURRENT_ALLOCATIONS_BY_STUDENT = {};
   let LAST_SELECTED_STUDENT = null;
+  let LAST_DRAFTS = [];
 
 
   // Helpers UI
@@ -500,31 +505,6 @@ function renderHistoryTable() {
     callHistoryTableBody.appendChild(row);
   });
 }
-
-
-// Report Cards
-viewReportCardsBtn.addEventListener('click', async () => {
-  if (!CURRENT_COACH_ID) return;
-  switchSection(reportCardsSection);
-  reportCardsList.innerHTML = '<li>Loading...</li>';
-  try {
-    const resp = await apiGet('getReportCardTasks', { coachId: CURRENT_COACH_ID });
-    if (resp.success && resp.tasks.length) {
-      reportCardsList.innerHTML = '';
-      resp.tasks.forEach(t => {
-        const li = document.createElement('li');
-        li.textContent = `${t.studentId} - ${t.name || ''} ${t.surname || ''} (${t.calls} calls)`;
-        reportCardsList.appendChild(li);
-      });
-    } else {
-      reportCardsList.innerHTML = '<li>No tasks found</li>';
-    }
-  } catch (err) {
-    reportCardsList.innerHTML = `<li class="text-red-500">Error: ${err.message}</li>`;
-  }
-});
-backFromReportCardsBtn.addEventListener('click', () => switchSection(dashboardSection));
-
   
   // Logout
   logoutBtn.addEventListener('click', () => {
@@ -979,6 +959,8 @@ async function loadReportCardDrafts() {
     if (!resp.success) throw new Error(resp.error || 'Unable to load drafts.');
     const drafts = resp.drafts || [];
 
+    LAST_DRAFTS = drafts;
+    
     if (!drafts.length) {
       reportCardDraftsContainer.innerHTML = '<p class="text-gray-500 text-center">No drafts yet.</p>';
       return;
