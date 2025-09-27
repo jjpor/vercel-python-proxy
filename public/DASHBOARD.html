@@ -133,6 +133,16 @@
         </select>
       </div>
 
+      <!-- Attendance -->
+<div>
+  <label for="attendance" class="form-label block mb-2">Attendance</label>
+  <select id="attendance" class="form-input">
+    <option value="YES" selected>YES</option>
+    <option value="NO">NO</option>
+  </select>
+</div>
+
+
       <div class="md:col-span-2 mt-4">
         <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed">Log Call</button>
         <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white py-3 px-6 rounded-xl hover:bg-gray-500">Back to Dashboard</button>
@@ -661,6 +671,8 @@ callTypeRadios.forEach(radio => {
       const selects = groupStudentsDynamic.querySelectorAll('select');
       payload.studentIds = Array.from(selects).map(s => s.value);
       payload.contractId = null;
+      payload.attendance = document.getElementById('attendance').value || "YES";
+
         }
 
 
