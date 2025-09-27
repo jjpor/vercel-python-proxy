@@ -449,6 +449,13 @@ studentIdSelect.addEventListener('change', () => {
     hourlyRateInput.value = '';
     technicalDurationInput.value = '';
     contractIdInput.value = '';
+        // Se è IND, valorizza sempre anche productIdInput e contractIdInput
+    if (callType === "IND") {
+      const contractId = opt.dataset.contractId || '';
+      contractIdInput.value = contractId;
+      productIdInput.value = selectedProductId; // <--- AGGIUNTO
+    }
+
     remainingCallsDisplay.classList.add('hidden');
     hideMessage(callMessageBox);
     updateFormState();
