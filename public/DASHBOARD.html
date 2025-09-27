@@ -261,10 +261,15 @@ const backFromReportCardsBtn = document.getElementById('backFromReportCardsBtn')
   }
   
 function switchSection(showEl) {
-  [loginSection, dashboardSection, callSection, callHistorySection, reportCardsSection].forEach(el => el.classList.add('hidden'));
+  [
+    loginSection,
+    dashboardSection,
+    callSection,
+    callHistorySection,
+    reportCardsSection
+  ].forEach(el => el.classList.add('hidden'));
   showEl.classList.remove('hidden');
 }
-
 
   // API helpers
   async function apiGet(action, params = {}) {
