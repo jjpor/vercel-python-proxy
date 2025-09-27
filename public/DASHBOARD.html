@@ -441,75 +441,70 @@ studentIdSelect.addEventListener('change', () => {
     }
   }
 
-  // Product change -> set rate/duration + (IND) contract + remaining
-  productIdSelect.addEventListener('change', async () => {
-    const callType = document.querySelector('input[name="callType"]:checked').value;
-    const selectedProductId = productIdSelect.value;
-    productIdInput.value = selectedProductId || '';
-    hourlyRateInput.value = '';
-    technicalDurationInput.value = '';
-    contractIdInput.value = '';
-        // Se è IND, valorizza sempre anche productIdInput e contractIdInput
-    if (callType === "IND") {
-      const contractId = opt.dataset.contractId || '';
-      contractIdInput.value = contractId;
-      productIdInput.value = selectedProductId; // <--- AGGIUNTO
-    }
+productIdSelect.addEventListener('change', async () => {
+  const callType = document.querySelector('input[name="callType"]:checked').value;
+  const selectedProductId = productIdSelect.value;
+  productIdInput.value = selectedProductId || '';
+  hourlyRateInput.value = '';
+  technicalDurationInput.value = '';
+  contractIdInput.value = '';
+  remainingCallsDisplay.classList.add('hidden');
+  hideMessage(callMessageBox);
+  updateFormState();
 
-    remainingCallsDisplay.classList.add('hidden');
-    hideMessage(callMessageBox);
-    updateFormState();
+  // prendo l'opzione selezionata
+  const opt = productIdSelect.options[productIdSelect.selectedIndex];
+  if (!opt || !opt.dataset.product) {
+    callDurationSelect.disabled = true;
+    return;
+  }
 
-    const opt = productIdSelect.options[productIdSelect.selectedIndex];
-    if (!opt || !opt.dataset.product) {
-      callDurationSelect.disabled = true;
-      return;
-    }
+  let prod = {};
+  try {
+    prod = JSON.parse(opt.dataset.product);
+  } catch (e) {
+    console.error('Error parsing product data', e);
+    callDurationSelect.disabled = true;
+    return;
+  }
 
-    let prod = {};
-    try {
-      prod = JSON.parse(opt.dataset.product);
-    } catch (e) {
-      console.error('Error parsing product data', e);
-      callDurationSelect.disabled = true;
-      return;
-    }
+  // rate per ruolo
+  const rateKey = CURRENT_COACH_ROLE;
+  let displayRate = 0;
+  if (rateKey && prod.rates && Object.prototype.hasOwnProperty.call(prod.rates, rateKey)) {
+    displayRate = Number(prod.rates[rateKey] || 0);
+  } else {
+    showMessage(callMessageBox, `Errore: ruolo '${rateKey}' mancante nel prodotto.`, false);
+  }
 
-    // rate per ruolo
-    const rateKey = CURRENT_COACH_ROLE;
-    let displayRate = 0;
-    if (rateKey && prod.rates && Object.prototype.hasOwnProperty.call(prod.rates, rateKey)) {
-      displayRate = Number(prod.rates[rateKey] || 0);
-    } else {
-      showMessage(callMessageBox, `Errore: ruolo '${rateKey}' mancante nel prodotto.`, false);
-    }
+  // durata nativa
+  const nativeDuration = prod.duration || '';
+  technicalDurationInput.value = nativeDuration;
 
-    // durata nativa
-    const nativeDuration = prod.duration || '';
-    technicalDurationInput.value = nativeDuration;
-
-    // set default in override (aggiungi se mancante)
-    if (nativeDuration) {
-      let found = false;
-      for (let i = 0; i < callDurationSelect.options.length; i++) {
-        if (callDurationSelect.options[i].value == nativeDuration) {
-          callDurationSelect.value = nativeDuration;
-          found = true;
-          break;
-        }
-      }
-      if (!found) {
-        const newOption = document.createElement('option');
-        newOption.value = nativeDuration;
-        newOption.textContent = nativeDuration;
-        callDurationSelect.appendChild(newOption);
+  // set default override = durata nativa
+  if (nativeDuration) {
+    let found = false;
+    for (let i = 0; i < callDurationSelect.options.length; i++) {
+      if (callDurationSelect.options[i].value == nativeDuration) {
         callDurationSelect.value = nativeDuration;
+        found = true;
+        break;
       }
     }
+    if (!found) {
+      const newOption = document.createElement('option');
+      newOption.value = nativeDuration;
+      newOption.textContent = nativeDuration;
+      callDurationSelect.appendChild(newOption);
+      callDurationSelect.value = nativeDuration;
+    }
+  }
 
-    if (callType === "IND") {
-      const contractId = opt.dataset.contractId || '';
-      contractIdInput.value = contractId;
+  // --- IND ---
+  if (callType === "IND") {
+    const contractId = opt.dataset.contractId || '';
+    contractIdInput.value = contractId;
+    productIdInput.value = selectedProductId;
 
     if (opt.dataset.unlimited === "true") {
       remainingCallsDisplay.classList.add('hidden');
@@ -522,58 +517,56 @@ studentIdSelect.addEventListener('change', () => {
         remainingCallsDisplay.classList.add('hidden');
       }
     }
-      
-    } else {
-  // GROUP: carica studenti del prodotto
-  try {
-    const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
-    const studs = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
-
-    // numero partecipanti dal prodotto
-    const n = prod.participants || 2;
-    groupStudentsDynamic.innerHTML = '';
-
-    for (let i = 0; i < n; i++) {
-      const sel = document.createElement('select');
-      sel.className = 'form-input';
-      sel.required = true;
-
-      const def = document.createElement('option');
-      def.value = '';
-      def.disabled = true;
-      def.selected = true;
-      def.textContent = `Select student ${i + 1}`;
-      sel.appendChild(def);
-
-      studs.forEach(sid => {
-        const o = document.createElement('option');
-        o.value = sid;
-        o.textContent = sid;
-        sel.appendChild(o);
-      });
-
-      groupStudentsDynamic.appendChild(sel);
-
-      // aggiorna la validazione al cambio
-      sel.addEventListener('change', updateFormState);
-    }
-  } catch (err) {
-    console.error("Error loading group students", err);
   }
-}
 
+  // --- GROUP ---
+  else {
+    try {
+      const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
+      const studs = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
 
-    if (displayRate > 0) {
-      hourlyRateInput.value = displayRate;
-      callDurationSelect.disabled = false;
-    } else {
-      hourlyRateInput.value = '';
-      callDurationSelect.disabled = true;
+      const n = prod.participants || 2;
+      groupStudentsDynamic.innerHTML = '';
+
+      for (let i = 0; i < n; i++) {
+        const sel = document.createElement('select');
+        sel.className = 'form-input';
+        sel.required = true;
+
+        const def = document.createElement('option');
+        def.value = '';
+        def.disabled = true;
+        def.selected = true;
+        def.textContent = `Select student ${i + 1}`;
+        sel.appendChild(def);
+
+        studs.forEach(sid => {
+          const o = document.createElement('option');
+          o.value = sid;
+          o.textContent = sid;
+          sel.appendChild(o);
+        });
+
+        groupStudentsDynamic.appendChild(sel);
+        sel.addEventListener('change', updateFormState);
+      }
+    } catch (err) {
+      console.error("Error loading group students", err);
     }
+  }
 
-    recomputeUnits();
-    updateFormState();
-  });
+  // abilita/disabilita override + recompute
+  if (displayRate > 0) {
+    hourlyRateInput.value = displayRate;
+    callDurationSelect.disabled = false;
+  } else {
+    hourlyRateInput.value = '';
+    callDurationSelect.disabled = true;
+  }
+
+  recomputeUnits();
+  updateFormState();
+});
 
   // Override duration -> recompute units
   function recomputeUnits() {
