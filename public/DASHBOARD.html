@@ -151,7 +151,42 @@
     <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
   </div>
 
+  <!-- CALL HISTORY -->
+<div id="callHistorySection" class="hidden">
+  <div class="text-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Call History</h1>
+    <p class="mt-2 text-gray-500">Your logged calls</p>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-200 rounded-xl">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 border">Date</th>
+          <th class="px-4 py-2 border">Student</th>
+          <th class="px-4 py-2 border">Contract</th>
+          <th class="px-4 py-2 border">Earnings (€)</th>
+        </tr>
+      </thead>
+      <tbody id="callHistoryTableBody"></tbody>
+    </table>
+  </div>
+  <button id="backFromCallHistoryBtn" class="mt-4 bg-gray-400 text-white py-2 px-6 rounded-lg hover:bg-gray-500">Back to Dashboard</button>
 </div>
+
+<!-- REPORT CARDS -->
+<div id="reportCardsSection" class="hidden">
+  <div class="text-center mb-6">
+    <h1 class="text-3xl font-bold text-gray-800">Report Cards</h1>
+    <p class="mt-2 text-gray-500">Pending tasks</p>
+  </div>
+  <ul id="reportCardsList" class="list-disc list-inside text-gray-700"></ul>
+  <button id="backFromReportCardsBtn" class="mt-4 bg-gray-400 text-white py-2 px-6 rounded-lg hover:bg-gray-500">Back to Dashboard</button>
+</div>
+
+  
+
+</div>
+  
 
 <script>
   // API proxy
@@ -198,6 +233,15 @@
   const callTypeRadios = document.querySelectorAll('input[name="callType"]');
   const remainingCallsDisplay = document.getElementById('remainingCalls');
 
+  const callHistorySection = document.getElementById('callHistorySection');
+const callHistoryTableBody = document.getElementById('callHistoryTableBody');
+const backFromCallHistoryBtn = document.getElementById('backFromCallHistoryBtn');
+
+const reportCardsSection = document.getElementById('reportCardsSection');
+const reportCardsList = document.getElementById('reportCardsList');
+const backFromReportCardsBtn = document.getElementById('backFromReportCardsBtn');
+
+
   // Stato
   let CURRENT_COACH_ID = null;
   let CURRENT_COACH_NAME = null;
@@ -215,10 +259,12 @@
     box.textContent = '';
     box.className = 'mt-4 p-4 rounded-xl text-center hidden';
   }
-  function switchSection(showEl) {
-    [loginSection, dashboardSection, callSection].forEach(el => el.classList.add('hidden'));
-    showEl.classList.remove('hidden');
-  }
+  
+function switchSection(showEl) {
+  [loginSection, dashboardSection, callSection, callHistorySection, reportCardsSection].forEach(el => el.classList.add('hidden'));
+  showEl.classList.remove('hidden');
+}
+
 
   // API helpers
   async function apiGet(action, params = {}) {
@@ -332,37 +378,56 @@ viewFolderBtn.addEventListener('click', async () => {
   }
 });
 
-// Call log
+// Call History
 viewCallLogBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
+  switchSection(callHistorySection);
+  callHistoryTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Loading...</td></tr>';
   try {
     const resp = await apiGet('getCallHistory', { coachId: CURRENT_COACH_ID });
-    if (resp.success && resp.history) {
-      const lines = resp.history.map(h => `${h.date} - ${h.studentId} (${h.earnings}€)`);
-      alert("Call History:\n" + lines.join("\n"));
+    if (resp.success && resp.history.length) {
+      callHistoryTableBody.innerHTML = '';
+      resp.history.forEach(h => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="border px-4 py-2">${h.date}</td>
+          <td class="border px-4 py-2">${h.studentId || ''}</td>
+          <td class="border px-4 py-2">${h.contractId || ''}</td>
+          <td class="border px-4 py-2 text-right">${h.earnings.toFixed(2)}</td>
+        `;
+        callHistoryTableBody.appendChild(row);
+      });
     } else {
-      alert("No call history found");
+      callHistoryTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No calls logged</td></tr>';
     }
   } catch (err) {
-    alert("Error: " + err.message);
+    callHistoryTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-500">Error: ${err.message}</td></tr>`;
   }
 });
+backFromCallHistoryBtn.addEventListener('click', () => switchSection(dashboardSection));
 
 // Report Cards
 viewReportCardsBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
+  switchSection(reportCardsSection);
+  reportCardsList.innerHTML = '<li>Loading...</li>';
   try {
     const resp = await apiGet('getReportCardTasks', { coachId: CURRENT_COACH_ID });
     if (resp.success && resp.tasks.length) {
-      const lines = resp.tasks.map(t => `${t.studentId} - ${t.name} ${t.surname} (${t.calls} calls)`);
-      alert("Report Card Tasks:\n" + lines.join("\n"));
+      reportCardsList.innerHTML = '';
+      resp.tasks.forEach(t => {
+        const li = document.createElement('li');
+        li.textContent = `${t.studentId} - ${t.name || ''} ${t.surname || ''} (${t.calls} calls)`;
+        reportCardsList.appendChild(li);
+      });
     } else {
-      alert("No report card tasks found");
+      reportCardsList.innerHTML = '<li>No tasks found</li>';
     }
   } catch (err) {
-    alert("Error: " + err.message);
+    reportCardsList.innerHTML = `<li class="text-red-500">Error: ${err.message}</li>`;
   }
 });
+backFromReportCardsBtn.addEventListener('click', () => switchSection(dashboardSection));
 
   
   // Logout
