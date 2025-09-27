@@ -490,6 +490,10 @@ productIdSelect.addEventListener('change', async () => {
   // durata nativa
   const nativeDuration = prod.duration || '';
   technicalDurationInput.value = nativeDuration;
+    // memorizza i dati base per ricalcolo override
+  hourlyRateInput.dataset.baseRate = String(displayRate || 0);
+  hourlyRateInput.dataset.attendees = String(prod.participants || 1);
+
 
   // set default override = durata nativa
   if (nativeDuration) {
@@ -574,18 +578,33 @@ productIdSelect.addEventListener('change', async () => {
     callDurationSelect.disabled = true;
   }
 
-  recomputeUnits();
+  recomputeUnitsAndRate();
   updateFormState();
+
 });
 
-  // Override duration -> recompute units
-  function recomputeUnits() {
-    const mins = parseFloat(callDurationSelect.value || '0');
-    const units = (isNaN(mins) || mins <= 0) ? '' : (mins / 60).toFixed(2);
-    unitsInput.value = units;
-    updateFormState();
-  }
-  callDurationSelect.addEventListener('change', recomputeUnits);
+// Override duration -> recompute units + coach rate
+function recomputeUnitsAndRate() {
+  const override = parseFloat(callDurationSelect.value || '0');
+  const native = parseFloat(technicalDurationInput.value || '0');
+  const units = (!native || !override) ? 0 : (override / native);
+
+  // aggiorna campo hidden Units
+  unitsInput.value = units ? units.toFixed(2) : '';
+
+  // calcola Coach Rate effettiva
+  const baseRateTotal = parseFloat(hourlyRateInput.dataset.baseRate || '0');
+  const attendees = parseInt(hourlyRateInput.dataset.attendees || '1', 10) || 1;
+  const perStudentBase = attendees > 0 ? (baseRateTotal / attendees) : baseRateTotal;
+  const effectiveRate = perStudentBase * units;
+
+  // aggiorna il campo visibile Coach Rate
+  hourlyRateInput.value = effectiveRate > 0 ? effectiveRate.toFixed(2) : '';
+
+  updateFormState();
+}
+callDurationSelect.addEventListener('change', recomputeUnitsAndRate);
+
 
   // Toggle IND/GROUP
 callTypeRadios.forEach(radio => {
