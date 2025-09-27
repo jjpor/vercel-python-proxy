@@ -182,7 +182,7 @@
         <tr>
           <th class="px-4 py-2 border">Date</th>
           <th class="px-4 py-2 border">Student</th>
-          <th class="px-4 py-2 border">Contract</th>
+          <th class="px-4 py-2 border">Product</th>
           <th class="px-4 py-2 border">Earnings (€)</th>
         </tr>
       </thead>
@@ -405,33 +405,55 @@ viewFolderBtn.addEventListener('click', async () => {
 });
 
 // Call History
-viewCallLogBtn.addEventListener('click', async () => {
+let fullHistory = []; // memorizza tutte le calls
+  viewCallLogBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   switchSection(callHistorySection);
   callHistoryTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Loading...</td></tr>';
   try {
     const resp = await apiGet('getCallHistory', { coachId: CURRENT_COACH_ID });
     if (resp.success && resp.history.length) {
-      callHistoryTableBody.innerHTML = '';
-      resp.history.forEach(h => {
-  const row = document.createElement('tr');
-  row.innerHTML = `
-    <td class="border px-4 py-2">${h.date}</td>
-    <td class="border px-4 py-2">${h.studentId || ''}</td>
-    <td class="border px-4 py-2">${h.productName || h.productId || ''}</td>
-    <td class="border px-4 py-2 text-right">${h.earnings.toFixed(2)}</td>
-  `;
-  callHistoryTableBody.appendChild(row);
-});
+  fullHistory = resp.history; // salva tutto
+  renderHistoryTable();       // disegna tabella (gestisce già i loop)
+} else {
+  callHistoryTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No calls logged</td></tr>';
+}
 
-    } else {
-      callHistoryTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No calls logged</td></tr>';
-    }
   } catch (err) {
     callHistoryTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-500">Error: ${err.message}</td></tr>`;
   }
 });
 backFromCallHistoryBtn.addEventListener('click', () => switchSection(dashboardSection));
+  // cambio mese
+historyMonthSelect.addEventListener('change', renderHistoryTable);
+
+function renderHistoryTable() {
+  const selected = historyMonthSelect.value; // "all" o numero mese
+  callHistoryTableBody.innerHTML = '';
+
+  const filtered = fullHistory.filter(h => {
+    if (selected === "all") return true;
+    const d = new Date(h.dateISO);
+    return d.getMonth().toString() === selected;
+  });
+
+  if (!filtered.length) {
+    callHistoryTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No calls found</td></tr>';
+    return;
+  }
+
+  filtered.forEach(h => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td class="border px-4 py-2">${h.date}</td>
+      <td class="border px-4 py-2">${h.studentId || ''}</td>
+      <td class="border px-4 py-2">${h.productName || h.productId || ''}</td>
+      <td class="border px-4 py-2 text-right">${h.earnings.toFixed(2)}</td>
+    `;
+    callHistoryTableBody.appendChild(row);
+  });
+}
+
 
 // Report Cards
 viewReportCardsBtn.addEventListener('click', async () => {
