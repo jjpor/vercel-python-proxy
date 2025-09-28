@@ -466,7 +466,7 @@ let fullHistory = []; // memorizza tutte le calls
   viewCallLogBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   switchSection(callHistorySection);
-  callHistoryTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">Loading...</td></tr>';
+  callHistoryTableBody.innerHTML = `<tr><td colspan="4">${loaderHTML("Loading call history...")}</td></tr>`;
   try {
     const resp = await apiGet('getCallHistory', { coachId: CURRENT_COACH_ID });
     if (resp.success && resp.history.length) {
@@ -904,7 +904,7 @@ backToReportCardsBtn.addEventListener('click', () => {
 
 // carica tasks
 async function loadReportCardTasks() {
-  reportCardsContainer.innerHTML = '<p class="text-gray-500 text-center">Loading report card tasks...</p>';
+  reportCardsContainer.innerHTML = loaderHTML("Loading report card tasks...");
   reportCardNoShowsContainer.classList.add('hidden');
 
   try {
@@ -974,7 +974,7 @@ if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length >
 
 // carica drafts
 async function loadReportCardDrafts() {
-  reportCardDraftsContainer.innerHTML = '<p class="text-gray-500 text-center">Loading drafts...</p>';
+  reportCardDraftsContainer.innerHTML = loaderHTML("Loading drafts...");
   try {
     const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
     if (!resp.success) throw new Error(resp.error || 'Unable to load drafts.');
@@ -1021,29 +1021,46 @@ document.addEventListener('click', async (e) => {
     try {
       const resp = await apiPost('submitNoShow', { studentId, contractId, coachId: CURRENT_COACH_ID });
       if (!resp.success) throw new Error(resp.error || "Failed to submit no-show");
-      alert(`No-show submitted for ${studentId}`);
-      await loadReportCardTasks(); // refresh lista
+
+      // disabilita il bottone subito
+      e.target.disabled = true;
+      e.target.classList.add("bg-gray-400", "cursor-not-allowed");
+      e.target.classList.remove("bg-indigo-600", "hover:bg-indigo-700");
+      e.target.textContent = "Submitted";
+
+      if (resp.status === "inserted") {
+        alert(`No-show submitted for ${studentId}`);
+      } else if (resp.status === "updated") {
+        alert(`No-show for ${studentId} was already submitted (updated).`);
+      }
     } catch (err) {
       alert("Error: " + err.message);
     }
   }
 });
 
+
 // submit all no-shows
 document.addEventListener('click', async (e) => {
   if (e.target.id === 'submitAllNoShowsBtn') {
     const buttons = document.querySelectorAll('.submitNoShowBtn');
     for (const btn of buttons) {
+      if (btn.disabled) continue; // già submitted
       const studentId = btn.dataset.student;
       const contractId = btn.dataset.contract;
       try {
-        await apiPost('submitNoShow', { studentId, contractId, coachId: CURRENT_COACH_ID });
+        const resp = await apiPost('submitNoShow', { studentId, contractId, coachId: CURRENT_COACH_ID });
+        if (resp.success) {
+          btn.disabled = true;
+          btn.classList.add("bg-gray-400", "cursor-not-allowed");
+          btn.classList.remove("bg-indigo-600", "hover:bg-indigo-700");
+          btn.textContent = "Submitted";
+        }
       } catch (err) {
         console.error("Error submitting no-show", err);
       }
     }
     alert("All no-shows submitted!");
-    await loadReportCardTasks(); // refresh lista
   }
 });
 
@@ -1172,7 +1189,7 @@ reportCardForm.addEventListener('submit', async (e) => {
   const table = document.getElementById('reportCardCallsTable');
   const tbody = document.getElementById('reportCardCallsTableBody');
   table.classList.remove('hidden');
-  tbody.innerHTML = '<tr><td colspan="2" class="text-center p-4">Loading...</td></tr>';
+  tbody.innerHTML = `<tr><td colspan="2">${loaderHTML("Loading calls...")}</td></tr>`;
 
   try {
     const resp = await apiGet('getStudentCallsForMonth', { studentId, coachId: CURRENT_COACH_ID });
