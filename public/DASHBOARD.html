@@ -1066,8 +1066,13 @@ async function loadReportCardTasks() {
 
 async function loadReportCardDrafts() {
   try {
-    // Sezione Your Drafts rimossa → non facciamo nulla
-    LAST_DRAFTS = [];
+    const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
+    if (!resp.success) throw new Error(resp.error || 'Unable to load drafts.');
+
+    // salviamo i drafts in memoria per il prefill
+    LAST_DRAFTS = resp.drafts || [];
+
+    // non mostriamo più nulla nell’interfaccia
     reportCardDraftsContainer.innerHTML = '';
   } catch (err) {
     reportCardDraftsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
