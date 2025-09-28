@@ -930,16 +930,24 @@ async function loadReportCardTasks() {
     } else {
       let html = '<h3 class="text-xl font-semibold text-gray-800">Tasks</h3><div class="grid gap-4">';
       tasks.forEach(t => {
+        const isDrafted = t.alreadyDrafted;
+        const disabledAttr = isDrafted ? "disabled" : "";
+        const btnClass = isDrafted
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-blue-600 hover:bg-blue-700";
+        const btnLabel = isDrafted ? "Draft" : "Write Report";
+
         html += `
           <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
             <h3 class="text-lg font-semibold text-gray-800">${t.name} ${t.surname} (${t.studentId})</h3>
             <p class="text-gray-600"><strong>Cadency:</strong> ${t.cadencyMonths} month(s)</p>
             <p class="text-gray-600"><strong>Calls:</strong> ${t.calls}</p>
             <button 
-              class="writeReportBtn mt-3 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+              class="writeReportBtn mt-3 text-white px-4 py-2 rounded-lg ${btnClass}"
               data-student="${t.studentId}" 
-              data-contract="${t.contractId}">
-              Write Report
+              data-contract="${t.contractId}"
+              ${disabledAttr}>
+              ${btnLabel}
             </button>
           </div>
         `;
@@ -993,7 +1001,6 @@ async function loadReportCardTasks() {
     reportCardsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
   }
 }
-
 
 // carica drafts
 async function loadReportCardDrafts() {
