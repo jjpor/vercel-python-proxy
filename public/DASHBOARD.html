@@ -246,6 +246,20 @@
     </button>
   </form>
 
+  <div id="reportCardCallsTable" class="mt-6 hidden">
+  <h3 class="text-lg font-semibold text-gray-800 mb-2">Calls this month</h3>
+  <table class="min-w-full border border-gray-200 rounded-xl">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="px-4 py-2 border">Date</th>
+        <th class="px-4 py-2 border">Attendance</th>
+      </tr>
+    </thead>
+    <tbody id="reportCardCallsTableBody"></tbody>
+  </table>
+</div>
+
+
   <div id="reportCardMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
 </div>
 
@@ -1009,6 +1023,8 @@ document.addEventListener('click', (e) => {
     }
 
     switchSection(reportCardFormSection);
+    // 👇 carica calls tabella
+    loadStudentCallsForMonth(studentId);
   }
 });
 
@@ -1101,6 +1117,37 @@ reportCardForm.addEventListener('submit', async (e) => {
     }
   });
 
+  async function loadStudentCallsForMonth(studentId) {
+  const table = document.getElementById('reportCardCallsTable');
+  const tbody = document.getElementById('reportCardCallsTableBody');
+  table.classList.remove('hidden');
+  tbody.innerHTML = '<tr><td colspan="2" class="text-center p-4">Loading...</td></tr>';
+
+  try {
+    const resp = await apiGet('getStudentCallsForMonth', { studentId, coachId: CURRENT_COACH_ID });
+    if (!resp.success) throw new Error(resp.error || 'Unable to load calls');
+
+    const calls = resp.calls || [];
+    if (!calls.length) {
+      tbody.innerHTML = '<tr><td colspan="2" class="text-center p-4">No calls this month</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = '';
+    calls.forEach(c => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="border px-4 py-2">${c.date}</td>
+        <td class="border px-4 py-2">${c.attendance}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="2" class="text-red-500 text-center p-4">Error: ${err.message}</td></tr>`;
+  }
+}
+
+  
 </script>
 </body>
 </html>
