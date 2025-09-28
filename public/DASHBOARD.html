@@ -950,7 +950,6 @@ callTypeRadios.forEach(radio => {
 // --- Report Cards
 const reportCardsSection = document.getElementById('reportCardsSection');
 const reportCardsContainer = document.getElementById('reportCardsContainer');
-const reportCardDraftsContainer = document.getElementById('reportCardDraftsContainer');
 const reportCardNoShowsContainer = document.getElementById('reportCardNoShowsContainer');
 const reportCardFormSection = document.getElementById('reportCardFormSection');
 const reportCardForm = document.getElementById('reportCardForm');
@@ -1065,42 +1064,23 @@ async function loadReportCardTasks() {
   }
 }
 
-// carica drafts
 async function loadReportCardDrafts() {
-  reportCardDraftsContainer.innerHTML = loaderHTML("Loading drafts...");
   try {
-    const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
-    if (!resp.success) throw new Error(resp.error || 'Unable to load drafts.');
-    const drafts = resp.drafts || [];
-
+    // Sezione Your Drafts rimossa → non facciamo nulla
+    const drafts = [];
+    reportCardDraftsContainer.innerHTML = '';
+  } catch (err) {
+    reportCardDraftsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
+  }
+}
     LAST_DRAFTS = drafts;
     
     if (!drafts.length) {
       reportCardDraftsContainer.innerHTML = '<p class="text-gray-500 text-center">No drafts yet.</p>';
       return;
     }
+reportCardDraftsContainer.innerHTML = '';
 
-    let html = '<h3 class="text-xl font-semibold text-gray-800">Your Drafts</h3><div class="grid gap-4">';
-    drafts.forEach(d => {
-      html += `
-        <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
-          <div class="flex justify-between">
-            <div>
-              <p class="font-semibold text-gray-800">${d.name} ${d.surname} (${d.studentId})</p>
-              <p class="text-gray-600 text-sm">${d.dateISO || ''} • Attendance: ${d.attendance || '-'}</p>
-              <p class="text-gray-600 text-sm mt-1">${(d.report || '').substring(0,100)}${d.report && d.report.length>100?'…':''}</p>
-            </div>
-            <button class="editDraftBtn bg-indigo-600 text-white px-3 py-1 rounded" 
-              data-student="${d.studentId}" 
-              data-contract="${d.contractId}">
-              Edit
-            </button>
-          </div>
-        </div>
-      `;
-    });
-    html += '</div>';
-    reportCardDraftsContainer.innerHTML = html;
   } catch (err) {
     reportCardDraftsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
   }
@@ -1204,7 +1184,6 @@ reportCardForm.addEventListener('submit', async (e) => {
     setTimeout(() => {
       switchSection(reportCardsSection);
       loadReportCardTasks();
-      loadReportCardDrafts();
     }, 1200);
   } catch (err) {
     showMessage(reportCardMessageBox, err.message, false);
