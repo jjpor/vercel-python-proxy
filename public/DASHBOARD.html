@@ -244,31 +244,66 @@
     <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700">
       Save Draft
     </button>
+
+    <!-- ✅ messaggio ora subito sotto al bottone -->
+    <div id="reportCardMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
   </form>
 
+  <!-- tabella chiamate -->
   <div id="reportCardCallsTable" class="mt-6 hidden">
-  <h3 class="text-lg font-semibold text-gray-800 mb-2">Calls this month</h3>
-  <table class="min-w-full border border-gray-200 rounded-xl">
-    <thead class="bg-gray-100">
-      <tr>
-        <th class="px-4 py-2 border">Date</th>
-        <th class="px-4 py-2 border">Attendance</th>
-      </tr>
-    </thead>
-    <tbody id="reportCardCallsTableBody"></tbody>
-  </table>
+    <h3 class="text-lg font-semibold text-gray-800 mb-2">Calls this month</h3>
+    <table class="min-w-full border border-gray-200 rounded-xl">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 border">Date</th>
+          <th class="px-4 py-2 border">Attendance</th>
+        </tr>
+      </thead>
+      <tbody id="reportCardCallsTableBody"></tbody>
+    </table>
+  </div>
 </div>
-
-
-  <div id="reportCardMessageBox" class="mt-4 p-4 rounded-xl text-center hidden"></div>
-</div>
-
-  
-
-</div>
-  
 
 <script>
+  // back dal form
+  backToReportCardsBtn.addEventListener('click', () => {
+    reportCardForm.reset();
+    document.getElementById('reportCardCallsTable').classList.add('hidden');
+    switchSection(reportCardsSection);
+  });
+
+  // submit draft
+  reportCardForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMessage(reportCardMessageBox);
+
+    const payload = {
+      studentId: document.getElementById('rcStudentId').value,
+      contractId: document.getElementById('rcContractId').value,
+      coachId: CURRENT_COACH_ID,
+      attendance: document.getElementById('rcAttendance').value,
+      report: document.getElementById('rcReport').value
+    };
+
+    try {
+      const resp = await apiPost('submitReportCard', payload);
+      if (!resp.success) throw new Error(resp.error || 'Error saving report.');
+      showMessage(reportCardMessageBox, 'Report card saved as draft!', true);
+
+      setTimeout(() => {
+        reportCardForm.reset();
+        document.getElementById('reportCardCallsTable').classList.add('hidden');
+        switchSection(reportCardsSection);
+        loadReportCardTasks();
+        loadReportCardDrafts();
+      }, 1200);
+    } catch (err) {
+      showMessage(reportCardMessageBox, err.message, false);
+    }
+  });
+</script>
+
+  <script>
   // API proxy
   const base_url = "https://vercel-python-proxy.vercel.app/api";
   const deployment_id = "AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD";
