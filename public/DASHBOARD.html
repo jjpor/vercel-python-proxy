@@ -366,8 +366,23 @@ const historyMonthSelect = document.getElementById('historyMonth');
   // Helpers UI
   function showMessage(box, message, isSuccess = true) {
     box.textContent = message;
-    box.className = 'mt-4 p-4 rounded-xl text-center block ' + (isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+    box.className = 'mt-4 p-4 rounded-xl text-center block ' + (isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');  
   }
+
+  function toggleNoShow() {
+  const list = document.getElementById('noShowStudentsList');
+  const chev = document.getElementById('noShowChevron');
+  if (!list) return;
+
+  list.classList.toggle('hidden');
+
+  if (chev) {
+    const collapsed = list.classList.contains('hidden');
+    chev.style.transform = collapsed ? 'rotate(-90deg)' : 'rotate(0deg)';
+  }
+}
+
+    
   function hideMessage(box) {
     box.textContent = '';
     box.className = 'mt-4 p-4 rounded-xl text-center hidden';
@@ -1002,14 +1017,19 @@ async function loadReportCardTasks() {
     // --- no-shows come già gestiti ---
     if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
       let html = `
-        <div class="flex items-center justify-between mb-2">
-          <h3 class="text-xl font-semibold text-red-600">No-show Students</h3>
-          <button id="submitAllNoShowsBtn" 
-            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-            Submit All
-          </button>
-        </div>
-        <div class="grid gap-4">`;
+  <div class="flex items-center justify-between mb-2">
+    <button id="toggleNoShowsBtn" type="button"
+      class="flex items-center gap-2 cursor-pointer select-none"
+      onclick="toggleNoShow()">
+      <h3 class="text-xl font-semibold text-red-600">No-show Students</h3>
+      <span id="noShowChevron" class="inline-block transform transition-transform">▼</span>
+    </button>
+    <button id="submitAllNoShowsBtn"
+      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+      Submit All
+    </button>
+  </div>
+  <div id="noShowStudentsList" class="grid gap-4">`;
 
       resp.noShows.forEach(ns => {
         const isSubmitted = ns.alreadySubmitted;
