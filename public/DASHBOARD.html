@@ -936,20 +936,36 @@ async function loadReportCardTasks() {
     }
 
     // mostra no-shows solo a Head Coach
-    if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
-      let html = '<h3 class="text-xl font-semibold text-red-600">No-show Students</h3><div class="grid gap-4">';
-      resp.noShows.forEach(ns => {
-        html += `
-          <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
-            <p class="font-semibold">${ns.name} ${ns.surname} (${ns.studentId}) — Contract ${ns.contractId}</p>
-            <p class="text-gray-600">Cadency: ${ns.cadencyMonths} month(s)</p>
-          </div>
-        `;
-      });
-      html += '</div>';
-      reportCardNoShowsContainer.innerHTML = html;
-      reportCardNoShowsContainer.classList.remove('hidden');
-    }
+if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
+  let html = `
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-xl font-semibold text-red-600">No-show Students</h3>
+      <button id="submitAllNoShowsBtn" 
+        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+        Submit All
+      </button>
+    </div>
+    <div class="grid gap-4">`;
+
+  resp.noShows.forEach(ns => {
+    html += `
+      <div class="p-4 bg-white rounded-xl shadow border border-gray-200 flex justify-between items-center">
+        <div>
+          <p class="font-semibold">${ns.name} ${ns.surname} (${ns.studentId}) — Contract ${ns.contractId}</p>
+          <p class="text-gray-600">Cadency: ${ns.cadencyMonths} month(s)</p>
+        </div>
+        <button 
+          class="submitNoShowBtn bg-indigo-600 text-white px-3 py-1 rounded"
+          data-student="${ns.studentId}"
+          data-contract="${ns.contractId}">
+          Submit
+        </button>
+      </div>`;
+  });
+  html += '</div>';
+  reportCardNoShowsContainer.innerHTML = html;
+  reportCardNoShowsContainer.classList.remove('hidden');
+}
 
   } catch (err) {
     reportCardsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
@@ -997,6 +1013,41 @@ async function loadReportCardDrafts() {
   }
 }
 
+// submit single no-show
+document.addEventListener('click', async (e) => {
+  if (e.target.classList.contains('submitNoShowBtn')) {
+    const studentId = e.target.dataset.student;
+    const contractId = e.target.dataset.contract;
+    try {
+      const resp = await apiPost('submitNoShow', { studentId, contractId, coachId: CURRENT_COACH_ID });
+      if (!resp.success) throw new Error(resp.error || "Failed to submit no-show");
+      alert(`No-show submitted for ${studentId}`);
+      await loadReportCardTasks(); // refresh lista
+    } catch (err) {
+      alert("Error: " + err.message);
+    }
+  }
+});
+
+// submit all no-shows
+document.addEventListener('click', async (e) => {
+  if (e.target.id === 'submitAllNoShowsBtn') {
+    const buttons = document.querySelectorAll('.submitNoShowBtn');
+    for (const btn of buttons) {
+      const studentId = btn.dataset.student;
+      const contractId = btn.dataset.contract;
+      try {
+        await apiPost('submitNoShow', { studentId, contractId, coachId: CURRENT_COACH_ID });
+      } catch (err) {
+        console.error("Error submitting no-show", err);
+      }
+    }
+    alert("All no-shows submitted!");
+    await loadReportCardTasks(); // refresh lista
+  }
+});
+
+  
 // click write/edit
 document.addEventListener('click', (e) => {
   if (e.target.classList.contains('writeReportBtn') || e.target.classList.contains('editDraftBtn')) {
