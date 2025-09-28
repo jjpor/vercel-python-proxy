@@ -337,6 +337,19 @@ const historyMonthSelect = document.getElementById('historyMonth');
     box.textContent = '';
     box.className = 'mt-4 p-4 rounded-xl text-center hidden';
   }
+
+  function loaderHTML(message = "Loading...") {
+  return `
+    <div class="flex flex-col items-center justify-center py-4 text-gray-500">
+      <div class="spinner-container mb-2">
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+      </div>
+      <p>${message}</p>
+    </div>
+  `;
+}
   
 function switchSection(showEl) {
   [
