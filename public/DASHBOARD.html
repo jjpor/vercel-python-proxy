@@ -387,15 +387,22 @@ const historyMonthSelect = document.getElementById('historyMonth');
 }
   
 function switchSection(showEl) {
-  [
+  const sections = [
     loginSection,
     dashboardSection,
     callSection,
     callHistorySection,
-    reportCardsSection
-  ].forEach(el => el.classList.add('hidden'));
+    reportCardsSection,
+    document.getElementById('reportCardFormSection') // 👈 nasconde anche il form
+  ].filter(Boolean);
+
+  sections.forEach(el => el.classList.add('hidden'));
   showEl.classList.remove('hidden');
+
+  // opzionale: scroll top quando apro una sezione nuova
+  window.scrollTo({ top: 0, behavior: 'instant' });
 }
+
 
   // API helpers
   async function apiGet(action, params = {}) {
@@ -947,6 +954,9 @@ document.getElementById('backToDashboardFromReportsBtn').addEventListener('click
 });
 
 backToReportCardsBtn.addEventListener('click', () => {
+  reportCardForm.reset();
+  const callsTable = document.getElementById('reportCardCallsTable');
+  if (callsTable) callsTable.classList.add('hidden');
   switchSection(reportCardsSection);
 });
 
@@ -1128,35 +1138,30 @@ document.addEventListener('click', async (e) => {
 });
 
   
-// click write/edit
+// click write/edit (prefill sempre se esiste una bozza)
 document.addEventListener('click', (e) => {
-  if (e.target.classList.contains('writeReportBtn') || e.target.classList.contains('editDraftBtn')) {
-    const studentId = e.target.dataset.student;
-    const contractId = e.target.dataset.contract;
+  if (!(e.target.classList.contains('writeReportBtn') || e.target.classList.contains('editDraftBtn'))) return;
 
-    document.getElementById('rcStudentId').value = studentId;
-    document.getElementById('rcContractId').value = contractId;
-    document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
+  const studentId = e.target.dataset.student;
+  const contractId = e.target.dataset.contract;
 
-    // se è edit, recupera bozza
-    if (e.target.classList.contains('editDraftBtn')) {
-      const draft = (LAST_DRAFTS || []).find(x => x.studentId === studentId && x.contractId === contractId);
-      if (draft) {
-        document.getElementById('rcAttendance').value = draft.attendance || '';
-        document.getElementById('rcReport').value = draft.report || '';
-      }
-    } else {
-      // reset per nuova bozza
-      reportCardForm.reset();
-      document.getElementById('rcStudentId').value = studentId;
-      document.getElementById('rcContractId').value = contractId;
-      document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
-    }
+  // reset base
+  reportCardForm.reset();
+  document.getElementById('rcStudentId').value = studentId;
+  document.getElementById('rcContractId').value = contractId;
+  document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
 
-    switchSection(reportCardFormSection);
-    // 👇 carica calls tabella
-    loadStudentCallsForMonth(studentId);
+  // prefill se esiste in LAST_DRAFTS (indipendentemente dal bottone)
+  const existing = (LAST_DRAFTS || []).find(d => d.studentId === studentId && d.contractId === contractId);
+  if (existing) {
+    document.getElementById('rcAttendance').value = existing.attendance || '';
+    document.getElementById('rcReport').value = existing.report || '';
   }
+
+  // nascondi eventuale tabella visibile da prima
+  document.getElementById('reportCardCallsTable').classList.add('hidden');
+  switchSection(document.getElementById('reportCardFormSection'));
+  loadStudentCallsForMonth(studentId);
 });
 
 // submit report card
