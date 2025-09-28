@@ -949,41 +949,51 @@ async function loadReportCardTasks() {
     }
 
     // mostra no-shows solo a Head Coach
-if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
-  let html = `
-    <div class="flex items-center justify-between mb-2">
-      <h3 class="text-xl font-semibold text-red-600">No-show Students</h3>
-      <button id="submitAllNoShowsBtn" 
-        class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-        Submit All
-      </button>
-    </div>
-    <div class="grid gap-4">`;
-
-  resp.noShows.forEach(ns => {
-    html += `
-      <div class="p-4 bg-white rounded-xl shadow border border-gray-200 flex justify-between items-center">
-        <div>
-          <p class="font-semibold">${ns.name} ${ns.surname} (${ns.studentId}) — Contract ${ns.contractId}</p>
-          <p class="text-gray-600">Cadency: ${ns.cadencyMonths} month(s)</p>
+    if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
+      let html = `
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="text-xl font-semibold text-red-600">No-show Students</h3>
+          <button id="submitAllNoShowsBtn" 
+            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+            Submit All
+          </button>
         </div>
-        <button 
-          class="submitNoShowBtn bg-indigo-600 text-white px-3 py-1 rounded"
-          data-student="${ns.studentId}"
-          data-contract="${ns.contractId}">
-          Submit
-        </button>
-      </div>`;
-  });
-  html += '</div>';
-  reportCardNoShowsContainer.innerHTML = html;
-  reportCardNoShowsContainer.classList.remove('hidden');
-}
+        <div class="grid gap-4">`;
+
+      resp.noShows.forEach(ns => {
+        const isSubmitted = ns.alreadySubmitted;
+        const disabledAttr = isSubmitted ? "disabled" : "";
+        const btnClass = isSubmitted
+          ? "bg-gray-400 cursor-not-allowed"
+          : "bg-indigo-600 hover:bg-indigo-700";
+        const btnLabel = isSubmitted ? "Submitted" : "Submit";
+
+        html += `
+          <div class="p-4 bg-white rounded-xl shadow border border-gray-200 flex justify-between items-center">
+            <div>
+              <p class="font-semibold">${ns.name} ${ns.surname} (${ns.studentId}) — Contract ${ns.contractId}</p>
+              <p class="text-gray-600">Cadency: ${ns.cadencyMonths} month(s)</p>
+            </div>
+            <button 
+              class="submitNoShowBtn text-white px-3 py-1 rounded ${btnClass}"
+              data-student="${ns.studentId}"
+              data-contract="${ns.contractId}"
+              ${disabledAttr}>
+              ${btnLabel}
+            </button>
+          </div>`;
+      });
+
+      html += '</div>';
+      reportCardNoShowsContainer.innerHTML = html;
+      reportCardNoShowsContainer.classList.remove('hidden');
+    }
 
   } catch (err) {
     reportCardsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
   }
 }
+
 
 // carica drafts
 async function loadReportCardDrafts() {
