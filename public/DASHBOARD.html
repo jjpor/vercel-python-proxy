@@ -1067,25 +1067,12 @@ async function loadReportCardTasks() {
 async function loadReportCardDrafts() {
   try {
     // Sezione Your Drafts rimossa → non facciamo nulla
-    const drafts = [];
+    LAST_DRAFTS = [];
     reportCardDraftsContainer.innerHTML = '';
   } catch (err) {
     reportCardDraftsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
   }
 }
-    LAST_DRAFTS = drafts;
-    
-    if (!drafts.length) {
-      reportCardDraftsContainer.innerHTML = '<p class="text-gray-500 text-center">No drafts yet.</p>';
-      return;
-    }
-reportCardDraftsContainer.innerHTML = '';
-
-  } catch (err) {
-    reportCardDraftsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
-  }
-}
-
 // submit single no-show
 document.addEventListener('click', async (e) => {
   if (e.target.classList.contains('submitNoShowBtn')) {
