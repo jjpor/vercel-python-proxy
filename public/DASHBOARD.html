@@ -69,6 +69,9 @@ async function handleGoogleLogin(response) {
     return;
   }
 
+    console.log("DEBUG from backend:", resp.debugEmail, resp.debugRow);
+    alert("Email da Google: " + resp.debugEmail + "\nRiga trovata: " + resp.debugRow);
+
   document.getElementById('googleLoginContainer').classList.add('hidden');
 
   CURRENT_COACH_ID = resp.coachId;
