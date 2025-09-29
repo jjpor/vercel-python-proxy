@@ -293,6 +293,8 @@ async function handleGoogleLogin(response) {
     <input type="hidden" id="rcStudentId" name="studentId">
     <input type="hidden" id="rcContractId" name="contractId">
     <input type="hidden" id="rcCoachId" name="coachId">
+    <input type="hidden" id="rcStudentName" name="studentName">
+
 
     <div>
       <label class="form-label block mb-2">Attendance</label>
@@ -308,6 +310,16 @@ async function handleGoogleLogin(response) {
     <div>
       <label class="form-label block mb-2">Report</label>
       <textarea id="rcReport" class="form-input" rows="6" placeholder="Write your notes here..." required></textarea>
+      <div class="flex flex-wrap gap-2 mt-2">
+  <button type="button" id="aiSuggestBtn" class="bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700">
+    ✨ Suggest text
+  </button>
+  <button type="button" id="aiRefineBtn" class="bg-gray-600 text-white px-3 py-1 rounded-lg hover:bg-gray-700">
+    📝 Refine current text
+  </button>
+</div>
+<p id="aiHelperMsg" class="mt-2 text-sm text-gray-500"></p>
+
     </div>
 
     <button type="submit" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700">
@@ -1072,12 +1084,13 @@ async function loadReportCardTasks() {
             <h3 class="text-lg font-semibold text-gray-800">${t.name} ${t.surname} (${t.studentId})</h3>
             <p class="text-gray-600"><strong>Cadency:</strong> ${t.cadencyMonths} month(s)</p>
             <p class="text-gray-600"><strong>Calls:</strong> ${t.calls}</p>
-            <button 
-              class="writeReportBtn mt-3 text-white px-4 py-2 rounded-lg ${btnClass}"
-              data-student="${t.studentId}" 
-              data-contract="${t.contractId}">
-              ${btnLabel}
-            </button>
+              <button 
+                class="writeReportBtn mt-3 text-white px-4 py-2 rounded-lg ${btnClass}"
+                data-student="${t.studentId}" 
+                data-contract="${t.contractId}"
+                data-student-name="${t.name} ${t.surname}">
+                ${btnLabel}
+              </button>
           </div>
         `;
       });
@@ -1214,6 +1227,7 @@ document.addEventListener('click', (e) => {
   document.getElementById('rcStudentId').value = studentId;
   document.getElementById('rcContractId').value = contractId;
   document.getElementById('rcCoachId').value = CURRENT_COACH_ID;
+  document.getElementById('rcStudentName').value = e.target.dataset.studentName || '';
 
   // prefill se esiste in LAST_DRAFTS (indipendentemente dal bottone)
   const existing = (LAST_DRAFTS || []).find(d => d.studentId === studentId && d.contractId === contractId);
@@ -1345,6 +1359,85 @@ reportCardForm.addEventListener('submit', async (e) => {
     tbody.innerHTML = `<tr><td colspan="2" class="text-red-500 text-center p-4">Error: ${err.message}</td></tr>`;
   }
 }
+
+    // ---- AI helper for Report Card ----
+(function setupAIHelper(){
+  const suggestBtn = document.getElementById('aiSuggestBtn');
+  const refineBtn  = document.getElementById('aiRefineBtn');
+  const msg        = document.getElementById('aiHelperMsg');
+  const textarea   = document.getElementById('rcReport');
+
+  if (!suggestBtn || !refineBtn || !textarea) return;
+
+  function setBusy(el, busyText) {
+    el.dataset._orig = el.textContent;
+    el.disabled = true;
+    el.textContent = busyText;
+    if (msg) msg.textContent = '';
+  }
+  function unsetBusy(el) {
+    el.disabled = false;
+    el.textContent = el.dataset._orig || el.textContent;
+  }
+
+  async function callAI(actionPayload){
+    // chiama il backend Apps Script tramite il tuo apiPost esistente
+    const resp = await apiPost('generateReportCardText', actionPayload);
+    if (!resp || !resp.success) throw new Error(resp?.error || 'Generation failed');
+    return resp.suggestion || '';
+  }
+
+  suggestBtn.addEventListener('click', async () => {
+    setBusy(suggestBtn, 'Generating...');
+    try {
+      const studentId   = document.getElementById('rcStudentId').value;
+      const studentName = document.getElementById('rcStudentName').value || 'Student';
+      const attendance  = document.getElementById('rcAttendance').value || '';
+      const coachId     = CURRENT_COACH_ID;
+
+      const suggestion = await callAI({
+        mode: 'suggest',
+        studentId, studentName, attendance, coachId
+      });
+
+      textarea.value = suggestion || textarea.value;
+      if (msg) msg.textContent = '✅ Suggestion inserted.';
+    } catch (err) {
+      if (msg) msg.textContent = '❌ ' + (err?.message || 'Error generating text');
+    } finally {
+      unsetBusy(suggestBtn);
+    }
+  });
+
+  refineBtn.addEventListener('click', async () => {
+    setBusy(refineBtn, 'Refining...');
+    try {
+      const studentId   = document.getElementById('rcStudentId').value;
+      const studentName = document.getElementById('rcStudentName').value || 'Student';
+      const coachId     = CURRENT_COACH_ID;
+      const currentText = textarea.value;
+
+      if (!currentText || !currentText.trim()) {
+        if (msg) msg.textContent = 'ℹ️ Nothing to refine. Write something first or use “Suggest text”.';
+        unsetBusy(refineBtn);
+        return;
+      }
+
+      const refined = await callAI({
+        mode: 'refine',
+        studentId, studentName, coachId,
+        currentText
+      });
+
+      if (refined) textarea.value = refined;
+      if (msg) msg.textContent = '✅ Text refined.';
+    } catch (err) {
+      if (msg) msg.textContent = '❌ ' + (err?.message || 'Error refining text');
+    } finally {
+      unsetBusy(refineBtn);
+    }
+  });
+})();
 
   
 </script>
