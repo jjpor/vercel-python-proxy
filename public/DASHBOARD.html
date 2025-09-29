@@ -220,23 +220,30 @@ async function handleGoogleLogin(response) {
     <h1 class="text-3xl font-bold text-gray-800">Call History</h1>
     <p class="mt-2 text-gray-500">Your logged calls</p>
   </div>
-  <div class="mb-4">
-  <label for="historyMonth" class="mr-2 font-medium">Filter by month:</label>
-  <select id="historyMonth" class="form-input w-auto inline-block">
-    <option value="all">All</option>
-    <option value="0">January</option>
-    <option value="1">February</option>
-    <option value="2">March</option>
-    <option value="3">April</option>
-    <option value="4">May</option>
-    <option value="5">June</option>
-    <option value="6">July</option>
-    <option value="7">August</option>
-    <option value="8">September</option>
-    <option value="9">October</option>
-    <option value="10">November</option>
-    <option value="11">December</option>
-  </select>
+<div class="flex items-center justify-between mb-4 gap-4">
+  <div class="flex items-center">
+    <label for="historyMonth" class="mr-2 font-medium">Filter by month:</label>
+    <select id="historyMonth" class="form-input w-auto inline-block">
+      <option value="all">All</option>
+      <option value="0">January</option>
+      <option value="1">February</option>
+      <option value="2">March</option>
+      <option value="3">April</option>
+      <option value="4">May</option>
+      <option value="5">June</option>
+      <option value="6">July</option>
+      <option value="7">August</option>
+      <option value="8">September</option>
+      <option value="9">October</option>
+      <option value="10">November</option>
+      <option value="11">December</option>
+    </select>
+  </div>
+
+  <button id="backFromCallHistoryBtn"
+    class="bg-gray-400 text-white py-2 px-6 rounded-lg hover:bg-gray-500">
+    Back to Dashboard
+  </button>
 </div>
 
   <div class="overflow-x-auto">
@@ -252,7 +259,6 @@ async function handleGoogleLogin(response) {
       <tbody id="callHistoryTableBody"></tbody>
     </table>
   </div>
-  <button id="backFromCallHistoryBtn" class="mt-4 bg-gray-400 text-white py-2 px-6 rounded-lg hover:bg-gray-500">Back to Dashboard</button>
 </div>
 
 <!-- REPORT CARDS SECTION -->
