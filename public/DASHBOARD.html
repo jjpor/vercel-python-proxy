@@ -25,22 +25,24 @@
 <div class="container bg-white p-8 md:p-12 rounded-2xl shadow-xl space-y-8 border border-gray-200">
 
 <!-- GOOGLE AUTH -->
-  
-<div id="g_id_onload"
-     data-client_id="591463114023-slvj8b5v9c8ttfbaal9g7l0nq0iq4q7e.apps.googleusercontent.com"
-     data-context="signin"
-     data-ux_mode="popup"
-     data-callback="handleGoogleLogin">
+<div id="googleLoginContainer" class="flex justify-center">
+  <div id="g_id_onload"
+       data-client_id="591463114023-slvj8b5v9c8ttfbaal9g7l0nq0iq4q7e.apps.googleusercontent.com"
+       data-context="signin"
+       data-ux_mode="popup"
+       data-callback="handleGoogleLogin">
+  </div>
+
+  <div class="g_id_signin"
+       data-type="standard"
+       data-shape="rectangular"
+       data-theme="outline"
+       data-text="signin_with"
+       data-size="large"
+       data-logo_alignment="left">
+  </div>
 </div>
 
-<div class="g_id_signin"
-     data-type="standard"
-     data-shape="rectangular"
-     data-theme="outline"
-     data-text="signin_with"
-     data-size="large"
-     data-logo_alignment="left">
-</div>
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
@@ -51,6 +53,9 @@ async function handleGoogleLogin(response) {
     alert("Google login fallito: " + resp.error);
     return;
   }
+
+  document.getElementById('googleLoginContainer').classList.add('hidden');
+  
   CURRENT_COACH_ID = resp.coachId;
   CURRENT_COACH_NAME = resp.coachName;
   CURRENT_COACH_ROLE = resp.rateRole;
@@ -531,6 +536,9 @@ function switchSection(showEl) {
       switchSection(dashboardSection);
       await fetchMonthlyEarnings();
       await loadStudentIds();
+
+      document.getElementById('googleLoginContainer').classList.add('hidden');
+      
     } catch (err) {
       showMessage(loginMessageBox, err.message || String(err), false);
     } finally {
