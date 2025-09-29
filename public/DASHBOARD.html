@@ -24,6 +24,61 @@
     .spinner-dot:nth-child(2){ animation-delay:.1s; }
     .spinner-dot:nth-child(3){ animation-delay:.2s; }
     @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-10px);} }
+      /* --- DARK MODE OVERRIDES --- */
+  .dark body {
+    background: #111827; /* sfondo principale */
+  }
+
+  .dark .container {
+    background: #1f2937; /* dark:bg-gray-800 */
+    border-color: #374151; /* dark:border-gray-700 */
+  }
+
+  /* testi principali */
+  .dark h1,
+  .dark h2,
+  .dark h3,
+  .dark h4,
+  .dark p,
+  .dark label,
+  .dark th,
+  .dark td {
+    color: #f3f4f6 !important; /* testo chiaro */
+  }
+
+  /* testi secondari (grigi chiari) */
+  .dark .text-gray-500,
+  .dark .text-gray-600,
+  .dark .form-label {
+    color: #9ca3af !important;
+  }
+
+  /* box input */
+  .dark .form-input {
+    background: #111827;
+    color: #f3f4f6;
+    border-color: #374151;
+  }
+
+  .dark .form-input:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59,130,246,.5);
+  }
+
+  /* tabella */
+  .dark thead {
+    background: #374151;
+  }
+
+  .dark table {
+    border-color: #374151;
+  }
+
+  .dark td, 
+  .dark th {
+    border-color: #374151;
+  }
+
   </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 min-h-screen flex items-center justify-center p-4">
