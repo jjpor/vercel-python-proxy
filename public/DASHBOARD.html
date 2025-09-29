@@ -24,6 +24,44 @@
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
 <div class="container bg-white p-8 md:p-12 rounded-2xl shadow-xl space-y-8 border border-gray-200">
 
+<!-- GOOGLE AUTH -->
+  
+<div id="g_id_onload"
+     data-client_id="591463114023-slvj8b5v9c8ttfbaal9g7l0nq0iq4q7e.apps.googleusercontent.com"
+     data-context="signin"
+     data-ux_mode="popup"
+     data-callback="handleGoogleLogin">
+</div>
+
+<div class="g_id_signin"
+     data-type="standard"
+     data-shape="rectangular"
+     data-theme="outline"
+     data-text="signin_with"
+     data-size="large"
+     data-logo_alignment="left">
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script>
+async function handleGoogleLogin(response) {
+  const credential = response.credential; // token di Google
+  const resp = await apiPost("loginWithGoogle", { credential });
+  if (!resp.success) {
+    alert("Google login fallito: " + resp.error);
+    return;
+  }
+  CURRENT_COACH_ID = resp.coachId;
+  CURRENT_COACH_NAME = resp.coachName;
+  CURRENT_COACH_ROLE = resp.rateRole;
+  switchSection(dashboardSection);
+  await fetchMonthlyEarnings();
+  await loadStudentIds();
+}
+</script>
+
+  
+  
   <!-- LOGIN -->
   <div id="loginSection">
     <div class="text-center">
