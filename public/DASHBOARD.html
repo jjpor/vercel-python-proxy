@@ -1269,6 +1269,17 @@ document.addEventListener('click', (e) => {
 // submit report card
 reportCardForm.addEventListener('submit', async (e) => {
   e.preventDefault();
+
+    const submitBtn = reportCardForm.querySelector('button[type="submit"]');
+  const orig = submitBtn.innerHTML;
+  submitBtn.innerHTML = `
+    <div class="spinner-container">
+      <div class="spinner-dot"></div>
+      <div class="spinner-dot"></div>
+      <div class="spinner-dot"></div>
+    </div>`;
+  submitBtn.disabled = true;
+
   hideMessage(reportCardMessageBox);
 
   const payload = {
@@ -1281,6 +1292,8 @@ reportCardForm.addEventListener('submit', async (e) => {
 
   try {
     const resp = await apiPost('submitReportCard', payload);
+
+    
     if (!resp.success) throw new Error(resp.error || 'Error saving report.');
     showMessage(reportCardMessageBox, 'Report card saved as draft!', true);
     setTimeout(() => {
@@ -1289,9 +1302,47 @@ reportCardForm.addEventListener('submit', async (e) => {
     }, 1200);
   } catch (err) {
     showMessage(reportCardMessageBox, err.message, false);
+    // submit report card
+reportCardForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+    const submitBtn = reportCardForm.querySelector('button[type="submit"]');
+  const orig = submitBtn.innerHTML;
+  submitBtn.innerHTML = `
+    <div class="spinner-container">
+      <div class="spinner-dot"></div>
+      <div class="spinner-dot"></div>
+      <div class="spinner-dot"></div>
+    </div>`;
+  submitBtn.disabled = true;
+
+  hideMessage(reportCardMessageBox);
+
+  const payload = {
+    studentId: document.getElementById('rcStudentId').value,
+    contractId: document.getElementById('rcContractId').value,
+    coachId: CURRENT_COACH_ID,
+    attendance: document.getElementById('rcAttendance').value,
+    report: document.getElementById('rcReport').value
+  };
+
+  try {
+    const resp = await apiPost('submitReportCard', payload);
+
+    
+    if (!resp.success) throw new Error(resp.error || 'Error saving report.');
+    showMessage(reportCardMessageBox, 'Report card saved as draft!', true);
+    setTimeout(() => {
+      switchSection(reportCardsSection);
+      loadReportCardTasks();
+    }, 1200);
+  } catch (err) {
+    showMessage(reportCardMessageBox, err.message, false);
+  } finally {
+    submitBtn.innerHTML = orig;
+    submitBtn.disabled = false;
   }
 });
-
   
   // Submit call
   document.getElementById('callForm').addEventListener('submit', async (e) => {
