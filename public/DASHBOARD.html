@@ -726,12 +726,16 @@ function renderHistoryTable() {
       def.textContent = 'Select a student';
       studentIdSelect.appendChild(def);
 
+      // ordina alfabeticamente ignorando maiuscole/minuscole
+      arr.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+      
       arr.forEach(id => {
         const opt = document.createElement('option');
         opt.value = id;
         opt.textContent = id;
         studentIdSelect.appendChild(opt);
       });
+
       studentIdSelect.disabled = false;
     } catch (err) {
       studentIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
