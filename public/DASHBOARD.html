@@ -610,13 +610,52 @@ async function fetchAndRenderStudentDetails(studentId) {
     const calls = info.calls || [];
     delete info.calls;
 
-    // --- Link fields da trasformare in bottoni
-    const linkFields = {
-      "Quizlet Link": "Quizlet",
-      "Drive Folder Link": "Drive Folder",
-      "Homework File": "Homework",
-      "Lesson Plan File": "Lesson Plan"
+    // --- Link fields da trasformare in bottoni (con alias reali dallo sheet)
+    const linkFieldDefs = {
+      "Quizlet Link":       { label: "Quizlet",      aliases: ["Quizlet"] },
+      "Drive Folder Link":  { label: "Drive Folder", aliases: ["Drive"] },
+      "Homework File":      { label: "Homework",     aliases: ["Homework"] },
+      "Lesson Plan File":   { label: "Lesson Plan",  aliases: ["Lesson Plan"] }
     };
+    
+    // helper per rendere cliccabile anche link senza http/https
+    function normalizeUrl(u) {
+      if (!u) return "";
+      const s = String(u).trim();
+      if (!s) return "";
+      if (/^https?:\/\//i.test(s)) return s;
+      return "https://" + s;
+    }
+    
+    let buttonsHtml = "";
+    for (const [primaryKey, def] of Object.entries(linkFieldDefs)) {
+      // prova le chiavi in ordine: primaria + alias
+      const candidates = [primaryKey, ...(def.aliases || [])];
+      let value = "";
+      for (const k of candidates) {
+        const v = (info[k] || "").toString().trim();
+        if (v && v !== "N/A") { value = v; break; }
+      }
+      // elimina SEMPRE tutte le chiavi (così non compaiono nella tabella)
+      candidates.forEach(k => delete info[k]);
+    
+      if (value) {
+        const url = normalizeUrl(value);
+        buttonsHtml += `
+          <a href="${url}" target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center justify-center px-5 py-2 rounded-xl bg-blue-600 text-white shadow
+                    hover:bg-blue-700 active:scale-[.99] transition text-sm font-medium">
+            ${def.label}
+          </a>`;
+      } else {
+        buttonsHtml += `
+          <span class="inline-flex items-center justify-center px-5 py-2 rounded-xl bg-gray-200 text-gray-500 shadow-inner
+                       cursor-not-allowed text-sm font-medium">
+            ${def.label}
+          </span>`;
+      }
+    }
+
 
     let buttonsHtml = "";
     for (const [key, label] of Object.entries(linkFields)) {
@@ -684,11 +723,20 @@ async function fetchAndRenderStudentDetails(studentId) {
 
       // Report Card Cadency Months → "No report card" se vuoto/N.A.
       if (key === 'Report Card Cadency Months') {
-        const display = (value && value !== 'N/A') ? value : 'No report card';
+        const hasCadency = value && value !== 'N/A';
+        const display = hasCadency ? value : 'No report card';
+        const badgeClass = hasCadency
+          ? "bg-blue-100 text-blue-800"
+          : "bg-gray-200 text-gray-600";
+      
         detailsHtml += `
           <tr>
             <td class="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">${key}</td>
-            <td class="py-3 px-6 text-gray-800">${display}</td>
+            <td class="py-3 px-6">
+              <span class="px-3 py-1 rounded-full text-xs font-semibold ${badgeClass}">
+                ${display}
+              </span>
+            </td>
           </tr>`;
         continue;
       }
@@ -702,13 +750,14 @@ async function fetchAndRenderStudentDetails(studentId) {
     }
     detailsHtml += `</tbody></table></div>`;
 
-    // --- Se ci sono bottoni, aggiungili sotto la tabella
+    // --- Se ci sono bottoni, aggiungili sotto la tabella (centrati e responsive)
     if (buttonsHtml) {
       detailsHtml += `
-        <div class="mt-4 flex flex-wrap gap-3">
+        <div class="mt-6 flex flex-wrap items-center justify-center gap-3">
           ${buttonsHtml}
         </div>`;
     }
+
 
     // --- Call History (nuovo formato)
     detailsHtml += `<h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">Call History</h3>
@@ -724,22 +773,23 @@ async function fetchAndRenderStudentDetails(studentId) {
         </tr>
       </thead>
       <tbody>`;
+  
+  if (calls.length > 0) {
+    calls.forEach(c => {
+      detailsHtml += `
+        <tr class="border-b hover:bg-gray-50">
+          <td class="py-3 px-6">${c.date || 'N/A'}</td>
+          <td class="py-3 px-6">${c.productName || c.productId || '-'}</td>
+          <td class="py-3 px-6">${c.coachId || '-'}</td>
+          <td class="py-3 px-6">${c.duration || '-'}</td>
+          <td class="py-3 px-6">${c.attendance || '-'}</td>
+          <td class="py-3 px-6">${c.notes || ''}</td>
+        </tr>`;
+    });
+  } else {
+    detailsHtml += `<tr><td colspan="6" class="py-3 px-6 text-center text-gray-500">No calls found.</td></tr>`;
+  }
 
-    if (calls.length > 0) {
-      calls.forEach(c => {
-        detailsHtml += `
-          <tr>
-            <td class="py-3 px-6">${c.date || 'N/A'}</td>
-            <td class="py-3 px-6">${c.productName || c.productId || '-'}</td>
-            <td class="py-3 px-6">${c.coachId || '-'}</td>
-            <td class="py-3 px-6">${c.duration || '-'}</td>
-            <td class="py-3 px-6">${c.attendance || '-'}</td>
-            <td class="py-3 px-6">${c.notes || ''}</td>
-          </tr>`;
-      });
-    } else {
-      detailsHtml += `<tr><td colspan="6" class="py-3 px-6 text-center text-gray-500">No calls found.</td></tr>`;
-    }
 
     detailsHtml += `</tbody></table></div>`;
 
