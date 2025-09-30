@@ -958,18 +958,24 @@ function renderHistoryTable() {
 }
   
   // Logout
-  logoutBtn.addEventListener('click', () => {
-    CURRENT_COACH_ID = null;
-    CURRENT_COACH_NAME = null;
-    CURRENT_COACH_ROLE = null;
-    CURRENT_ALLOCATIONS_BY_STUDENT = {};
-    coachIdInput.value = "";
-    passwordInput.value = "";
-    // Clear persisted session
-localStorage.removeItem("coachSession");
-    switchSection(loginSection);
-    hideMessage(loginMessageBox);
-  });
+logoutBtn.addEventListener('click', () => {
+  CURRENT_COACH_ID = null;
+  CURRENT_COACH_NAME = null;
+  CURRENT_COACH_ROLE = null;
+  CURRENT_ALLOCATIONS_BY_STUDENT = {};
+  coachIdInput.value = "";
+  passwordInput.value = "";
+
+  // Clear persisted session
+  localStorage.removeItem("coachSession");
+
+  // 👇 Riporta visibile il bottone Google
+  document.getElementById('googleLoginContainer')?.classList.remove('hidden');
+
+  switchSection(loginSection);
+  hideMessage(loginMessageBox);
+});
+
 
   // Earnings
   async function fetchMonthlyEarnings() {
