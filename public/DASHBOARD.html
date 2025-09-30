@@ -168,6 +168,7 @@ async function handleGoogleLogin(response) {
         <p class="mt-2 text-4xl sm:text-5xl font-bold"><span id="earningsAmount">--</span>€</p>
       </div>
       <button id="logCallBtn" class="cube-button bg-green-600 text-white"><span class="text-4xl">📝</span><p class="mt-2 text-lg font-semibold">Log a new call</p></button>
+      <button id="viewCoachingDebriefBtn" class="cube-button bg-indigo-600 text-white">  <span class="text-4xl">📝</span>  <p class="mt-2 text-lg font-semibold">Coaching Debrief</p></button>
       <button id="viewStudentsBtn" class="cube-button bg-orange-600 text-white"><span class="text-4xl">🧑‍🎓</span><p class="mt-2 text-lg font-semibold">Students</p></button>
       <button id="viewFolderBtn" class="cube-button bg-gray-600 text-white"><span class="text-4xl">📂</span><p class="mt-2 text-lg font-semibold">My payment folder</p></button>
       <button id="viewCallLogBtn" class="cube-button bg-purple-600 text-white"><span class="text-4xl">📖</span><p class="mt-2 text-lg font-semibold">Call log</p></button>
@@ -289,6 +290,75 @@ async function handleGoogleLogin(response) {
     </div>
   </div>
 </div>
+
+<!-- Coaching Debrief -->
+<section id="coachingDebriefSection" class="hidden">
+  <div class="max-w-5xl mx-auto p-4 md:p-6">
+    <h2 class="text-2xl font-semibold mb-4">Coaching Debrief</h2>
+
+    <!-- Meta: Student + Date -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+      <div>
+        <label for="debriefStudentSelect" class="block text-sm font-medium mb-1">Student</label>
+        <select id="debriefStudentSelect" class="w-full border rounded-lg px-3 py-2">
+          <!-- verrà popolato via JS -->
+        </select>
+      </div>
+      <div>
+        <label for="debriefDateInput" class="block text-sm font-medium mb-1">Date</label>
+        <input id="debriefDateInput" type="date" class="w-full border rounded-lg px-3 py-2" />
+      </div>
+    </div>
+
+    <!-- Content blocks -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="space-y-4">
+        <div>
+          <label for="debriefGoals" class="block text-sm font-medium mb-1">Goals</label>
+          <textarea id="debriefGoals" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+        <div>
+          <label for="debriefTopics" class="block text-sm font-medium mb-1">Topics</label>
+          <textarea id="debriefTopics" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+        <div>
+          <label for="debriefGrammar" class="block text-sm font-medium mb-1">Grammar</label>
+          <textarea id="debriefGrammar" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+        <div>
+          <label for="debriefVocabulary" class="block text-sm font-medium mb-1">Vocabulary</label>
+          <textarea id="debriefVocabulary" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label for="debriefPronunciation" class="block text-sm font-medium mb-1">Pronunciation</label>
+          <textarea id="debriefPronunciation" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+        <div>
+          <label for="debriefOther" class="block text-sm font-medium mb-1">Other</label>
+          <textarea id="debriefOther" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+        <div>
+          <label for="debriefHomework" class="block text-sm font-medium mb-1">Homework</label>
+          <textarea id="debriefHomework" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex items-center gap-3 mt-6">
+      <button id="debriefSaveDraftBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:opacity-90">
+        Save Draft
+      </button>
+      <button id="debriefSendBtn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:opacity-90">
+        Send to Student
+      </button>
+      <span id="debriefMsg" class="ml-2 text-sm opacity-80"></span>
+    </div>
+  </div>
+</section>
 
   
   <!-- CALL HISTORY -->
