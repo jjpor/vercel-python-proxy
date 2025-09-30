@@ -19,9 +19,38 @@
     .spinner-dot:nth-child(2){ animation-delay:.1s; }
     .spinner-dot:nth-child(3){ animation-delay:.2s; }
     @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-10px);} }
+            /* Fullscreen overlay loader */
+        #globalLoader {
+          position: fixed;
+          inset: 0; /* top, right, bottom, left: 0 */
+          background: rgba(255,255,255,0.7); /* bianco semi-trasparente */
+          display: none; /* nascosto di default */
+          justify-content: center;
+          align-items: center;
+          z-index: 9999; /* sopra tutto */
+        }
+        
+        .loader-circle {
+          border: 6px solid #e5e7eb; /* grigino */
+          border-top: 6px solid #3b82f6; /* blu */
+          border-radius: 50%;
+          width: 60px;
+          height: 60px;
+          animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  <!-- Global loader overlay -->
+<div id="globalLoader">
+  <div class="loader-circle"></div>
+</div>
 <div class="container bg-white p-8 md:p-12 rounded-2xl shadow-xl space-y-8 border border-gray-200">
 
 <!-- GOOGLE AUTH -->
@@ -447,6 +476,17 @@ const historyMonthYear = document.getElementById('historyMonthYear');
     box.className = 'mt-4 p-4 rounded-xl text-center hidden';
   }
 
+    // Global overlay loader controls
+function showGlobalLoader() {
+  const el = document.getElementById('globalLoader');
+  if (el) el.style.display = 'flex';
+}
+function hideGlobalLoader() {
+  const el = document.getElementById('globalLoader');
+  if (el) el.style.display = 'none';
+}
+
+    
   function loaderHTML(message = "Loading...") {
   return `
     <div class="flex flex-col items-center justify-center py-4 text-gray-500">
@@ -527,41 +567,40 @@ function switchSection(showEl) {
 }
 
 
-  // Login
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideMessage(loginMessageBox);
-    const orig = loginBtn.innerHTML;
-    loginBtn.innerHTML = '<div class="spinner-container"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div>';
-    loginBtn.disabled = true;
+// Login
+loginForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  hideMessage(loginMessageBox);
 
-    try {
-      const coachId = coachIdInput.value.trim();
-      const password = passwordInput.value.trim();
-      const resp = await apiPost('login', { coachId, password });
-      if (!resp.success) throw new Error(resp.error || 'Login failed');
+  showGlobalLoader(); // 👈 solo overlay, niente spinner nel bottone
 
-      CURRENT_COACH_ID = String(resp.coachId);
-      CURRENT_COACH_NAME = resp.coachName || CURRENT_COACH_ID;
-      CURRENT_COACH_ROLE = resp.rateRole || resp.role;
-      if (!CURRENT_COACH_ROLE) throw new Error("Ruolo coach non trovato. Contatta l'amministratore.");
+  try {
+    const coachId = coachIdInput.value.trim();
+    const password = passwordInput.value.trim();
+    const resp = await apiPost('login', { coachId, password });
+    if (!resp.success) throw new Error(resp.error || 'Login failed');
 
-      coachNameDisplay.textContent = CURRENT_COACH_NAME;
-      callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+    CURRENT_COACH_ID = String(resp.coachId);
+    CURRENT_COACH_NAME = resp.coachName || CURRENT_COACH_ID;
+    CURRENT_COACH_ROLE = resp.rateRole || resp.role;
+    if (!CURRENT_COACH_ROLE) throw new Error("Ruolo coach non trovato. Contatta l'amministratore.");
 
-      switchSection(dashboardSection);
-      await fetchMonthlyEarnings();
-      await loadStudentIds();
+    coachNameDisplay.textContent = CURRENT_COACH_NAME;
+    callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
 
-      document.getElementById('googleLoginContainer').classList.add('hidden');
+    switchSection(dashboardSection);
+    await fetchMonthlyEarnings();
+    await loadStudentIds();
+
+    document.getElementById('googleLoginContainer').classList.add('hidden');
       
-    } catch (err) {
-      showMessage(loginMessageBox, err.message || String(err), false);
-    } finally {
-      loginBtn.innerHTML = orig;
-      loginBtn.disabled = false;
-    }
-  });
+  } catch (err) {
+    showMessage(loginMessageBox, err.message || String(err), false);
+  } finally {
+    hideGlobalLoader(); // 👈 chiudi overlay
+  }
+});
+
 
 // Students
 viewStudentsBtn.addEventListener('click', async () => {
