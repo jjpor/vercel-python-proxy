@@ -361,44 +361,6 @@ async function handleGoogleLogin(response) {
   </div>
 </div>
 
-<script>
-  // back dal form
-  backToReportCardsBtn.addEventListener('click', () => {
-    reportCardForm.reset();
-    document.getElementById('reportCardCallsTable').classList.add('hidden');
-    switchSection(reportCardsSection);
-  });
-
-  // submit draft
-  reportCardForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    hideMessage(reportCardMessageBox);
-
-    const payload = {
-      studentId: document.getElementById('rcStudentId').value,
-      contractId: document.getElementById('rcContractId').value,
-      coachId: CURRENT_COACH_ID,
-      attendance: document.getElementById('rcAttendance').value,
-      report: document.getElementById('rcReport').value
-    };
-
-    try {
-      const resp = await apiPost('submitReportCard', payload);
-      if (!resp.success) throw new Error(resp.error || 'Error saving report.');
-      showMessage(reportCardMessageBox, 'Report card saved as draft!', true);
-
-      setTimeout(() => {
-        reportCardForm.reset();
-        document.getElementById('reportCardCallsTable').classList.add('hidden');
-        switchSection(reportCardsSection);
-        loadReportCardTasks();
-        loadReportCardDrafts();
-      }, 1200);
-    } catch (err) {
-      showMessage(reportCardMessageBox, err.message, false);
-    }
-  });
-</script>
 
   <script>
   // API proxy
@@ -1266,11 +1228,13 @@ document.addEventListener('click', (e) => {
   loadStudentCallsForMonth(studentId);
 });
 
-// submit report card
+// submit report card (single handler, with spinner)
 reportCardForm.addEventListener('submit', async (e) => {
   e.preventDefault();
 
-    const submitBtn = reportCardForm.querySelector('button[type="submit"]');
+  hideMessage(reportCardMessageBox);
+
+  const submitBtn = reportCardForm.querySelector('button[type="submit"]');
   const orig = submitBtn.innerHTML;
   submitBtn.innerHTML = `
     <div class="spinner-container">
@@ -1279,8 +1243,6 @@ reportCardForm.addEventListener('submit', async (e) => {
       <div class="spinner-dot"></div>
     </div>`;
   submitBtn.disabled = true;
-
-  hideMessage(reportCardMessageBox);
 
   const payload = {
     studentId: document.getElementById('rcStudentId').value,
@@ -1292,50 +1254,18 @@ reportCardForm.addEventListener('submit', async (e) => {
 
   try {
     const resp = await apiPost('submitReportCard', payload);
-
-    
     if (!resp.success) throw new Error(resp.error || 'Error saving report.');
+
     showMessage(reportCardMessageBox, 'Report card saved as draft!', true);
-    setTimeout(() => {
+
+    setTimeout(async () => {
+      reportCardForm.reset();
+      document.getElementById('reportCardCallsTable').classList.add('hidden');
       switchSection(reportCardsSection);
-      loadReportCardTasks();
-    }, 1200);
-  } catch (err) {
-    showMessage(reportCardMessageBox, err.message, false);
-    // submit report card
-reportCardForm.addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-    const submitBtn = reportCardForm.querySelector('button[type="submit"]');
-  const orig = submitBtn.innerHTML;
-  submitBtn.innerHTML = `
-    <div class="spinner-container">
-      <div class="spinner-dot"></div>
-      <div class="spinner-dot"></div>
-      <div class="spinner-dot"></div>
-    </div>`;
-  submitBtn.disabled = true;
-
-  hideMessage(reportCardMessageBox);
-
-  const payload = {
-    studentId: document.getElementById('rcStudentId').value,
-    contractId: document.getElementById('rcContractId').value,
-    coachId: CURRENT_COACH_ID,
-    attendance: document.getElementById('rcAttendance').value,
-    report: document.getElementById('rcReport').value
-  };
-
-  try {
-    const resp = await apiPost('submitReportCard', payload);
-
-    
-    if (!resp.success) throw new Error(resp.error || 'Error saving report.');
-    showMessage(reportCardMessageBox, 'Report card saved as draft!', true);
-    setTimeout(() => {
-      switchSection(reportCardsSection);
-      loadReportCardTasks();
-    }, 1200);
+      await loadReportCardTasks();
+      await loadReportCardDrafts();
+      await loadReportCardHistory(); // 👈 aggiorna anche lo storico sotto
+    }, 800);
   } catch (err) {
     showMessage(reportCardMessageBox, err.message, false);
   } finally {
@@ -1343,7 +1273,7 @@ reportCardForm.addEventListener('submit', async (e) => {
     submitBtn.disabled = false;
   }
 });
-  
+
   // Submit call
   document.getElementById('callForm').addEventListener('submit', async (e) => {
     e.preventDefault();
