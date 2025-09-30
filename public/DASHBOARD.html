@@ -535,8 +535,22 @@ async function handleGoogleLogin(response) {
   const viewFolderBtn = document.getElementById('viewFolderBtn');
   const viewCallLogBtn = document.getElementById('viewCallLogBtn');
   const viewReportCardsBtn = document.getElementById('viewReportCardsBtn');
-    const viewCoachingDebriefBtn = document.getElementById('viewCoachingDebriefBtn');
-const coachingDebriefSection = document.getElementById('coachingDebriefSection');
+  const viewCoachingDebriefBtn = document.getElementById('viewCoachingDebriefBtn');
+  const coachingDebriefSection = document.getElementById('coachingDebriefSection');
+    // Coaching Debrief DOM
+  const debriefStudentSelect   = document.getElementById('debriefStudentSelect');
+  const debriefDateInput       = document.getElementById('debriefDateInput');
+  const debriefGoals           = document.getElementById('debriefGoals');
+  const debriefTopics          = document.getElementById('debriefTopics');
+  const debriefGrammar         = document.getElementById('debriefGrammar');
+  const debriefVocabulary      = document.getElementById('debriefVocabulary');
+  const debriefPronunciation   = document.getElementById('debriefPronunciation');
+  const debriefOther           = document.getElementById('debriefOther');
+  const debriefHomework        = document.getElementById('debriefHomework');
+  const debriefSaveDraftBtn    = document.getElementById('debriefSaveDraftBtn');
+  const debriefSendBtn         = document.getElementById('debriefSendBtn');
+  const debriefMsg             = document.getElementById('debriefMsg');
+
   const logoutBtn = document.getElementById('logoutBtn');
 
   const studentIdSelect = document.getElementById('studentId');
@@ -943,7 +957,7 @@ localStorage.setItem("coachSession", JSON.stringify({
   }
 });
 
-viewCoachingDebriefBtn.addEventListener('click', () => {
+viewCoachingDebriefBtn.addEventListener('click', async () => {
   switchSection(coachingDebriefSection);
 
   // Precompila la data odierna
@@ -951,8 +965,56 @@ viewCoachingDebriefBtn.addEventListener('click', () => {
   const yyyy = today.getFullYear();
   const mm = String(today.getMonth() + 1).padStart(2, '0');
   const dd = String(today.getDate()).padStart(2, '0');
-  document.getElementById('debriefDateInput').value = `${yyyy}-${mm}-${dd}`;
+  debriefDateInput.value = `${yyyy}-${mm}-${dd}`;
+
+  // Carica lista studenti nel dropdown
+  try {
+    const resp = await apiGet('getStudents');
+    let arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+    arr.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+
+    debriefStudentSelect.innerHTML = '<option value="" disabled selected>Select a student</option>';
+    arr.forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = id;
+      debriefStudentSelect.appendChild(opt);
+    });
+  } catch (err) {
+    debriefStudentSelect.innerHTML = '<option value="" disabled selected>Error loading students</option>';
+  }
 });
+
+    // --- Save Draft Debrief ---
+debriefSaveDraftBtn.addEventListener('click', async () => {
+  debriefMsg.textContent = "💾 Saving draft...";
+
+  try {
+    const payload = {
+      action: "saveDebrief",
+      coachId: CURRENT_COACH_ID,
+      studentId: debriefStudentSelect.value,
+      date: debriefDateInput.value,
+      goals: debriefGoals.value,
+      topics: debriefTopics.value,
+      grammar: debriefGrammar.value,
+      vocabulary: debriefVocabulary.value,
+      pronunciation: debriefPronunciation.value,
+      other: debriefOther.value,
+      homework: debriefHomework.value,
+      draft: true
+    };
+
+    const resp = await apiPost('saveDebrief', payload);
+
+    if (!resp.success) throw new Error(resp.error || "Unknown error");
+    debriefMsg.textContent = "✅ Draft saved!";
+  } catch (err) {
+    console.error("Save draft error:", err);
+    debriefMsg.textContent = "❌ " + (err.message || "Error saving draft");
+  }
+});
+
 
     
 // My payment folder
