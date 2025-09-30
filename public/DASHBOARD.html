@@ -222,22 +222,8 @@ async function handleGoogleLogin(response) {
   </div>
 <div class="flex items-center justify-between mb-4 gap-4">
   <div class="flex items-center">
-    <label for="historyMonth" class="mr-2 font-medium">Filter by month:</label>
-    <select id="historyMonth" class="form-input w-auto inline-block">
-      <option value="all">All</option>
-      <option value="0">January</option>
-      <option value="1">February</option>
-      <option value="2">March</option>
-      <option value="3">April</option>
-      <option value="4">May</option>
-      <option value="5">June</option>
-      <option value="6">July</option>
-      <option value="7">August</option>
-      <option value="8">September</option>
-      <option value="9">October</option>
-      <option value="10">November</option>
-      <option value="11">December</option>
-    </select>
+    <label for="historyMonthYear" class="mr-2 font-medium">Filter by month:</label>
+    <input type="month" id="historyMonthYear" class="form-input w-auto inline-block">
   </div>
 
   <button id="backFromCallHistoryBtn"
