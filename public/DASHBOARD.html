@@ -498,31 +498,7 @@ const historyMonthYear = document.getElementById('historyMonthYear');
   let LAST_SELECTED_STUDENT = null;
   let LAST_DRAFTS = [];
 
-    // --- Restore persisted session from localStorage (if present)
-(function restoreSession() {
-  try {
-    const raw = localStorage.getItem("coachSession");
-    if (!raw) return;
-    const saved = JSON.parse(raw);
-    if (!saved || !saved.id) return;
 
-    CURRENT_COACH_ID = saved.id;
-    CURRENT_COACH_NAME = saved.name || saved.id;
-    CURRENT_COACH_ROLE = saved.role || "";
-
-    // Update UI
-    if (coachNameDisplay) coachNameDisplay.textContent = CURRENT_COACH_NAME;
-    if (callSectionCoachNameDisplay) callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
-
-    // Go straight to dashboard and load data
-    switchSection(dashboardSection);
-    fetchMonthlyEarnings();
-    loadStudentIds();
-  } catch (e) {
-    console.warn("Restore session failed:", e);
-    localStorage.removeItem("coachSession");
-  }
-})();
 
 
   // Helpers UI
@@ -1837,6 +1813,30 @@ historyFilterMonth.addEventListener('change', loadReportCardHistory);
       unsetBusy(refineBtn);
     }
   });
+})();
+    // 👇 QUI INCOLLI restoreSession
+(function restoreSession() {
+  try {
+    const raw = localStorage.getItem("coachSession");
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (!saved || !saved.id) return;
+
+    CURRENT_COACH_ID = saved.id;
+    CURRENT_COACH_NAME = saved.name || saved.id;
+    CURRENT_COACH_ROLE = saved.role || "";
+
+    if (coachNameDisplay) coachNameDisplay.textContent = CURRENT_COACH_NAME;
+    if (callSectionCoachNameDisplay) callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+    document.getElementById('googleLoginContainer')?.classList.add('hidden');
+
+    switchSection(dashboardSection);
+    fetchMonthlyEarnings();
+    loadStudentIds();
+  } catch (e) {
+    console.warn("Restore session failed:", e);
+    localStorage.removeItem("coachSession");
+  }
 })();
 
   
