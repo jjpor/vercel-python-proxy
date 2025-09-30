@@ -570,26 +570,34 @@ function switchSection(showEl) {
   }
 
     // --- Load Students Dropdown
-async function loadStudentsDropdown() {
-  const select = document.getElementById('studentSelect');
-  const container = document.getElementById('studentDetailsContainer');
-  select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
-  container.innerHTML = '<p class="text-gray-500 text-center">Select a student from the dropdown to view their details.</p>';
+    async function loadStudentsDropdown() {
+      const select = document.getElementById('studentSelect');
+      const container = document.getElementById('studentDetailsContainer');
+    
+      // UI di attesa
+      select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
+      container.innerHTML = '<p class="text-gray-500 text-center">Select a student from the dropdown to view their details.</p>';
+    
+      try {
+        const resp = await apiGet('getStudents');
+        let arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+    
+        // 👉 Ordina alfabeticamente ignorando maiuscole/minuscole
+        arr.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+    
+        // Ripopola il select
+        select.innerHTML = '<option value="" disabled selected>Select a student</option>';
+        arr.forEach(id => {
+          const opt = document.createElement('option');
+          opt.value = id;
+          opt.textContent = id;
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        select.innerHTML = '<option value="" disabled selected>Error loading students</option>';
+      }
+    }
 
-  try {
-    const resp = await apiGet('getStudents');
-    const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
-    select.innerHTML = '<option value="" disabled selected>Select a student</option>';
-    arr.forEach(id => {
-      const opt = document.createElement('option');
-      opt.value = id;
-      opt.textContent = id;
-      select.appendChild(opt);
-    });
-  } catch (err) {
-    select.innerHTML = '<option value="" disabled selected>Error loading students</option>';
-  }
-}
 
 // --- Fetch & Render Student Details
 async function fetchAndRenderStudentDetails(studentId) {
@@ -602,10 +610,42 @@ async function fetchAndRenderStudentDetails(studentId) {
     const calls = info.calls || [];
     delete info.calls;
 
+    // --- Link fields da trasformare in bottoni
+    const linkFields = {
+      "Quizlet Link": "Quizlet",
+      "Drive Folder Link": "Drive Folder",
+      "Homework File": "Homework",
+      "Lesson Plan File": "Lesson Plan"
+    };
+
+    let buttonsHtml = "";
+    for (const [key, label] of Object.entries(linkFields)) {
+      const value = info[key];
+      delete info[key]; // 👉 non mostriamo questi nel table
+      if (value && value !== "N/A") {
+        buttonsHtml += `
+          <a href="${value}" target="_blank"
+             class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
+            ${label}
+          </a>`;
+      } else {
+        buttonsHtml += `
+          <span class="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
+            ${label}
+          </span>`;
+      }
+    }
+
+    // --- Tabella dettagli
     let detailsHtml = `<h3 class="text-xl font-semibold text-gray-800 mb-4">Student Details</h3>
     <div class="overflow-x-auto mb-6"><table class="w-full text-sm"><tbody>`;
 
     for (const [key, value] of Object.entries(info)) {
+      // Nascondi campo "Onboarded (dashboard)"
+      if (key === 'Onboarded (dashboard)') {
+        continue;
+      }
+
       // Secondary Email → mailto
       if ((key === 'Email' || key === 'Secondary Email') && value && value !== 'N/A') {
         detailsHtml += `
@@ -617,9 +657,10 @@ async function fetchAndRenderStudentDetails(studentId) {
           </tr>`;
         continue;
       }
+
       // Phone → WhatsApp
       if (key === 'Phone' && value && value !== 'N/A') {
-        const clean = value.replace(/\\D/g, '');
+        const clean = value.replace(/\D/g, '');
         detailsHtml += `
           <tr>
             <td class="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">${key}</td>
@@ -629,6 +670,7 @@ async function fetchAndRenderStudentDetails(studentId) {
           </tr>`;
         continue;
       }
+
       // Status → badge
       if (key === 'Status') {
         const color = value === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
@@ -639,6 +681,19 @@ async function fetchAndRenderStudentDetails(studentId) {
           </tr>`;
         continue;
       }
+
+      // Report Card Cadency Months → "No report card" se vuoto/N.A.
+      if (key === 'Report Card Cadency Months') {
+        const display = (value && value !== 'N/A') ? value : 'No report card';
+        detailsHtml += `
+          <tr>
+            <td class="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">${key}</td>
+            <td class="py-3 px-6 text-gray-800">${display}</td>
+          </tr>`;
+        continue;
+      }
+
+      // Default
       detailsHtml += `
         <tr>
           <td class="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">${key}</td>
@@ -647,33 +702,45 @@ async function fetchAndRenderStudentDetails(studentId) {
     }
     detailsHtml += `</tbody></table></div>`;
 
-    // --- Call History
-    detailsHtml += `<h3 class="text-xl font-semibold text-gray-800 mb-4">Call History</h3>
-    <div class="overflow-x-auto"><table class="w-full text-sm">
-      <thead>
-        <tr class="bg-gray-200 text-gray-600 uppercase text-xs leading-normal">
+    // --- Se ci sono bottoni, aggiungili sotto la tabella
+    if (buttonsHtml) {
+      detailsHtml += `
+        <div class="mt-4 flex flex-wrap gap-3">
+          ${buttonsHtml}
+        </div>`;
+    }
+
+    // --- Call History (nuovo formato)
+    detailsHtml += `<h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">Call History</h3>
+    <div class="overflow-x-auto"><table class="w-full text-sm border border-gray-200 rounded-xl">
+      <thead class="bg-gray-100">
+        <tr>
           <th class="py-3 px-6 text-left">Date</th>
-          <th class="py-3 px-6 text-left">Contract ID</th>
-          <th class="py-3 px-6 text-left">Product ID</th>
-          <th class="py-3 px-6 text-left">Units</th>
-          <th class="py-3 px-6 text-left">Earnings</th>
+          <th class="py-3 px-6 text-left">Product</th>
+          <th class="py-3 px-6 text-left">Coach ID</th>
+          <th class="py-3 px-6 text-left">Duration (min)</th>
+          <th class="py-3 px-6 text-left">Attendance</th>
+          <th class="py-3 px-6 text-left">Notes</th>
         </tr>
       </thead>
       <tbody>`;
+
     if (calls.length > 0) {
       calls.forEach(c => {
         detailsHtml += `
           <tr>
-            <td class="py-3 px-6">${c.date || c.dateISO || 'N/A'}</td>
-            <td class="py-3 px-6">${c.contractId || '-'}</td>
-            <td class="py-3 px-6">${c.productId || '-'}</td>
-            <td class="py-3 px-6">${c.units || 0}</td>
-            <td class="py-3 px-6">${c.earnings.toFixed(2)}€</td>
+            <td class="py-3 px-6">${c.date || 'N/A'}</td>
+            <td class="py-3 px-6">${c.productName || c.productId || '-'}</td>
+            <td class="py-3 px-6">${c.coachId || '-'}</td>
+            <td class="py-3 px-6">${c.duration || '-'}</td>
+            <td class="py-3 px-6">${c.attendance || '-'}</td>
+            <td class="py-3 px-6">${c.notes || ''}</td>
           </tr>`;
       });
     } else {
-      detailsHtml += `<tr><td colspan="5" class="py-3 px-6 text-center text-gray-500">No calls found.</td></tr>`;
+      detailsHtml += `<tr><td colspan="6" class="py-3 px-6 text-center text-gray-500">No calls found.</td></tr>`;
     }
+
     detailsHtml += `</tbody></table></div>`;
 
     container.innerHTML = detailsHtml;
