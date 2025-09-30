@@ -1365,13 +1365,15 @@ async function loadReportCardHistory() {
         : (r.report || '');
 
       const row = document.createElement('tr');
-      row.innerHTML = `
-        <td class="border px-4 py-2">${r.dateISO || ''}</td>
-        <td class="border px-4 py-2">${r.name || ''} ${r.surname || ''}</td>
-        <td class="border px-4 py-2">${r.attendance || ''}</td>
-        <td class="border px-4 py-2">${reportExcerpt}</td>
-        <td class="border px-4 py-2 text-center">${sentIcon}</td>
-      `;
+      const formattedDate = r.dateISO ? new Date(r.dateISO).toISOString().slice(0,10) : '';
+        row.innerHTML = `
+          <td class="border px-4 py-2">${formattedDate}</td>
+          <td class="border px-4 py-2">${r.name || ''} ${r.surname || ''}</td>
+          <td class="border px-4 py-2">${r.attendance || ''}</td>
+          <td class="border px-4 py-2">${reportExcerpt}</td>
+          <td class="border px-4 py-2 text-center">${sentIcon}</td>
+        `;
+
       reportCardHistoryTableBody.appendChild(row);
     });
   } catch (err) {
