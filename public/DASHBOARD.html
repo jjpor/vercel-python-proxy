@@ -224,14 +224,20 @@ async function handleGoogleLogin(response) {
         </select>
       </div>
 
-      <!-- Attendance -->
-<div>
-  <label for="attendance" class="form-label block mb-2">Attendance</label>
-  <select id="attendance" class="form-input">
-    <option value="YES" selected>YES</option>
-    <option value="NO">NO</option>
-  </select>
-</div>
+            <!-- Attendance -->
+      <div>
+        <label for="attendance" class="form-label block mb-2">Attendance</label>
+        <select id="attendance" class="form-input">
+          <option value="YES" selected>YES</option>
+          <option value="NO">NO</option>
+        </select>
+      </div>
+      
+            <!-- Notes -->
+      <div class="md:col-span-2">
+        <label for="notes" class="form-label block mb-2">Notes</label>
+        <textarea id="notes" class="form-input" rows="3" placeholder="Write any notes here..."></textarea>
+      </div>
 
 
       <div class="md:col-span-2 mt-4">
@@ -1479,6 +1485,8 @@ reportCardForm.addEventListener('submit', async (e) => {
         coachId: CURRENT_COACH_ID,
         coachName: CURRENT_COACH_NAME,
         productId: productIdInput.value || productIdSelect.value || ''
+        notes: document.getElementById('notes').value || "" 
+
       };
 
       if (callType === "IND") {
