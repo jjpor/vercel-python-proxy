@@ -75,6 +75,18 @@
 
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
+
+ // Global overlay loader controls
+function showGlobalLoader() {
+  const el = document.getElementById('globalLoader');
+  if (el) el.style.display = 'flex';
+}
+function hideGlobalLoader() {
+  const el = document.getElementById('globalLoader');
+  if (el) el.style.display = 'none';
+}
+ 
+  
 async function handleGoogleLogin(response) {
   showGlobalLoader(); // 👈 overlay a schermo intero
 
@@ -652,25 +664,6 @@ async function fetchAndRenderStudentDetails(studentId) {
           <span class="inline-flex items-center justify-center px-5 py-2 rounded-xl bg-gray-200 text-gray-500 shadow-inner
                        cursor-not-allowed text-sm font-medium">
             ${def.label}
-          </span>`;
-      }
-    }
-
-
-    let buttonsHtml = "";
-    for (const [key, label] of Object.entries(linkFields)) {
-      const value = info[key];
-      delete info[key]; // 👉 non mostriamo questi nel table
-      if (value && value !== "N/A") {
-        buttonsHtml += `
-          <a href="${value}" target="_blank"
-             class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
-            ${label}
-          </a>`;
-      } else {
-        buttonsHtml += `
-          <span class="px-4 py-2 bg-gray-300 text-gray-600 rounded-lg cursor-not-allowed">
-            ${label}
           </span>`;
       }
     }
