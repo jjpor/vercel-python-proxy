@@ -76,41 +76,40 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 async function handleGoogleLogin(response) {
-  const googleBtn = document.getElementById('googleLoginContainer');
-  googleBtn.innerHTML = `
-    <div class="flex flex-col items-center justify-center py-2 text-gray-500">
-      <div class="spinner-container mb-1">
-        <div class="spinner-dot"></div>
-        <div class="spinner-dot"></div>
-        <div class="spinner-dot"></div>
-      </div>
-      <p>Signing in...</p>
-    </div>
-  `;
+  showGlobalLoader(); // 👈 overlay a schermo intero
 
-  const credential = response.credential; 
-  const resp = await apiPost("loginWithGoogle", { credential });
-  
+  try {
+    const credential = response.credential; 
+    const resp = await apiPost("loginWithGoogle", { credential });
 
-  if (!resp.success) {
-    alert("Google login fallito: " + resp.error);
-    // se fallisce, rimetti di nuovo il bottone
-    location.reload(); 
-    return;
+    if (!resp.success) {
+      alert("Google login fallito: " + resp.error);
+      location.reload(); 
+      return;
+    }
+
+    document.getElementById('googleLoginContainer').classList.add('hidden');
+
+    CURRENT_COACH_ID = resp.coachId;
+    CURRENT_COACH_NAME = resp.coachName;
+    CURRENT_COACH_ROLE = resp.rateRole;
+    coachNameDisplay.textContent = CURRENT_COACH_NAME;
+    callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+
+    switchSection(dashboardSection);
+
+    hideGlobalLoader(); // 👈 chiudiamo subito, l’utente entra in dashboard
+
+    // caricamenti secondari (non bloccano l’UI)
+    await fetchMonthlyEarnings();
+    await loadStudentIds();
+  } catch (err) {
+    alert("Errore login Google: " + (err.message || err));
+  } finally {
+    hideGlobalLoader(); // 👈 safety net in caso di errori
   }
-
-  document.getElementById('googleLoginContainer').classList.add('hidden');
-
-  CURRENT_COACH_ID = resp.coachId;
-  CURRENT_COACH_NAME = resp.coachName;
-  CURRENT_COACH_ROLE = resp.rateRole;
-  coachNameDisplay.textContent = CURRENT_COACH_NAME;
-  callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
-
-  switchSection(dashboardSection);
-  await fetchMonthlyEarnings();
-  await loadStudentIds();
 }
+
 
 </script>
 
