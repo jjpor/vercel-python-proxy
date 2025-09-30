@@ -242,6 +242,30 @@ async function handleGoogleLogin(response) {
     <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
   </div>
 
+<!-- Students Section -->
+<div id="studentsSection" class="hidden">
+  <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
+    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">My Students</h2>
+    <button id="backToDashboardFromStudentsBtn" 
+      class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg transition duration-300 ease-in-out hover:bg-gray-500 focus:outline-none">
+      Back to Dashboard
+    </button>
+  </div>
+
+  <div class="space-y-4">
+    <div>
+      <label for="studentSelect" class="form-label block mb-2">Select a Student</label>
+      <select id="studentSelect" class="form-input">
+        <option value="" disabled selected>Loading students...</option>
+      </select>
+    </div>
+    <div id="studentDetailsContainer" class="rounded-xl shadow-lg border border-gray-200 p-6 bg-white">
+      <p class="text-gray-500 text-center">Select a student from the dropdown to view their details.</p>
+    </div>
+  </div>
+</div>
+
+  
   <!-- CALL HISTORY -->
 <div id="callHistorySection" class="hidden">
   <div class="text-center mb-6">
@@ -539,6 +563,120 @@ function switchSection(showEl) {
     return res.json();
   }
 
+    // --- Load Students Dropdown
+async function loadStudentsDropdown() {
+  const select = document.getElementById('studentSelect');
+  const container = document.getElementById('studentDetailsContainer');
+  select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
+  container.innerHTML = '<p class="text-gray-500 text-center">Select a student from the dropdown to view their details.</p>';
+
+  try {
+    const resp = await apiGet('getStudents');
+    const arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+    select.innerHTML = '<option value="" disabled selected>Select a student</option>';
+    arr.forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = id;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    select.innerHTML = '<option value="" disabled selected>Error loading students</option>';
+  }
+}
+
+// --- Fetch & Render Student Details
+async function fetchAndRenderStudentDetails(studentId) {
+  const container = document.getElementById('studentDetailsContainer');
+  container.innerHTML = '<p class="text-gray-500 text-center">Loading student details...</p>';
+  try {
+    const resp = await apiGet('getStudentInfo', { studentId });
+    if (!resp.success || !resp.studentInfo) throw new Error(resp.error || "Student not found");
+    const info = resp.studentInfo;
+    const calls = info.calls || [];
+    delete info.calls;
+
+    let detailsHtml = `<h3 class="text-xl font-semibold text-gray-800 mb-4">Student Details</h3>
+    <div class="overflow-x-auto mb-6"><table class="w-full text-sm"><tbody>`;
+
+    for (const [key, value] of Object.entries(info)) {
+      // Secondary Email → mailto
+      if ((key === 'Email' || key === 'Secondary Email') && value && value !== 'N/A') {
+        detailsHtml += `
+          <tr>
+            <td class="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">${key}</td>
+            <td class="py-3 px-6">
+              <a href="mailto:${value}" class="text-blue-600 underline hover:text-blue-800">${value}</a>
+            </td>
+          </tr>`;
+        continue;
+      }
+      // Phone → WhatsApp
+      if (key === 'Phone' && value && value !== 'N/A') {
+        const clean = value.replace(/\\D/g, '');
+        detailsHtml += `
+          <tr>
+            <td class="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">${key}</td>
+            <td class="py-3 px-6">
+              <a href="https://wa.me/${clean}" target="_blank" class="text-blue-600 underline hover:text-blue-800">${value}</a>
+            </td>
+          </tr>`;
+        continue;
+      }
+      // Status → badge
+      if (key === 'Status') {
+        const color = value === 'Active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+        detailsHtml += `
+          <tr>
+            <td class="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">${key}</td>
+            <td class="py-3 px-6"><span class="px-3 py-1 rounded-full text-xs font-semibold ${color}">${value}</span></td>
+          </tr>`;
+        continue;
+      }
+      detailsHtml += `
+        <tr>
+          <td class="py-3 px-6 font-medium text-gray-700 whitespace-nowrap">${key}</td>
+          <td class="py-3 px-6 text-gray-800">${value || 'N/A'}</td>
+        </tr>`;
+    }
+    detailsHtml += `</tbody></table></div>`;
+
+    // --- Call History
+    detailsHtml += `<h3 class="text-xl font-semibold text-gray-800 mb-4">Call History</h3>
+    <div class="overflow-x-auto"><table class="w-full text-sm">
+      <thead>
+        <tr class="bg-gray-200 text-gray-600 uppercase text-xs leading-normal">
+          <th class="py-3 px-6 text-left">Date</th>
+          <th class="py-3 px-6 text-left">Contract ID</th>
+          <th class="py-3 px-6 text-left">Product ID</th>
+          <th class="py-3 px-6 text-left">Units</th>
+          <th class="py-3 px-6 text-left">Earnings</th>
+        </tr>
+      </thead>
+      <tbody>`;
+    if (calls.length > 0) {
+      calls.forEach(c => {
+        detailsHtml += `
+          <tr>
+            <td class="py-3 px-6">${c.date || c.dateISO || 'N/A'}</td>
+            <td class="py-3 px-6">${c.contractId || '-'}</td>
+            <td class="py-3 px-6">${c.productId || '-'}</td>
+            <td class="py-3 px-6">${c.units || 0}</td>
+            <td class="py-3 px-6">${c.earnings.toFixed(2)}€</td>
+          </tr>`;
+      });
+    } else {
+      detailsHtml += `<tr><td colspan="5" class="py-3 px-6 text-center text-gray-500">No calls found.</td></tr>`;
+    }
+    detailsHtml += `</tbody></table></div>`;
+
+    container.innerHTML = detailsHtml;
+  } catch (err) {
+    container.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
+  }
+}
+
+
   // Validazione form
   function updateFormState() {
     const selectedStudent = studentIdSelect.value;
@@ -600,22 +738,6 @@ loginForm.addEventListener('submit', async (e) => {
   }
 });
 
-
-// Students
-viewStudentsBtn.addEventListener('click', async () => {
-  if (!CURRENT_COACH_ID) return;
-  try {
-    const resp = await apiGet('getStudents');
-    if (resp.success) {
-      alert("Students:\n" + resp.students.join(", "));
-    } else {
-      alert("Error loading students");
-    }
-  } catch (err) {
-    alert("Error: " + err.message);
-  }
-});
-
 // My payment folder
 viewFolderBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
@@ -631,6 +753,26 @@ viewFolderBtn.addEventListener('click', async () => {
   }
 });
 
+//Student Info
+
+  // Student dropdown change
+document.getElementById('studentSelect').addEventListener('change', e => {
+  const sid = e.target.value;
+  if (sid) fetchAndRenderStudentDetails(sid);
+});
+
+// Aprire sezione Students dal dashboard
+document.getElementById('viewStudentsBtn').addEventListener('click', () => {
+  switchSection(document.getElementById('studentsSection'));
+  loadStudentsDropdown();
+});
+
+// Torna al dashboard
+document.getElementById('backToDashboardFromStudentsBtn').addEventListener('click', () => {
+  switchSection(document.getElementById('dashboardSection'));
+});
+  
+    
 // Call History
 let fullHistory = []; // memorizza tutte le calls
   viewCallLogBtn.addEventListener('click', async () => {
