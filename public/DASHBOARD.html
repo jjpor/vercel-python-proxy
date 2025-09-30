@@ -448,7 +448,7 @@ async function handleGoogleLogin(response) {
   const callHistorySection = document.getElementById('callHistorySection');
 const callHistoryTableBody = document.getElementById('callHistoryTableBody');
 const backFromCallHistoryBtn = document.getElementById('backFromCallHistoryBtn');
-const historyMonthSelect = document.getElementById('historyMonth');
+const historyMonthYear = document.getElementById('historyMonthYear');
 
 
   // Stato
@@ -652,17 +652,18 @@ let fullHistory = []; // memorizza tutte le calls
 });
 backFromCallHistoryBtn.addEventListener('click', () => switchSection(dashboardSection));
   // cambio mese
-historyMonthSelect.addEventListener('change', renderHistoryTable);
+historyMonthYear.addEventListener('change', renderHistoryTable);
 
 function renderHistoryTable() {
-  const selected = historyMonthSelect.value; // "all" o numero mese
+  const selected = document.getElementById('historyMonthYear').value; // es. "2025-09"
   callHistoryTableBody.innerHTML = '';
 
   const filtered = fullHistory.filter(h => {
-    if (selected === "all") return true;
-    const d = new Date(h.dateISO);
-    return d.getMonth().toString() === selected;
+    if (!selected) return true; // se non scelto, mostra tutto
+    if (!h.dateISO) return false;
+    return h.dateISO.startsWith(selected); // confronta YYYY-MM
   });
+
 
   if (!filtered.length) {
     callHistoryTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No calls found</td></tr>';
