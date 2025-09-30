@@ -589,6 +589,7 @@ loginForm.addEventListener('submit', async (e) => {
     callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
 
     switchSection(dashboardSection);
+    hideGlobalLoader();
     await fetchMonthlyEarnings();
     await loadStudentIds();
 
@@ -597,7 +598,6 @@ loginForm.addEventListener('submit', async (e) => {
   } catch (err) {
     showMessage(loginMessageBox, err.message || String(err), false);
   } finally {
-    hideGlobalLoader(); // 👈 chiudi overlay
   }
 });
 
