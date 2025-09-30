@@ -1484,10 +1484,10 @@ reportCardForm.addEventListener('submit', async (e) => {
         hourlyRate: parseFloat(hourlyRateInput.value) || 0, // Coach Rate (per debug/compat)
         coachId: CURRENT_COACH_ID,
         coachName: CURRENT_COACH_NAME,
-        productId: productIdInput.value || productIdSelect.value || ''
-        notes: document.getElementById('notes').value || "" 
-
+        productId: productIdInput.value || productIdSelect.value || '',
+        notes: document.getElementById('notes').value || ""  // 👈 virgola sopra
       };
+
 
       if (callType === "IND") {
         payload.studentId = studentIdSelect.value;
