@@ -280,6 +280,34 @@ async function handleGoogleLogin(response) {
   <div id="reportCardDraftsContainer" class="space-y-4 text-gray-700 mt-6"></div>
 </div>
 
+    <!-- storico report cards -->
+  <div id="reportCardHistoryContainer" class="space-y-4 text-gray-700 mt-10">
+    <h3 class="text-xl font-semibold text-gray-800">Report Cards History</h3>
+
+    <!-- filtro mese -->
+    <div class="flex items-center gap-2">
+      <label for="historyFilterMonth" class="font-medium">Filter by month:</label>
+      <input type="month" id="historyFilterMonth" class="form-input w-auto inline-block">
+    </div>
+
+    <!-- tabella storico -->
+    <div class="overflow-x-auto mt-4">
+      <table class="min-w-full border border-gray-200 rounded-xl">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 border">Date</th>
+            <th class="px-4 py-2 border">Student</th>
+            <th class="px-4 py-2 border">Attendance</th>
+            <th class="px-4 py-2 border">Report</th>
+            <th class="px-4 py-2 border">Sent</th>
+          </tr>
+        </thead>
+        <tbody id="reportCardHistoryTableBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+
 <!-- REPORT CARD FORM -->
 <div id="reportCardFormSection" class="hidden">
   <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
@@ -1039,12 +1067,19 @@ const reportCardFormSection = document.getElementById('reportCardFormSection');
 const reportCardForm = document.getElementById('reportCardForm');
 const backToReportCardsBtn = document.getElementById('backToReportCardsBtn');
 const reportCardMessageBox = document.getElementById('reportCardMessageBox');
+    // storico report cards
+const reportCardHistoryContainer = document.getElementById('reportCardHistoryContainer');
+const reportCardHistoryTableBody = document.getElementById('reportCardHistoryTableBody');
+const historyFilterMonth = document.getElementById('historyFilterMonth');
+
 
 document.getElementById('viewReportCardsBtn').addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   switchSection(reportCardsSection);
   await loadReportCardTasks();
   await loadReportCardDrafts();
+  await loadReportCardHistory(); // 👈 nuovo
+
 });
 
 document.getElementById('backToDashboardFromReportsBtn').addEventListener('click', () => {
@@ -1330,6 +1365,54 @@ reportCardForm.addEventListener('submit', async (e) => {
     }
   });
 
+async function loadReportCardHistory() {
+  reportCardHistoryTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4">Loading...</td></tr>`;
+
+  try {
+    const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
+    if (!resp.success) throw new Error(resp.error || 'Unable to load history.');
+
+    const rows = resp.drafts || [];
+
+    // filtro per mese scelto
+    const filterValue = historyFilterMonth.value; // formato "2025-09"
+    const filtered = rows.filter(r => {
+      if (!filterValue) return true;
+      if (!r.dateISO) return false;
+      return r.dateISO.startsWith(filterValue);
+    });
+
+    if (!filtered.length) {
+      reportCardHistoryTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4">No report cards found</td></tr>`;
+      return;
+    }
+
+    reportCardHistoryTableBody.innerHTML = '';
+    filtered.forEach(r => {
+      const sentIcon = r.sent ? '✅' : '❌';
+      const reportExcerpt = (r.report || '').length > 150
+        ? r.report.substring(0, 150) + '…'
+        : (r.report || '');
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td class="border px-4 py-2">${r.dateISO || ''}</td>
+        <td class="border px-4 py-2">${r.name || ''} ${r.surname || ''}</td>
+        <td class="border px-4 py-2">${r.attendance || ''}</td>
+        <td class="border px-4 py-2">${reportExcerpt}</td>
+        <td class="border px-4 py-2 text-center">${sentIcon}</td>
+      `;
+      reportCardHistoryTableBody.appendChild(row);
+    });
+  } catch (err) {
+    reportCardHistoryTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-red-500">Error: ${err.message}</td></tr>`;
+  }
+}
+
+// ricarica su cambio filtro
+historyFilterMonth.addEventListener('change', loadReportCardHistory);
+
+    
   async function loadStudentCallsForMonth(studentId) {
   const table = document.getElementById('reportCardCallsTable');
   const tbody = document.getElementById('reportCardCallsTableBody');
