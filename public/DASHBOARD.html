@@ -979,6 +979,8 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
   debriefDateInput.value = `${yyyy}-${mm}-${dd}`;
 
   // Carica lista studenti nel dropdown
+  showGlobalLoader();  // 👈 mostra overlay
+
   try {
     const resp = await apiGet('getStudents');
     let arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
@@ -993,8 +995,11 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
     });
   } catch (err) {
     debriefStudentSelect.innerHTML = '<option value="" disabled selected>Error loading students</option>';
+  } finally {
+    hideGlobalLoader();  // 👈 chiudi overlay SEMPRE
   }
 });
+
 
     // --- Save Draft Debrief ---
 debriefSaveDraftBtn.addEventListener('click', async () => {
