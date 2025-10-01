@@ -1541,6 +1541,7 @@ document.getElementById('backToDashboardFromDebriefBtn').addEventListener('click
   switchSection(dashboardSection);
 });
 
+
 // carica tasks
 async function loadReportCardTasks() {
   reportCardsContainer.innerHTML = loaderHTML("Loading report card tasks...");
@@ -1555,15 +1556,20 @@ async function loadReportCardTasks() {
       reportCardsContainer.innerHTML = '<p class="text-gray-500 text-center">No report cards due this month 🎉</p>';
     } else {
       let html = '<h3 class="text-xl font-semibold text-gray-800">Tasks</h3><div class="grid gap-4">';
-      tasks.forEach(t => {
-      const thisMonth = new Date().toISOString().slice(0,7); // "2025-10"
-      const hasDraftThisMonth = (LAST_DRAFTS || []).some(d =>
-        d.studentId === t.studentId &&
-        d.contractId === t.contractId &&
-        d.dateISO && d.dateISO.startsWith(thisMonth)
-      );
-      const btnLabel = hasDraftThisMonth ? "Edit Draft" : "Write Report";
+      const thisMonth = new Date().toISOString().slice(0,7); // es: "2025-10"
 
+      tasks.forEach(t => {
+        // ✅ check se esiste bozza di questo mese
+        const hasDraftThisMonth = (LAST_DRAFTS || []).some(d =>
+          d.studentId === t.studentId &&
+          d.contractId === t.contractId &&
+          d.dateISO && d.dateISO.toString().startsWith(thisMonth)
+        );
+
+        const btnClass = hasDraftThisMonth
+          ? "bg-indigo-600 hover:bg-indigo-700"
+          : "bg-blue-600 hover:bg-blue-700";
+        const btnLabel = hasDraftThisMonth ? "Edit Draft" : "Write Report";
 
         html += `
           <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
@@ -1615,6 +1621,7 @@ async function loadReportCardTasks() {
     reportCardsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
   }
 }
+
 
 // funzione helper per disegnare lista no-shows
 function renderNoShowList(list) {
