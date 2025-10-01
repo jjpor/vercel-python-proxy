@@ -643,13 +643,14 @@ function switchSection(showEl) {
     callSection,
     callHistorySection,
     reportCardsSection,
-    document.getElementById('reportCardFormSection') // 👈 nasconde anche il form
+    document.getElementById('reportCardFormSection'),
+    document.getElementById('studentsSection'),      // 👈 aggiungi
+    document.getElementById('coachingDebriefSection') // 👈 se esiste
   ].filter(Boolean);
 
   sections.forEach(el => el.classList.add('hidden'));
   showEl.classList.remove('hidden');
 
-  // opzionale: scroll top quando apro una sezione nuova
   window.scrollTo({ top: 0, behavior: 'auto' });
 }
 
