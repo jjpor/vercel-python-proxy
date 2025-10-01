@@ -296,6 +296,15 @@ async function handleGoogleLogin(response) {
   <div class="max-w-5xl mx-auto p-4 md:p-6">
     <h2 class="text-2xl font-semibold mb-4">Coaching Debrief</h2>
 
+        <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-semibold">Coaching Debrief</h2>
+      <button id="backToDashboardFromDebriefBtn" 
+        class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
+        Back to Dashboard
+      </button>
+    </div>
+
+
     <!-- Meta: Student + Date -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div>
@@ -1527,6 +1536,11 @@ backToReportCardsBtn.addEventListener('click', () => {
   switchSection(reportCardsSection);
 });
 
+document.getElementById('backToDashboardFromDebriefBtn').addEventListener('click', () => {
+  switchSection(dashboardSection);
+});
+
+    
 // carica tasks
 async function loadReportCardTasks() {
   reportCardsContainer.innerHTML = loaderHTML("Loading report card tasks...");
