@@ -352,19 +352,16 @@ async function handleGoogleLogin(response) {
       </div>
     </div>
 
-    <!-- Actions -->
-    <div class="flex items-center gap-3 mt-6">
-      <button id="debriefSaveDraftBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:opacity-90">
-        Save Draft
-      </button>
-      <button id="debriefSendBtn" class="px-4 py-2 rounded-lg bg-indigo-600 text-white hover:opacity-90">
-        Send to Student
-      </button>
-      <span id="debriefMsg" class="ml-2 text-sm opacity-80"></span>
-    </div>
-  </div>
-</section>
-
+      <!-- Actions -->
+      <div class="flex items-center gap-3 mt-6">
+        <button id="debriefSaveDraftBtn" class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:opacity-90">
+          Save Draft
+        </button>
+        <button id="debriefSendBtn" class="px-4 py-2 rounded-lg bg-green-600 text-white hover:opacity-90">
+          📤 Send Debrief
+        </button>
+        <span id="debriefMsg" class="ml-2 text-sm opacity-80"></span>
+      </div>
   
   <!-- CALL HISTORY -->
 <div id="callHistorySection" class="hidden">
@@ -1000,36 +997,55 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
 });
 
 
-    // --- Save Draft Debrief ---
-debriefSaveDraftBtn.addEventListener('click', async () => {
-  debriefMsg.textContent = "💾 Saving draft...";
+        // --- Save Draft Debrief ---
+    debriefSaveDraftBtn.addEventListener('click', async () => {
+      debriefMsg.textContent = "💾 Saving draft...";
+    
+      try {
+        const payload = {
+          action: "saveDebrief",
+          coachId: CURRENT_COACH_ID,
+          studentId: debriefStudentSelect.value,
+          date: debriefDateInput.value,
+          goals: debriefGoals.value,
+          topics: debriefTopics.value,
+          grammar: debriefGrammar.value,
+          vocabulary: debriefVocabulary.value,
+          pronunciation: debriefPronunciation.value,
+          other: debriefOther.value,
+          homework: debriefHomework.value,
+          draft: true
+        };
+    
+        const resp = await apiPost('saveDebrief', payload);
+    
+        if (!resp.success) throw new Error(resp.error || "Unknown error");
+        debriefMsg.textContent = "✅ Draft saved!";
+      } catch (err) {
+        console.error("Save draft error:", err);
+        debriefMsg.textContent = "❌ " + (err.message || "Error saving draft");
+      }
+    });
 
-  try {
-    const payload = {
-      action: "saveDebrief",
-      coachId: CURRENT_COACH_ID,
-      studentId: debriefStudentSelect.value,
-      date: debriefDateInput.value,
-      goals: debriefGoals.value,
-      topics: debriefTopics.value,
-      grammar: debriefGrammar.value,
-      vocabulary: debriefVocabulary.value,
-      pronunciation: debriefPronunciation.value,
-      other: debriefOther.value,
-      homework: debriefHomework.value,
-      draft: true
-    };
-
-    const resp = await apiPost('saveDebrief', payload);
-
-    if (!resp.success) throw new Error(resp.error || "Unknown error");
-    debriefMsg.textContent = "✅ Draft saved!";
-  } catch (err) {
-    console.error("Save draft error:", err);
-    debriefMsg.textContent = "❌ " + (err.message || "Error saving draft");
-  }
-});
-
+    // --- Send Debrief ---
+    const debriefSendBtn = document.getElementById("debriefSendBtn");
+    
+    debriefSendBtn.addEventListener('click', async () => {
+      debriefMsg.textContent = "📤 Sending...";
+    
+      try {
+        const resp = await apiPost("sendDebrief", {
+          coachId: CURRENT_COACH_ID,
+          studentId: debriefStudentSelect.value
+        });
+    
+        if (!resp.success) throw new Error(resp.error || "Send failed");
+        debriefMsg.textContent = "✅ Sent to student!";
+      } catch (err) {
+        console.error("Send debrief error:", err);
+        debriefMsg.textContent = "❌ " + (err.message || "Error sending debrief");
+      }
+    });
 
     
 // My payment folder
