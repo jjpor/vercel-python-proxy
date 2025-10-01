@@ -335,7 +335,6 @@ async function handleGoogleLogin(response) {
           <textarea id="debriefVocabulary" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
         </div>
       </div>
-
       <div class="space-y-4">
         <div>
           <label for="debriefPronunciation" class="block text-sm font-medium mb-1">Pronunciation</label>
@@ -349,6 +348,11 @@ async function handleGoogleLogin(response) {
           <label for="debriefHomework" class="block text-sm font-medium mb-1">Homework</label>
           <textarea id="debriefHomework" rows="3" class="w-full border rounded-lg px-3 py-2"></textarea>
         </div>
+          <div class="flex gap-2 mt-2">
+          <button id="aiDebriefSuggestBtn" class="px-3 py-1 bg-indigo-600 text-white rounded">✨ Suggest</button>
+          <button id="aiDebriefRefineBtn" class="px-3 py-1 bg-gray-600 text-white rounded">📝 Refine</button>
+        </div>
+        <p id="aiDebriefMsg" class="text-sm text-gray-500 mt-1"></p>
       </div>
     </div>
 
@@ -1046,6 +1050,45 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
         debriefMsg.textContent = "❌ " + (err.message || "Error sending debrief");
       }
     });
+
+            // --- AI Debrief (Suggest / Refine) ---
+        const aiDebriefSuggestBtn = document.getElementById("aiDebriefSuggestBtn");
+        const aiDebriefRefineBtn  = document.getElementById("aiDebriefRefineBtn");
+        const aiDebriefMsg        = document.getElementById("aiDebriefMsg");
+        
+        aiDebriefSuggestBtn.addEventListener("click", async () => {
+          aiDebriefMsg.textContent = "⏳ Generating...";
+          try {
+            const resp = await apiPost("generateDebriefText", {
+              studentName: debriefStudentSelect.value,
+              mode: "suggest"
+            });
+            if (!resp.success) throw new Error(resp.error);
+            debriefHomework.value = resp.suggestion;
+            aiDebriefMsg.textContent = "✅ Suggested text inserted.";
+          } catch (err) {
+            console.error("AI suggest error:", err);
+            aiDebriefMsg.textContent = "❌ " + err.message;
+          }
+        });
+        
+        aiDebriefRefineBtn.addEventListener("click", async () => {
+          aiDebriefMsg.textContent = "⏳ Refining...";
+          try {
+            const resp = await apiPost("generateDebriefText", {
+              studentName: debriefStudentSelect.value,
+              mode: "refine",
+              currentText: debriefHomework.value
+            });
+            if (!resp.success) throw new Error(resp.error);
+            debriefHomework.value = resp.suggestion;
+            aiDebriefMsg.textContent = "✅ Refined text.";
+          } catch (err) {
+            console.error("AI refine error:", err);
+            aiDebriefMsg.textContent = "❌ " + err.message;
+          }
+        });
+
 
     
 // My payment folder
