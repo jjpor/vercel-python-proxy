@@ -1167,12 +1167,13 @@ function renderHistoryTable() {
 
   filtered.forEach(h => {
     const row = document.createElement('tr');
-    row.innerHTML = `
-      <td class="border px-4 py-2">${h.date}</td>
-      <td class="border px-4 py-2">${h.studentId || ''}</td>
-      <td class="border px-4 py-2">${h.productName || h.productId || ''}</td>
-      <td class="border px-4 py-2 text-right">${h.earnings.toFixed(2)}</td>
-    `;
+      row.innerHTML = `
+        <td class="border px-4 py-2">${h.date || h.dateISO || 'N/A'}</td>
+        <td class="border px-4 py-2">${h.studentId || ''}</td>
+        <td class="border px-4 py-2">${h.productName || h.productId || ''}</td>
+        <td class="border px-4 py-2 text-right">${(Number(h.earnings) || 0).toFixed(2)}</td>
+      `;
+
     callHistoryTableBody.appendChild(row);
   });
 }
@@ -1960,7 +1961,15 @@ async function loadReportCardHistory() {
         : (r.report || '');
 
       const row = document.createElement('tr');
-      const formattedDate = r.dateISO ? new Date(r.dateISO).toISOString().slice(0,10) : '';
+          let formattedDate = '';
+          if (r.dateISO) {
+            try {
+              const d = (r.dateISO instanceof Date) ? r.dateISO : new Date(r.dateISO);
+              formattedDate = isNaN(d) ? (r.dateISO.toString().slice(0,10)) : d.toISOString().slice(0,10);
+            } catch {
+              formattedDate = r.dateISO.toString().slice(0,10);
+            }
+          }
         row.innerHTML = `
           <td class="border px-4 py-2">${formattedDate}</td>
           <td class="border px-4 py-2">${r.name || ''} ${r.surname || ''}</td>
