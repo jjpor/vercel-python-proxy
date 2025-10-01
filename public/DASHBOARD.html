@@ -1603,27 +1603,23 @@ document.getElementById('backToDashboardFromDebriefBtn').addEventListener('click
 // carica tasks
 async function loadReportCardTasks() {
   reportCardsContainer.innerHTML = loaderHTML("Loading report card tasks...");
-  reportCardNoShowsContainer.classList.add('hidden');
+  reportCardNoShowsContainer.innerHTML = "";
+  reportCardNoShowsContainer.classList.add("hidden");
 
   try {
     const resp = await apiGet('getReportCardTasks', { coachId: CURRENT_COACH_ID });
     if (!resp.success) throw new Error(resp.error || 'Unable to load tasks.');
 
     const tasks = resp.tasks || [];
-    if (tasks.length === 0) {
+    if (!tasks.length) {
       reportCardsContainer.innerHTML = '<p class="text-gray-500 text-center">No report cards due this month 🎉</p>';
     } else {
       let html = '<h3 class="text-xl font-semibold text-gray-800">Tasks</h3><div class="grid gap-4">';
-      const thisMonth = new Date().toISOString().slice(0,7); // es: "2025-10"
-
-        tasks.forEach(t => {
-          const hasDraftThisMonth = t.alreadyDrafted; // 👈 già calcolato dal BE
-          const btnClass = hasDraftThisMonth
-            ? "bg-indigo-600 hover:bg-indigo-700"
-            : "bg-blue-600 hover:bg-blue-700";
-          const btnLabel = hasDraftThisMonth ? "Edit Draft" : "Write Report";
-          ...
-        });
+      tasks.forEach(t => {
+        const btnClass = t.alreadyDrafted
+          ? "bg-indigo-600 hover:bg-indigo-700"
+          : "bg-blue-600 hover:bg-blue-700";
+        const btnLabel = t.alreadyDrafted ? "Edit Draft" : "Write Report";
 
         html += `
           <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
@@ -1643,57 +1639,44 @@ async function loadReportCardTasks() {
       reportCardsContainer.innerHTML = html;
     }
 
-// --- No-shows per Head Coach: separa corrente e precedente ---
-if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
-  const grouped = { current: [], previous: [] };
-  resp.noShows.forEach(ns => {
-    (ns.period === "previous" ? grouped.previous : grouped.current).push(ns);
-  });
+    // --- No-shows ---
+    if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows?.length) {
+      const grouped = { current: [], previous: [] };
+      resp.noShows.forEach(ns => {
+        (ns.period === "previous" ? grouped.previous : grouped.current).push(ns);
+      });
 
-  let html = "";
-
-  // mese corrente
-  if (grouped.current.length) {
-    html += `
-      <details class="mt-4 bg-red-50 rounded-xl border border-red-200">
-        <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600 flex justify-between items-center">
-          <span>No-show Students (Current Month)</span>
-          <button 
-            id="submitAllNoShowsBtn" 
-            class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm ml-4">
-            Submit All
-          </button>
-        </summary>
-        <div class="p-4">
-          ${renderNoShowList(grouped.current)}
-        </div>
-      </details>`;
-  }
-
-  // mesi precedenti (solo non-submitted)
-  const pendingPrev = grouped.previous.filter(ns => !ns.alreadySubmitted);
-  if (pendingPrev.length) {
-    html += `
-      <details class="mt-6 bg-red-50 rounded-xl border border-red-200">
-        <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600">
-          No-show Students (Previous Months)
-        </summary>
-        <div class="p-4">
-          ${renderNoShowList(pendingPrev)}
-        </div>
-      </details>`;
-  }
-
-  reportCardNoShowsContainer.innerHTML = html;
-  reportCardNoShowsContainer.classList.remove('hidden');
-}
-
+      let html = "";
+      if (grouped.current.length) {
+        html += `
+          <details open class="mt-4 bg-red-50 rounded-xl border border-red-200">
+            <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600 flex justify-between items-center">
+              <span>No-show Students (Current Month)</span>
+              <button id="submitAllNoShowsBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm ml-4">
+                Submit All
+              </button>
+            </summary>
+            <div class="p-4">${renderNoShowList(grouped.current)}</div>
+          </details>`;
+      }
+      const pendingPrev = grouped.previous.filter(ns => !ns.alreadySubmitted);
+      if (pendingPrev.length) {
+        html += `
+          <details class="mt-6 bg-red-50 rounded-xl border border-red-200">
+            <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600">
+              No-show Students (Previous Months)
+            </summary>
+            <div class="p-4">${renderNoShowList(pendingPrev)}</div>
+          </details>`;
+      }
+      reportCardNoShowsContainer.innerHTML = html;
+      reportCardNoShowsContainer.classList.remove("hidden");
+    }
 
   } catch (err) {
     reportCardsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
   }
 }
-
 
 // funzione helper per disegnare lista no-shows
 function renderNoShowList(list) {
@@ -1929,7 +1912,8 @@ reportCardForm.addEventListener('submit', async (e) => {
   });
 
 async function loadReportCardHistory() {
-  reportCardHistoryTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4">Loading...</td></tr>`;
+  reportCardHistoryTableBody.innerHTML = `
+    <tr><td colspan="5" class="text-center p-4">Loading...</td></tr>`;
 
   try {
     const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
@@ -1937,48 +1921,68 @@ async function loadReportCardHistory() {
 
     const rows = resp.drafts || [];
 
-    // filtro per mese scelto
-    const filterValue = historyFilterMonth.value; // formato "2025-09"
+    // filtro per mese scelto (formato "2025-09")
+    const filterValue = historyFilterMonth.value;
     const filtered = rows.filter(r => {
       if (!filterValue) return true;
       if (!r.dateISO) return false;
-      return r.dateISO.startsWith(filterValue);
+
+      try {
+        let ym = "";
+        if (r.dateISO instanceof Date) {
+          ym = r.dateISO.toISOString().slice(0, 7);
+        } else {
+          const dParsed = new Date(r.dateISO);
+          if (!isNaN(dParsed)) ym = dParsed.toISOString().slice(0, 7);
+        }
+        return ym === filterValue;
+      } catch {
+        return false;
+      }
     });
 
     if (!filtered.length) {
-      reportCardHistoryTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4">No report cards found</td></tr>`;
+      reportCardHistoryTableBody.innerHTML = `
+        <tr><td colspan="5" class="text-center p-4">No report cards found</td></tr>`;
       return;
     }
 
     reportCardHistoryTableBody.innerHTML = '';
     filtered.forEach(r => {
+      // format date
+      let formattedDate = '';
+      try {
+        if (r.dateISO instanceof Date) {
+          formattedDate = r.dateISO.toISOString().slice(0, 10);
+        } else {
+          const d = new Date(r.dateISO);
+          formattedDate = isNaN(d) ? String(r.dateISO).slice(0, 10) : d.toISOString().slice(0, 10);
+        }
+      } catch {
+        formattedDate = String(r.dateISO).slice(0, 10);
+      }
+
       const sentIcon = r.sent ? '✅' : '❌';
       const reportExcerpt = (r.report || '').length > 150
         ? r.report.substring(0, 150) + '…'
         : (r.report || '');
 
       const row = document.createElement('tr');
-          let formattedDate = '';
-          if (r.dateISO) {
-            try {
-              const d = (r.dateISO instanceof Date) ? r.dateISO : new Date(r.dateISO);
-              formattedDate = isNaN(d) ? (r.dateISO.toString().slice(0,10)) : d.toISOString().slice(0,10);
-            } catch {
-              formattedDate = r.dateISO.toString().slice(0,10);
-            }
-          }
-        row.innerHTML = `
-          <td class="border px-4 py-2">${formattedDate}</td>
-          <td class="border px-4 py-2">${r.name || ''} ${r.surname || ''}</td>
-          <td class="border px-4 py-2">${r.attendance || ''}</td>
-          <td class="border px-4 py-2">${reportExcerpt}</td>
-          <td class="border px-4 py-2 text-center">${sentIcon}</td>
-        `;
-
+      row.innerHTML = `
+        <td class="border px-4 py-2">${formattedDate}</td>
+        <td class="border px-4 py-2">${r.name || ''} ${r.surname || ''}</td>
+        <td class="border px-4 py-2">${r.attendance || ''}</td>
+        <td class="border px-4 py-2">${reportExcerpt}</td>
+        <td class="border px-4 py-2 text-center">${sentIcon}</td>
+      `;
       reportCardHistoryTableBody.appendChild(row);
     });
+
   } catch (err) {
-    reportCardHistoryTableBody.innerHTML = `<tr><td colspan="5" class="text-center p-4 text-red-500">Error: ${err.message}</td></tr>`;
+    reportCardHistoryTableBody.innerHTML = `
+      <tr><td colspan="5" class="text-center p-4 text-red-500">
+        Error: ${err.message}
+      </td></tr>`;
   }
 }
 
@@ -1986,7 +1990,7 @@ async function loadReportCardHistory() {
 historyFilterMonth.addEventListener('change', loadReportCardHistory);
 
     
-  async function loadStudentCallsForMonth(studentId) {
+async function loadStudentCallsForMonth(studentId) {
   const table = document.getElementById('reportCardCallsTable');
   const tbody = document.getElementById('reportCardCallsTableBody');
   table.classList.remove('hidden');
