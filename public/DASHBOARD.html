@@ -666,6 +666,7 @@ function switchSection(showEl) {
     const url = new URL(base_url + "/get");
     url.searchParams.set("deployment_id", deployment_id);
     url.searchParams.set("action", action);
+    url.searchParams.set("_ts", Date.now()); // avoid browser caching
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null) url.searchParams.set(k, v);
     });
