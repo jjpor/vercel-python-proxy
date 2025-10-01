@@ -1559,7 +1559,7 @@ async function loadReportCardTasks() {
       tasks.forEach(t => {
         const isDrafted = t.alreadyDrafted;
         const btnClass = isDrafted
-          ? "bg-indigo-600 hover:bg-indigo-700"   // colore diverso se esiste draft
+          ? "bg-indigo-600 hover:bg-indigo-700"
           : "bg-blue-600 hover:bg-blue-700";
         const btnLabel = isDrafted ? "Edit Draft" : "Write Report";
 
@@ -1568,62 +1568,38 @@ async function loadReportCardTasks() {
             <h3 class="text-lg font-semibold text-gray-800">${t.name} ${t.surname} (${t.studentId})</h3>
             <p class="text-gray-600"><strong>Cadency:</strong> ${t.cadencyMonths} month(s)</p>
             <p class="text-gray-600"><strong>Calls:</strong> ${t.calls}</p>
-              <button 
-                class="writeReportBtn mt-3 text-white px-4 py-2 rounded-lg ${btnClass}"
-                data-student="${t.studentId}" 
-                data-contract="${t.contractId}"
-                data-student-name="${t.name} ${t.surname}">
-                ${btnLabel}
-              </button>
-          </div>
-        `;
+            <button 
+              class="writeReportBtn mt-3 text-white px-4 py-2 rounded-lg ${btnClass}"
+              data-student="${t.studentId}" 
+              data-contract="${t.contractId}"
+              data-student-name="${t.name} ${t.surname}">
+              ${btnLabel}
+            </button>
+          </div>`;
       });
       html += '</div>';
       reportCardsContainer.innerHTML = html;
     }
 
-    // --- no-shows come già gestiti ---
+    // --- No-shows per Head Coach: separa corrente e precedente ---
     if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
-      let html = `
-  <div class="flex items-center justify-between mb-2">
-    <button id="toggleNoShowsBtn" type="button"
-      class="flex items-center gap-2 cursor-pointer select-none"
-      onclick="toggleNoShow()">
-      <h3 class="text-xl font-semibold text-red-600">No-show Students</h3>
-      <span id="noShowChevron" class="inline-block transform transition-transform">▼</span>
-    </button>
-    <button id="submitAllNoShowsBtn"
-      class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-      Submit All
-    </button>
-  </div>
-  <div id="noShowStudentsList" class="grid gap-4">`;
-
+      const grouped = { current: [], previous: [] };
       resp.noShows.forEach(ns => {
-        const isSubmitted = ns.alreadySubmitted;
-        const disabledAttr = isSubmitted ? "disabled" : "";
-        const btnClass = isSubmitted
-          ? "bg-gray-400 cursor-not-allowed"
-          : "bg-indigo-600 hover:bg-indigo-700";
-        const btnLabel = isSubmitted ? "Submitted" : "Submit";
-
-        html += `
-          <div class="p-4 bg-white rounded-xl shadow border border-gray-200 flex justify-between items-center">
-            <div>
-              <p class="font-semibold">${ns.name} ${ns.surname} (${ns.studentId}) — Contract ${ns.contractId}</p>
-              <p class="text-gray-600">Cadency: ${ns.cadencyMonths} month(s)</p>
-            </div>
-            <button 
-              class="submitNoShowBtn text-white px-3 py-1 rounded ${btnClass}"
-              data-student="${ns.studentId}"
-              data-contract="${ns.contractId}"
-              ${disabledAttr}>
-              ${btnLabel}
-            </button>
-          </div>`;
+        (ns.period === "previous" ? grouped.previous : grouped.current).push(ns);
       });
 
-      html += '</div>';
+      let html = "";
+
+      if (grouped.current.length) {
+        html += `<h3 class="text-xl font-semibold text-red-600 mt-4">No-show Students (Current Month)</h3>`;
+        html += renderNoShowList(grouped.current);
+      }
+
+      if (grouped.previous.length) {
+        html += `<h3 class="text-xl font-semibold text-red-600 mt-6">No-show Students (Previous Month)</h3>`;
+        html += renderNoShowList(grouped.previous);
+      }
+
       reportCardNoShowsContainer.innerHTML = html;
       reportCardNoShowsContainer.classList.remove('hidden');
     }
@@ -1633,6 +1609,37 @@ async function loadReportCardTasks() {
   }
 }
 
+// funzione helper per disegnare lista no-shows
+function renderNoShowList(list) {
+  let html = '<div class="grid gap-4">';
+  list.forEach(ns => {
+    const isSubmitted = ns.alreadySubmitted;
+    const disabledAttr = isSubmitted ? "disabled" : "";
+    const btnClass = isSubmitted
+      ? "bg-gray-400 cursor-not-allowed"
+      : "bg-indigo-600 hover:bg-indigo-700";
+    const btnLabel = isSubmitted ? "Submitted" : "Submit";
+
+    html += `
+      <div class="p-4 bg-white rounded-xl shadow border border-gray-200 flex justify-between items-center">
+        <div>
+          <p class="font-semibold">${ns.name} ${ns.surname} (${ns.studentId}) — Contract ${ns.contractId}</p>
+          <p class="text-gray-600">Cadency: ${ns.cadencyMonths} month(s)</p>
+        </div>
+        <button 
+          class="submitNoShowBtn text-white px-3 py-1 rounded ${btnClass}"
+          data-student="${ns.studentId}"
+          data-contract="${ns.contractId}"
+          ${disabledAttr}>
+          ${btnLabel}
+        </button>
+      </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+    
 async function loadReportCardDrafts() {
   try {
     const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
