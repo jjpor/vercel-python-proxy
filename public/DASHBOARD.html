@@ -1589,33 +1589,46 @@ async function loadReportCardTasks() {
       reportCardsContainer.innerHTML = html;
     }
 
-    // --- No-shows per Head Coach: separa corrente e precedente ---
-    if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
-      const grouped = { current: [], previous: [] };
-      resp.noShows.forEach(ns => {
-        (ns.period === "previous" ? grouped.previous : grouped.current).push(ns);
-      });
+// --- No-shows per Head Coach: separa corrente e precedente ---
+if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length > 0) {
+  const grouped = { current: [], previous: [] };
+  resp.noShows.forEach(ns => {
+    (ns.period === "previous" ? grouped.previous : grouped.current).push(ns);
+  });
 
-      let html = "";
+  let html = "";
 
-      // mese corrente → mostro sempre tutti
-      if (grouped.current.length) {
-        html += `<h3 class="text-xl font-semibold text-red-600 mt-4">No-show Students (Current Month)</h3>`;
-        html += renderNoShowList(grouped.current);
-      }
+  // mese corrente
+  if (grouped.current.length) {
+    html += `
+      <details class="mt-4 bg-red-50 rounded-xl border border-red-200">
+        <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600">
+          No-show Students (Current Month)
+        </summary>
+        <div class="p-4">
+          ${renderNoShowList(grouped.current)}
+        </div>
+      </details>`;
+  }
 
-      // mesi precedenti → mostro solo i non-submitted
-      if (grouped.previous.length) {
-        const pendingPrev = grouped.previous.filter(ns => !ns.alreadySubmitted);
-        if (pendingPrev.length) {
-          html += `<h3 class="text-xl font-semibold text-red-600 mt-6">No-show Students (Previous Months)</h3>`;
-          html += renderNoShowList(pendingPrev);
-        }
-      }
+  // mesi precedenti (solo non-submitted)
+  const pendingPrev = grouped.previous.filter(ns => !ns.alreadySubmitted);
+  if (pendingPrev.length) {
+    html += `
+      <details class="mt-6 bg-red-50 rounded-xl border border-red-200">
+        <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600">
+          No-show Students (Previous Months)
+        </summary>
+        <div class="p-4">
+          ${renderNoShowList(pendingPrev)}
+        </div>
+      </details>`;
+  }
 
-      reportCardNoShowsContainer.innerHTML = html;
-      reportCardNoShowsContainer.classList.remove('hidden');
-    }
+  reportCardNoShowsContainer.innerHTML = html;
+  reportCardNoShowsContainer.classList.remove('hidden');
+}
+
 
   } catch (err) {
     reportCardsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
@@ -1783,7 +1796,7 @@ reportCardForm.addEventListener('submit', async (e) => {
       switchSection(reportCardsSection);
       await loadReportCardTasks();
       await loadReportCardDrafts();
-      await loadReportCardHistory(); // 👈 aggiorna anche lo storico sotto
+      await loadReportCardHistory(); 
     }, 800);
   } catch (err) {
     showMessage(reportCardMessageBox, err.message, false);
