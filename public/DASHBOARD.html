@@ -1602,10 +1602,16 @@ if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length >
   if (grouped.current.length) {
     html += `
       <details class="mt-4 bg-red-50 rounded-xl border border-red-200">
-        <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600">
-          No-show Students (Current Month)
+        <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600 flex justify-between items-center">
+          <span>No-show Students (Current Month)</span>
+          <span class="text-sm text-gray-500">(click to expand)</span>
         </summary>
-        <div class="p-4">
+        <div class="p-4 space-y-4">
+          <button 
+            id="submitAllNoShowsBtn" 
+            class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+            Submit All
+          </button>
           ${renderNoShowList(grouped.current)}
         </div>
       </details>`;
@@ -1616,8 +1622,9 @@ if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length >
   if (pendingPrev.length) {
     html += `
       <details class="mt-6 bg-red-50 rounded-xl border border-red-200">
-        <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600">
-          No-show Students (Previous Months)
+        <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600 flex justify-between items-center">
+          <span>No-show Students (Previous Months)</span>
+          <span class="text-sm text-gray-500">(click to expand)</span>
         </summary>
         <div class="p-4">
           ${renderNoShowList(pendingPrev)}
@@ -1628,6 +1635,7 @@ if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows && resp.noShows.length >
   reportCardNoShowsContainer.innerHTML = html;
   reportCardNoShowsContainer.classList.remove('hidden');
 }
+
 
 
   } catch (err) {
