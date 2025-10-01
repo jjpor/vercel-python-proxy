@@ -677,34 +677,38 @@ function switchSection(showEl) {
     return res.json();
   }
 
-    // --- Load Students Dropdown
-    async function loadStudentsDropdown() {
-      const select = document.getElementById('studentSelect');
-      const container = document.getElementById('studentDetailsContainer');
-    
-      // UI di attesa
-      select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
-      container.innerHTML = '<p class="text-gray-500 text-center">Select a student from the dropdown to view their details.</p>';
-    
-      try {
-        const resp = await apiGet('getStudents');
-        let arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
-    
-        // 👉 Ordina alfabeticamente ignorando maiuscole/minuscole
-        arr.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
-    
-        // Ripopola il select
-        select.innerHTML = '<option value="" disabled selected>Select a student</option>';
-        arr.forEach(id => {
-          const opt = document.createElement('option');
-          opt.value = id;
-          opt.textContent = id;
-          select.appendChild(opt);
-        });
-      } catch (err) {
-        select.innerHTML = '<option value="" disabled selected>Error loading students</option>';
-      }
-    }
+// --- Load Students Dropdown
+async function loadStudentsDropdown() {
+  const select = document.getElementById('studentSelect');
+  const container = document.getElementById('studentDetailsContainer');
+
+  // UI di attesa
+  select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
+  container.innerHTML = '<p class="text-gray-500 text-center">Select a student from the dropdown to view their details.</p>';
+
+  showGlobalLoader(); // 👈 overlay on
+
+  try {
+    const resp = await apiGet('getStudents');
+    let arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+
+    // 👉 Ordina alfabeticamente ignorando maiuscole/minuscole
+    arr.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+
+    // Ripopola il select
+    select.innerHTML = '<option value="" disabled selected>Select a student</option>';
+    arr.forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = id;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    select.innerHTML = '<option value="" disabled selected>Error loading students</option>';
+  } finally {
+    hideGlobalLoader(); // 👈 overlay off SEMPRE
+  }
+}
 
 
 // --- Fetch & Render Student Details
@@ -1175,45 +1179,49 @@ logoutBtn.addEventListener('click', () => {
     }
   }
 
-  async function loadStudentContracts(studentId) {
-    productIdSelect.disabled = true;
-    productIdSelect.innerHTML = '<option value="" disabled selected>Loading products...</option>';
-    hourlyRateInput.value = '';
-    technicalDurationInput.value = '';
-    contractIdInput.value = '';
-    productIdInput.value = '';
-    remainingCallsDisplay.classList.add('hidden');
-    updateFormState();
+async function loadStudentContracts(studentId) {
+  productIdSelect.disabled = true;
+  productIdSelect.innerHTML = '<option value="" disabled selected>Loading products...</option>';
+  hourlyRateInput.value = '';
+  technicalDurationInput.value = '';
+  contractIdInput.value = '';
+  productIdInput.value = '';
+  remainingCallsDisplay.classList.add('hidden');
+  updateFormState();
 
-    try {
-      const resp = await apiGet('getStudentContracts', { studentId });
-      const contracts = (resp && resp.success && Array.isArray(resp.contracts)) ? resp.contracts : [];
-      CURRENT_ALLOCATIONS_BY_STUDENT[studentId] = contracts;
+  showGlobalLoader(); // 👈 overlay on
 
-      productIdSelect.innerHTML = '';
-      const def = document.createElement('option');
-      def.value = '';
-      def.disabled = true;
-      def.selected = true;
-      def.textContent = 'Select a product/allocation';
-      productIdSelect.appendChild(def);
+  try {
+    const resp = await apiGet('getStudentContracts', { studentId });
+    const contracts = (resp && resp.success && Array.isArray(resp.contracts)) ? resp.contracts : [];
+    CURRENT_ALLOCATIONS_BY_STUDENT[studentId] = contracts;
 
-      contracts.forEach(c => {
-        const prodName = (c.product && c.product.productName) ? c.product.productName : c.productId;
-        const opt = document.createElement('option');
-        opt.value = c.productId;
-        opt.textContent = prodName;
-        opt.dataset.contractId = c.contractId;
-        opt.dataset.product = JSON.stringify(c.product || {});
-        opt.dataset.remainingCalls = c.leftCalls;
-        productIdSelect.appendChild(opt);
-      });
+    productIdSelect.innerHTML = '';
+    const def = document.createElement('option');
+    def.value = '';
+    def.disabled = true;
+    def.selected = true;
+    def.textContent = 'Select a product/allocation';
+    productIdSelect.appendChild(def);
 
-      productIdSelect.disabled = false;
-    } catch (err) {
-      productIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
-    }
+    contracts.forEach(c => {
+      const prodName = (c.product && c.product.productName) ? c.product.productName : c.productId;
+      const opt = document.createElement('option');
+      opt.value = c.productId;
+      opt.textContent = prodName;
+      opt.dataset.contractId = c.contractId;
+      opt.dataset.product = JSON.stringify(c.product || {});
+      opt.dataset.remainingCalls = c.leftCalls;
+      productIdSelect.appendChild(opt);
+    });
+
+    productIdSelect.disabled = false;
+  } catch (err) {
+    productIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
+  } finally {
+    hideGlobalLoader(); // 👈 overlay off SEMPRE
   }
+}
 
 studentIdSelect.addEventListener('change', () => {
   const studentId = studentIdSelect.value;
