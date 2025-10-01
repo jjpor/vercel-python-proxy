@@ -1021,6 +1021,7 @@ debriefSaveDraftBtn.addEventListener('click', async () => {
 // My payment folder
 viewFolderBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
+  showGlobalLoader(); // 👈 loader on
   try {
     const resp = await apiGet('getPaymentFolderUrl', { coachId: CURRENT_COACH_ID });
     if (resp.success && resp.url) {
@@ -1030,6 +1031,8 @@ viewFolderBtn.addEventListener('click', async () => {
     }
   } catch (err) {
     alert("Error: " + err.message);
+  } finally {
+    hideGlobalLoader(); // 👈 loader off
   }
 });
 
