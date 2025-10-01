@@ -1541,7 +1541,6 @@ document.getElementById('backToDashboardFromDebriefBtn').addEventListener('click
   switchSection(dashboardSection);
 });
 
-    
 // carica tasks
 async function loadReportCardTasks() {
   reportCardsContainer.innerHTML = loaderHTML("Loading report card tasks...");
@@ -1590,14 +1589,19 @@ async function loadReportCardTasks() {
 
       let html = "";
 
+      // mese corrente → mostro sempre tutti
       if (grouped.current.length) {
         html += `<h3 class="text-xl font-semibold text-red-600 mt-4">No-show Students (Current Month)</h3>`;
         html += renderNoShowList(grouped.current);
       }
 
+      // mesi precedenti → mostro solo i non-submitted
       if (grouped.previous.length) {
-        html += `<h3 class="text-xl font-semibold text-red-600 mt-6">No-show Students (Previous Month)</h3>`;
-        html += renderNoShowList(grouped.previous);
+        const pendingPrev = grouped.previous.filter(ns => !ns.alreadySubmitted);
+        if (pendingPrev.length) {
+          html += `<h3 class="text-xl font-semibold text-red-600 mt-6">No-show Students (Previous Months)</h3>`;
+          html += renderNoShowList(pendingPrev);
+        }
       }
 
       reportCardNoShowsContainer.innerHTML = html;
@@ -1638,7 +1642,7 @@ function renderNoShowList(list) {
   html += '</div>';
   return html;
 }
-
+    
     
 async function loadReportCardDrafts() {
   try {
