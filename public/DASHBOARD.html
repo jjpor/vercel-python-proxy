@@ -1616,18 +1616,14 @@ async function loadReportCardTasks() {
       let html = '<h3 class="text-xl font-semibold text-gray-800">Tasks</h3><div class="grid gap-4">';
       const thisMonth = new Date().toISOString().slice(0,7); // es: "2025-10"
 
-      tasks.forEach(t => {
-        // ✅ check se esiste bozza di questo mese
-        const hasDraftThisMonth = (LAST_DRAFTS || []).some(d =>
-          d.studentId === t.studentId &&
-          d.contractId === t.contractId &&
-          d.dateISO && d.dateISO.toString().startsWith(thisMonth)
-        );
-
-        const btnClass = hasDraftThisMonth
-          ? "bg-indigo-600 hover:bg-indigo-700"
-          : "bg-blue-600 hover:bg-blue-700";
-        const btnLabel = hasDraftThisMonth ? "Edit Draft" : "Write Report";
+        tasks.forEach(t => {
+          const hasDraftThisMonth = t.alreadyDrafted; // 👈 già calcolato dal BE
+          const btnClass = hasDraftThisMonth
+            ? "bg-indigo-600 hover:bg-indigo-700"
+            : "bg-blue-600 hover:bg-blue-700";
+          const btnLabel = hasDraftThisMonth ? "Edit Draft" : "Write Report";
+          ...
+        });
 
         html += `
           <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
