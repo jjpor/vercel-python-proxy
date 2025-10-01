@@ -1710,19 +1710,64 @@ function renderNoShowList(list) {
     
     
 async function loadReportCardDrafts() {
+  reportCardDraftsContainer.innerHTML = loaderHTML("Loading drafts...");
+
   try {
     const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
     if (!resp.success) throw new Error(resp.error || 'Unable to load drafts.');
 
-    // salviamo i drafts in memoria per il prefill
     LAST_DRAFTS = resp.drafts || [];
 
-    // non mostriamo più nulla nell’interfaccia
-    reportCardDraftsContainer.innerHTML = '';
+    if (!LAST_DRAFTS.length) {
+      reportCardDraftsContainer.innerHTML = `
+        <p class="text-gray-500 text-center">No drafts saved.</p>`;
+      return;
+    }
+
+    let html = '<h3 class="text-xl font-semibold text-gray-800">Drafts</h3><div class="grid gap-4">';
+    LAST_DRAFTS.forEach(d => {
+      // normalizza la data
+      let formattedDate = '';
+      try {
+        if (d.dateISO instanceof Date) {
+          formattedDate = d.dateISO.toISOString().slice(0, 10);
+        } else {
+          const dd = new Date(d.dateISO);
+          formattedDate = isNaN(dd) ? String(d.dateISO).slice(0, 10) : dd.toISOString().slice(0, 10);
+        }
+      } catch {
+        formattedDate = String(d.dateISO || '').slice(0, 10);
+      }
+
+      const excerpt = (d.report || '').length > 120
+        ? d.report.substring(0, 120) + '…'
+        : (d.report || '');
+
+      html += `
+        <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
+          <h4 class="text-lg font-semibold text-gray-800">${d.name || ''} ${d.surname || ''} (${d.studentId})</h4>
+          <p class="text-gray-600"><strong>Date:</strong> ${formattedDate}</p>
+          <p class="text-gray-600"><strong>Attendance:</strong> ${d.attendance || '-'}</p>
+          <p class="text-gray-600 mt-2"><strong>Excerpt:</strong> ${excerpt}</p>
+          <button 
+            class="editDraftBtn mt-3 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg"
+            data-student="${d.studentId}"
+            data-contract="${d.contractId}"
+            data-student-name="${d.name} ${d.surname}">
+            Edit Draft
+          </button>
+        </div>`;
+    });
+    html += '</div>';
+
+    reportCardDraftsContainer.innerHTML = html;
+
   } catch (err) {
-    reportCardDraftsContainer.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
+    reportCardDraftsContainer.innerHTML = `
+      <p class="text-red-500 text-center">Error: ${err.message}</p>`;
   }
 }
+
 // submit single no-show
 document.addEventListener('click', async (e) => {
   if (e.target.classList.contains('submitNoShowBtn')) {
