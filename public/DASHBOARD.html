@@ -1930,10 +1930,10 @@ async function loadReportCardHistory() {
     <tr><td colspan="5" class="text-center p-4">Loading...</td></tr>`;
 
   try {
-    const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
+    const resp = await apiGet('getReportCardHistory', { coachId: CURRENT_COACH_ID });
     if (!resp.success) throw new Error(resp.error || 'Unable to load history.');
 
-    const rows = resp.drafts || [];
+    const rows = resp.history || [];   // 👈 non più drafts
 
     // filtro per mese scelto (formato "2025-09")
     const filterValue = historyFilterMonth.value;
