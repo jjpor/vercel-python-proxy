@@ -104,7 +104,7 @@ async function handleGoogleLogin(response) {
 
     CURRENT_COACH_ID = resp.coachId;
     CURRENT_COACH_NAME = resp.coachName;
-    CURRENT_COACH_ROLE = resp.Role;
+    CURRENT_COACH_ROLE = resp.role;
         // Persist session
     localStorage.setItem("coachSession", JSON.stringify({
       id: CURRENT_COACH_ID,
