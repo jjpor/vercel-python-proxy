@@ -409,21 +409,27 @@ async function handleGoogleLogin(response) {
       Back to Dashboard
     </button>
   </div>
+
+  <!-- Pending (Tasks + Drafts unificati) -->
   <div id="reportCardsContainer" class="space-y-4 text-gray-700">
     <p class="text-gray-500 text-center">Loading report card tasks...</p>
   </div>
 
-  <!-- no-shows per Head Coach -->
+  <!-- No-shows (solo Head Coach) -->
   <div id="reportCardNoShowsContainer" class="space-y-4 text-gray-700 mt-6 hidden"></div>
 
-  <!-- drafts -->
-  <div id="reportCardDraftsContainer" class="space-y-4 text-gray-700 mt-6"></div>
-    <!-- storico report cards -->
+  <!-- History -->
   <div id="reportCardHistoryContainer" class="space-y-4 text-gray-700 mt-10">
-    <h3 class="text-xl font-semibold text-gray-800">Report Cards History</h3>
+    <div class="flex items-center justify-between">
+      <h3 class="text-xl font-semibold text-gray-800">Report Cards History</h3>
+      <button id="sendAllReportCardsBtn" 
+              class="hidden bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow">
+        📤 Send All
+      </button>
+    </div>
 
     <!-- filtro mese -->
-    <div class="flex items-center gap-2">
+    <div class="flex items-center gap-2 mt-2">
       <label for="historyFilterMonth" class="font-medium">Filter by month:</label>
       <input type="month" id="historyFilterMonth" class="form-input w-auto inline-block">
     </div>
@@ -444,10 +450,7 @@ async function handleGoogleLogin(response) {
       </table>
     </div>
   </div>
-
-
 </div>
-
 
 
 <!-- REPORT CARD FORM -->
@@ -1550,11 +1553,10 @@ const historyFilterMonth = document.getElementById('historyFilterMonth');
 document.getElementById('viewReportCardsBtn').addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   switchSection(reportCardsSection);
-  await loadReportCardTasks();
-  await loadReportCardDrafts();
-  await loadReportCardHistory(); // 👈 nuovo
-
+  await loadReportCardsPending();
+  await loadReportCardHistory();
 });
+
 
 document.getElementById('backToDashboardFromReportsBtn').addEventListener('click', () => {
   switchSection(dashboardSection);
@@ -1571,38 +1573,57 @@ document.getElementById('backToDashboardFromDebriefBtn').addEventListener('click
   switchSection(dashboardSection);
 });
 
-
-// carica tasks
-async function loadReportCardTasks() {
-  reportCardsContainer.innerHTML = loaderHTML("Loading report card tasks...");
+async function loadReportCardsPending() {
+  reportCardsContainer.innerHTML = loaderHTML("Loading pending report cards...");
   reportCardNoShowsContainer.innerHTML = "";
   reportCardNoShowsContainer.classList.add("hidden");
 
   try {
-    const resp = await apiGet('getReportCardTasks', { coachId: CURRENT_COACH_ID });
-    if (!resp.success) throw new Error(resp.error || 'Unable to load tasks.');
+    // 🔹 Chiediamo sia tasks che drafts
+    const [respTasks, respDrafts] = await Promise.all([
+      apiGet("getReportCardTasks", { coachId: CURRENT_COACH_ID }),
+      apiGet("getReportCardDrafts", { coachId: CURRENT_COACH_ID })
+    ]);
 
-    const tasks = resp.tasks || [];
-    if (!tasks.length) {
-      reportCardsContainer.innerHTML = '<p class="text-gray-500 text-center">No report cards due this month 🎉</p>';
+    if (!respTasks.success) throw new Error(respTasks.error || "Unable to load tasks.");
+    if (!respDrafts.success) throw new Error(respDrafts.error || "Unable to load drafts.");
+
+    const tasks = respTasks.tasks || [];
+    const drafts = respDrafts.drafts || [];
+
+    LAST_DRAFTS = drafts; // ci serve per prefillare il form
+
+    // 🔹 Merge: ogni task diventa "Write" o "Draft"
+    const pending = tasks.map(t => {
+      const match = drafts.find(d => d.studentId === t.studentId && d.contractId === t.contractId);
+      return {
+        ...t,
+        alreadyDrafted: !!match,
+        draftReport: match ? match.report : "",
+        attendance: match ? match.attendance : ""
+      };
+    });
+
+    if (!pending.length) {
+      reportCardsContainer.innerHTML = '<p class="text-gray-500 text-center">No pending reports 🎉</p>';
     } else {
-      let html = '<h3 class="text-xl font-semibold text-gray-800">Tasks</h3><div class="grid gap-4">';
-      tasks.forEach(t => {
-        const btnClass = t.alreadyDrafted
+      let html = '<h3 class="text-xl font-semibold text-gray-800 mb-4">Pending Reports</h3><div class="grid gap-4">';
+      pending.forEach(p => {
+        const btnClass = p.alreadyDrafted
           ? "bg-indigo-600 hover:bg-indigo-700"
           : "bg-blue-600 hover:bg-blue-700";
-        const btnLabel = t.alreadyDrafted ? "Edit Draft" : "Write Report";
+        const btnLabel = p.alreadyDrafted ? "Edit Draft" : "Write Report";
 
         html += `
           <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
-            <h3 class="text-lg font-semibold text-gray-800">${t.name} ${t.surname} (${t.studentId})</h3>
-            <p class="text-gray-600"><strong>Cadency:</strong> ${t.cadencyMonths} month(s)</p>
-            <p class="text-gray-600"><strong>Calls:</strong> ${t.calls}</p>
+            <h3 class="text-lg font-semibold text-gray-800">${p.name} ${p.surname} (${p.studentId})</h3>
+            <p class="text-gray-600"><strong>Cadency:</strong> ${p.cadencyMonths} month(s)</p>
+            <p class="text-gray-600"><strong>Calls:</strong> ${p.calls}</p>
             <button 
               class="writeReportBtn mt-3 text-white px-4 py-2 rounded-lg ${btnClass}"
-              data-student="${t.studentId}" 
-              data-contract="${t.contractId}"
-              data-student-name="${t.name} ${t.surname}">
+              data-student="${p.studentId}" 
+              data-contract="${p.contractId}"
+              data-student-name="${p.name} ${p.surname}">
               ${btnLabel}
             </button>
           </div>`;
@@ -1611,10 +1632,10 @@ async function loadReportCardTasks() {
       reportCardsContainer.innerHTML = html;
     }
 
-    // --- No-shows ---
-    if (CURRENT_COACH_ROLE === "Head Coach" && resp.noShows?.length) {
+    // 🔹 Render dei No-shows
+    if (CURRENT_COACH_ROLE === "Head Coach" && respTasks.noShows?.length) {
       const grouped = { current: [], previous: [] };
-      resp.noShows.forEach(ns => {
+      respTasks.noShows.forEach(ns => {
         (ns.period === "previous" ? grouped.previous : grouped.current).push(ns);
       });
 
@@ -1622,23 +1643,19 @@ async function loadReportCardTasks() {
       if (grouped.current.length) {
         html += `
           <details open class="mt-4 bg-red-50 rounded-xl border border-red-200">
-            <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600 flex justify-between items-center">
-              <span>No-show Students (Current Month)</span>
-              <button id="submitAllNoShowsBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded text-sm ml-4">
-                Submit All
-              </button>
+            <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600">
+              No-show Students (Current Month)
             </summary>
             <div class="p-4">${renderNoShowList(grouped.current)}</div>
           </details>`;
       }
-      const pendingPrev = grouped.previous.filter(ns => !ns.alreadySubmitted);
-      if (pendingPrev.length) {
+      if (grouped.previous.length) {
         html += `
           <details class="mt-6 bg-red-50 rounded-xl border border-red-200">
             <summary class="cursor-pointer px-4 py-2 font-semibold text-red-600">
               No-show Students (Previous Months)
             </summary>
-            <div class="p-4">${renderNoShowList(pendingPrev)}</div>
+            <div class="p-4">${renderNoShowList(grouped.previous)}</div>
           </details>`;
       }
       reportCardNoShowsContainer.innerHTML = html;
@@ -1650,6 +1667,7 @@ async function loadReportCardTasks() {
   }
 }
 
+  
 // funzione helper per disegnare lista no-shows
 function renderNoShowList(list) {
   let html = '<div class="grid gap-4">';
@@ -1680,66 +1698,6 @@ function renderNoShowList(list) {
   return html;
 }
     
-    
-async function loadReportCardDrafts() {
-  reportCardDraftsContainer.innerHTML = loaderHTML("Loading drafts...");
-
-  try {
-    const resp = await apiGet('getReportCardDrafts', { coachId: CURRENT_COACH_ID });
-    if (!resp.success) throw new Error(resp.error || 'Unable to load drafts.');
-
-    LAST_DRAFTS = resp.drafts || [];
-
-    if (!LAST_DRAFTS.length) {
-      reportCardDraftsContainer.innerHTML = `
-        <p class="text-gray-500 text-center">No drafts saved.</p>`;
-      return;
-    }
-
-    let html = '<h3 class="text-xl font-semibold text-gray-800">Drafts</h3><div class="grid gap-4">';
-    LAST_DRAFTS.forEach(d => {
-      // normalizza la data
-      let formattedDate = '';
-      try {
-        if (d.dateISO instanceof Date) {
-          formattedDate = d.dateISO.toISOString().slice(0, 10);
-        } else {
-          const dd = new Date(d.dateISO);
-          formattedDate = isNaN(dd) ? String(d.dateISO).slice(0, 10) : dd.toISOString().slice(0, 10);
-        }
-      } catch {
-        formattedDate = String(d.dateISO || '').slice(0, 10);
-      }
-
-      const excerpt = (d.report || '').length > 120
-        ? d.report.substring(0, 120) + '…'
-        : (d.report || '');
-
-      html += `
-        <div class="p-4 bg-white rounded-xl shadow border border-gray-200">
-          <h4 class="text-lg font-semibold text-gray-800">${d.name || ''} ${d.surname || ''} (${d.studentId})</h4>
-          <p class="text-gray-600"><strong>Date:</strong> ${formattedDate}</p>
-          <p class="text-gray-600"><strong>Attendance:</strong> ${d.attendance || '-'}</p>
-          <p class="text-gray-600 mt-2"><strong>Excerpt:</strong> ${excerpt}</p>
-          <button 
-            class="editDraftBtn mt-3 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg"
-            data-student="${d.studentId}"
-            data-contract="${d.contractId}"
-            data-student-name="${d.name} ${d.surname}">
-            Edit Draft
-          </button>
-        </div>`;
-    });
-    html += '</div>';
-
-    reportCardDraftsContainer.innerHTML = html;
-
-  } catch (err) {
-    reportCardDraftsContainer.innerHTML = `
-      <p class="text-red-500 text-center">Error: ${err.message}</p>`;
-  }
-}
-
 // submit single no-show
 document.addEventListener('click', async (e) => {
   if (e.target.classList.contains('submitNoShowBtn')) {
@@ -1853,10 +1811,10 @@ reportCardForm.addEventListener('submit', async (e) => {
       reportCardForm.reset();
       document.getElementById('reportCardCallsTable').classList.add('hidden');
       switchSection(reportCardsSection);
-      await loadReportCardTasks();
-      await loadReportCardDrafts();
-      await loadReportCardHistory(); 
+      await loadReportCardsPending();
+      await loadReportCardHistory();
     }, 800);
+
   } catch (err) {
     showMessage(reportCardMessageBox, err.message, false);
   } finally {
