@@ -910,6 +910,7 @@ loginForm.addEventListener('submit', async (e) => {
     CURRENT_COACH_ID = String(resp.coachId);
     CURRENT_COACH_NAME = resp.coachName || CURRENT_COACH_ID;
     CURRENT_COACH_ROLE = resp.role;
+    console.log("DEBUG ROLE →", CURRENT_COACH_ROLE, resp);
     if (!CURRENT_COACH_ROLE) throw new Error("Ruolo coach non trovato. Contatta l'amministratore.");
 
     // Persist session
