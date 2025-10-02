@@ -104,7 +104,7 @@ async function handleGoogleLogin(response) {
 
     CURRENT_COACH_ID = resp.coachId;
     CURRENT_COACH_NAME = resp.coachName;
-    CURRENT_COACH_ROLE = resp.rateRole;
+    CURRENT_COACH_ROLE = resp.Role;
         // Persist session
     localStorage.setItem("coachSession", JSON.stringify({
       id: CURRENT_COACH_ID,
@@ -909,7 +909,7 @@ loginForm.addEventListener('submit', async (e) => {
 
     CURRENT_COACH_ID = String(resp.coachId);
     CURRENT_COACH_NAME = resp.coachName || CURRENT_COACH_ID;
-    CURRENT_COACH_ROLE = resp.rateRole || resp.role;
+    CURRENT_COACH_ROLE = resp.role;
     if (!CURRENT_COACH_ROLE) throw new Error("Ruolo coach non trovato. Contatta l'amministratore.");
 
     // Persist session
@@ -1752,7 +1752,7 @@ document.addEventListener('click', async (e) => {
   
 // click write/edit (prefill sempre se esiste una bozza)
 document.addEventListener('click', (e) => {
-  if (!(e.target.classList.contains('writeReportBtn') || e.target.classList.contains('editDraftBtn'))) return;
+  if (!e.target.classList.contains('writeReportBtn')) return;
 
   const studentId = e.target.dataset.student;
   const contractId = e.target.dataset.contract;
