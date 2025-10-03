@@ -2481,11 +2481,6 @@ async function loadFlashcards() {
         // Mostra la prima card
         renderCard(0, cards, studentId, container);
 
-      } catch (err) {
-        container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
-      }
-    };
-
   } catch (err) {
     container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
   }
