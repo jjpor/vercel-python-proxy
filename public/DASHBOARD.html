@@ -2289,6 +2289,35 @@ async function loadFlashcards() {
         if (!respCards.success) throw new Error(respCards.error || "Unable to load flashcards.");
         const cards = respCards.cards || [];
 
+        // calcola score
+        cards.forEach(c => {
+          const attempts = Number(c.attempts) || 0;
+          const correct  = Number(c.correct) || 0;
+          const base = attempts - correct;
+          const penalty = (c.status === "unknown" ? 2 : 0);
+          c.score = base + penalty;
+          if (c.score < 1) c.score = 1; // minimo 1 per non sparire
+        });
+        
+        // genera mazzo pesato
+        let weightedDeck = [];
+        cards.forEach(c => {
+          for (let i = 0; i < c.score; i++) {
+            weightedDeck.push(c);
+          }
+        });
+        
+        // shuffle
+        function shuffle(arr) {
+          for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+          }
+          return arr;
+        }
+        weightedDeck = shuffle(weightedDeck);
+
+
         if (!cards.length) {
           container.innerHTML = '<p class="text-gray-500">No flashcards found.</p>';
           return;
@@ -2396,19 +2425,43 @@ async function loadFlashcards() {
               const known = pendingFlashcardUpdates.filter(c => c.status === "known").length;
               const unknown = pendingFlashcardUpdates.filter(c => c.status === "unknown").length;
               const percent = Math.round((known / (known + unknown)) * 100);
-
+          
               container.innerHTML = `
                 <p class="text-xl font-bold text-gray-800 mb-4">🎉 You’ve completed all flashcards!</p>
                 <p class="text-lg text-green-600">✅ Known: ${known}</p>
                 <p class="text-lg text-red-600">❌ Still learning: ${unknown}</p>
-                <p class="text-lg text-blue-600">📊 Success rate: ${percent}%</p>
+                <p class="text-lg text-blue-600 mb-6">📊 Success rate: ${percent}%</p>
+                ${unknown > 0 ? `
+                  <button id="retryRedBtn" 
+                    class="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700">
+                    🔄 Retry only the red ones
+                  </button>` : ``}
               `;
-
+          
               flushFlashcardUpdates(studentId);
               document.onkeydown = null;
+          
+              // listener retry
+              if (unknown > 0) {
+                document.getElementById('retryRedBtn').addEventListener('click', () => {
+                  const redOnes = pendingFlashcardUpdates.filter(c => c.status === "unknown");
+                  if (!redOnes.length) return;
+                  // 👇 shuffle per non rifare sempre ordine fisso
+                  function shuffle(arr) {
+                    for (let i = arr.length - 1; i > 0; i--) {
+                      const j = Math.floor(Math.random() * (i + 1));
+                      [arr[i], arr[j]] = [arr[j], arr[i]];
+                    }
+                    return arr;
+                  }
+                  const retryDeck = shuffle(redOnes.map(c => ({ ...c })));
+                  pendingFlashcardUpdates = []; // reset round
+                  renderCard(0, retryDeck, studentId, container);
+                });
+              }
             }
           }
-        }
+
 
         // Batch save
         async function flushFlashcardUpdates(studentId) {
