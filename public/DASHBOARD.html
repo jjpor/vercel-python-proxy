@@ -2238,7 +2238,7 @@ confirmSendAllBtn?.addEventListener('click', async () => {
   }
 })();
 
-  viewFlashcardsBtn.addEventListener('click', async () => {
+viewFlashcardsBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   switchSection(flashcardsSection);
   await loadFlashcards();  // funzione che scriviamo sotto
@@ -2457,30 +2457,31 @@ async function loadFlashcards() {
           }
 
 
-        // Batch save
-        async function flushFlashcardUpdates(studentId) {
-          if (!pendingFlashcardUpdates.length) return;
-          try {
-            await apiPost('updateFlashcardStatus', {
-              studentId,
-              cards: pendingFlashcardUpdates
-            });
-            console.log("✅ Batch update inviato:", pendingFlashcardUpdates.length, "cards");
-            pendingFlashcardUpdates = [];
-          } catch (err) {
-            console.error("❌ Errore salvataggio batch:", err);
+          // Batch save
+          async function flushFlashcardUpdates(studentId) {
+            if (!pendingFlashcardUpdates.length) return;
+            try {
+              await apiPost('updateFlashcardStatus', {
+                studentId,
+                cards: pendingFlashcardUpdates
+              });
+              console.log("✅ Batch update inviato:", pendingFlashcardUpdates.length, "cards");
+              pendingFlashcardUpdates = [];
+            } catch (err) {
+              console.error("❌ Errore salvataggio batch:", err);
+            }
           }
+
+          // Mostra la prima card
+          renderCard(0, cards, studentId, container);
         }
-
-        // Mostra la prima card
-        renderCard(0, cards, studentId, container);
      
-        } catch (err) {
-          container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
-        }  // 👈 chiusura try/catch di select.onchange
-      };   // 👈 chiusura di select.onchange
-
-  } catch (err) {
+            
+      } catch (err) {
+        container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+      }
+    }
+  }  catch (err) {
     container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
   } // 👈 chiusura try/catch del loadFlashcards esterno
 }   // 👈 chiusura di loadFlashcards
