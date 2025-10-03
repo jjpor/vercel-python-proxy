@@ -2251,42 +2251,69 @@ backToDashboardFromFlashcardsBtn.addEventListener('click', () => {
   switchSection(dashboardSection);
 });
 
-  async function loadFlashcards() {
-  flashcardsContainer.innerHTML = '<p class="text-gray-500">Loading...</p>';
+async function loadFlashcards() {
+  const select = document.getElementById('flashcardsStudentSelect');
+  const container = document.getElementById('flashcardsContainer');
+
+  container.innerHTML = loaderHTML("Loading students...");
+
   try {
-    // 👇 Per test: prendiamo studentId a mano (poi potremo renderlo dinamico)
-    const studentId = prompt("Enter Student ID to load flashcards:");
-    if (!studentId) {
-      flashcardsContainer.innerHTML = '<p class="text-gray-500">No student selected.</p>';
-      return;
-    }
+    // carica lista studenti
+    const resp = await apiGet('getStudents');
+    if (!resp.success) throw new Error(resp.error || "Unable to load students.");
+    const students = resp.students || [];
 
-    const resp = await apiGet('getFlashcards', { studentId });
-    if (!resp.success) throw new Error(resp.error || "Unable to load flashcards.");
-
-    const cards = resp.cards || [];
-    if (!cards.length) {
-      flashcardsContainer.innerHTML = '<p class="text-gray-500">No flashcards found.</p>';
-      return;
-    }
-
-    // 👇 Per ora mostriamo lista semplice
-    let html = '<div class="grid gap-4">';
-    cards.forEach(c => {
-      html += `
-        <div class="p-6 bg-white rounded-xl shadow text-center">
-          <p class="text-xl font-bold">${c.en}</p>
-          <p class="text-gray-500 mt-2">${c.it}</p>
-          <p class="text-sm mt-2">Status: ${c.status || '-'}</p>
-        </div>`;
+    // popola il dropdown
+    select.innerHTML = '<option value="" disabled selected>Select a student</option>';
+    students.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+    students.forEach(id => {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = id;
+      select.appendChild(opt);
     });
-    html += '</div>';
-    flashcardsContainer.innerHTML = html;
+
+    // reset container
+    container.innerHTML = '<p class="text-gray-500">Select a student to load flashcards.</p>';
+
+    // listener cambio
+    select.onchange = async () => {
+      const studentId = select.value;
+      container.innerHTML = loaderHTML("Loading flashcards...");
+
+      try {
+        const respCards = await apiGet('getFlashcards', { studentId });
+        if (!respCards.success) throw new Error(respCards.error || "Unable to load flashcards.");
+
+        const cards = respCards.cards || [];
+        if (!cards.length) {
+          container.innerHTML = '<p class="text-gray-500">No flashcards found.</p>';
+          return;
+        }
+
+        // renderizza le card
+        let html = '<div class="grid gap-4 w-full md:grid-cols-2">';
+        cards.forEach(c => {
+          html += `
+            <div class="p-6 bg-white rounded-xl shadow text-center border border-gray-200">
+              <p class="text-xl font-bold">${c.en}</p>
+              <p class="text-gray-500 mt-2">${c.it}</p>
+              <p class="text-sm mt-2">Status: ${c.status || '-'}</p>
+            </div>`;
+        });
+        html += '</div>';
+        container.innerHTML = html;
+
+      } catch (err) {
+        container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+      }
+    };
 
   } catch (err) {
-    flashcardsContainer.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+    container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
   }
 }
+
 
   
 </script>
