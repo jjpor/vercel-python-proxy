@@ -44,6 +44,13 @@
           100% { transform: rotate(360deg); }
         }
 
+        /* Flashcards flip effect */
+        .perspective { perspective: 1000px; }
+        .transform-style-preserve-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+
+    
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
@@ -2263,7 +2270,7 @@ async function loadFlashcards() {
     if (!resp.success) throw new Error(resp.error || "Unable to load students.");
     const students = resp.students || [];
 
-    // popola il dropdown
+    // popola dropdown
     select.innerHTML = '<option value="" disabled selected>Select a student</option>';
     students.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
     students.forEach(id => {
@@ -2273,7 +2280,7 @@ async function loadFlashcards() {
       select.appendChild(opt);
     });
 
-    // reset container
+    // reset
     container.innerHTML = '<p class="text-gray-500">Select a student to load flashcards.</p>';
 
     // listener cambio
@@ -2284,25 +2291,79 @@ async function loadFlashcards() {
       try {
         const respCards = await apiGet('getFlashcards', { studentId });
         if (!respCards.success) throw new Error(respCards.error || "Unable to load flashcards.");
-
         const cards = respCards.cards || [];
+
         if (!cards.length) {
           container.innerHTML = '<p class="text-gray-500">No flashcards found.</p>';
           return;
         }
 
-        // renderizza le card
-        let html = '<div class="grid gap-4 w-full md:grid-cols-2">';
-        cards.forEach(c => {
-          html += `
-            <div class="p-6 bg-white rounded-xl shadow text-center border border-gray-200">
-              <p class="text-xl font-bold">${c.en}</p>
-              <p class="text-gray-500 mt-2">${c.it}</p>
-              <p class="text-sm mt-2">Status: ${c.status || '-'}</p>
-            </div>`;
-        });
-        html += '</div>';
-        container.innerHTML = html;
+        let currentIndex = 0;
+
+        function renderCard(index) {
+          const c = cards[index];
+          container.innerHTML = `
+            <div class="relative w-72 h-48 perspective">
+              <div id="flashcard" class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
+                <div class="absolute w-full h-full bg-white rounded-xl shadow flex items-center justify-center text-2xl font-bold backface-hidden">
+                  ${c.en}
+                </div>
+                <div class="absolute w-full h-full bg-blue-600 text-white rounded-xl shadow flex items-center justify-center text-xl font-semibold transform rotateY-180 backface-hidden">
+                  ${c.it}
+                </div>
+              </div>
+            </div>
+            <div class="flex gap-4 mt-6">
+              <button id="btnKnown" class="px-4 py-2 bg-green-600 text-white rounded-lg">✅ Lo sapevo</button>
+              <button id="btnUnknown" class="px-4 py-2 bg-red-600 text-white rounded-lg">❌ Non lo sapevo</button>
+            </div>
+            <p class="mt-4 text-gray-500">Card ${index+1} of ${cards.length}</p>
+          `;
+
+          // flip
+          const cardEl = document.getElementById('flashcard');
+          cardEl.addEventListener('click', () => {
+            cardEl.classList.toggle('rotate-y-180');
+          });
+
+          // risposta nota
+          document.getElementById('btnKnown').addEventListener('click', async () => {
+            try {
+              await apiPost('updateFlashcardStatus', {
+                studentId,
+                cards: [{ en: c.en, status: "known" }]
+              });
+            } catch (err) {
+              console.error("Update status failed:", err);
+            }
+            nextCard();
+          });
+
+          // risposta non nota
+          document.getElementById('btnUnknown').addEventListener('click', async () => {
+            try {
+              await apiPost('updateFlashcardStatus', {
+                studentId,
+                cards: [{ en: c.en, status: "unknown" }]
+              });
+            } catch (err) {
+              console.error("Update status failed:", err);
+            }
+            nextCard();
+          });
+        }
+
+        function nextCard() {
+          currentIndex++;
+          if (currentIndex < cards.length) {
+            renderCard(currentIndex);
+          } else {
+            container.innerHTML = `<p class="text-xl text-green-600 font-bold">🎉 Hai completato tutte le flashcards!</p>`;
+          }
+        }
+
+        // mostra la prima
+        renderCard(currentIndex);
 
       } catch (err) {
         container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
@@ -2313,8 +2374,6 @@ async function loadFlashcards() {
     container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
   }
 }
-
-
   
 </script>
 </body>
