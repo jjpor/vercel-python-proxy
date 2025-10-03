@@ -683,6 +683,16 @@ function loaderHTML(message = "Loading...") {
   `;
 }
 
+function showToast(msg, ms = 4000, color = "bg-green-600") {
+  const t = document.getElementById("toast");
+  if (!t) return;
+  t.className = `fixed top-4 right-4 text-white px-4 py-2 rounded-lg shadow-lg z-[99999] ${color}`;
+  t.textContent = msg;
+  t.classList.remove("hidden");
+  setTimeout(() => { t.classList.add("hidden"); }, ms);
+}
+
+  
 function switchSection(showEl) {
   // li prendo tutti senza dimentirne uno (tutti quelli che hanno classe  app-section)
   document.querySelectorAll('.app-section').forEach(el => el.classList.add('hidden'));
@@ -2227,22 +2237,6 @@ confirmSendAllBtn?.addEventListener('click', async () => {
     localStorage.removeItem("coachSession");
   }
 })();
-
-  function showToast(msg, ms = 4000, color = "bg-green-600") {
-  const t = document.getElementById("toast");
-  if (!t) return;
-
-  // reset colori e applica quello scelto
-  t.className = `fixed top-4 right-4 text-white px-4 py-2 rounded-lg shadow-lg z-[99999] ${color}`;
-
-  t.textContent = msg;
-  t.classList.remove("hidden");
-
-  // nasconde dopo X secondi
-  setTimeout(() => {
-    t.classList.add("hidden");
-  }, ms);
-}
 
   viewFlashcardsBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
