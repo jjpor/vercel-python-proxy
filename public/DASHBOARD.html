@@ -2309,17 +2309,17 @@ async function loadFlashcards() {
               <div id="flashcard" 
                    class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
                 
-                <!-- Front -->
+                <!-- Front = IT (scuro + testo bianco) -->
                 <div class="absolute w-full h-full flex items-center justify-center 
-                            text-2xl font-bold bg-white rounded-xl shadow backface-hidden">
-                  ${c.en}
+                            text-2xl font-bold bg-gray-800 text-white rounded-xl shadow backface-hidden">
+                  ${c.it}
                 </div>
                 
-                <!-- Back -->
+                <!-- Back = EN (chiaro + testo nero) -->
                 <div class="absolute w-full h-full flex items-center justify-center 
-                            text-xl font-semibold bg-blue-600 text-white rounded-xl shadow 
+                            text-xl font-semibold bg-white text-gray-900 rounded-xl shadow 
                             backface-hidden rotate-y-180">
-                  ${c.it}
+                  ${c.en}
                 </div>
               </div>
             </div>
@@ -2361,7 +2361,7 @@ async function loadFlashcards() {
           }
         }
 
-                async function flushFlashcardUpdates(studentId) {
+          async function flushFlashcardUpdates(studentId) {
           if (!pendingFlashcardUpdates.length) return;
         
           try {
@@ -2384,12 +2384,12 @@ async function loadFlashcards() {
         container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
       }
     };
-
-  } catch (err) {
-    container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
-  }
-}
-  
+    
+      } catch (err) {
+        container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+      }
+    }
+      
 </script>
 </body>
 </html>
