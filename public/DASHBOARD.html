@@ -172,6 +172,7 @@ async function handleGoogleLogin(response) {
       <button id="viewStudentsBtn" class="cube-button bg-orange-600 text-white"><span class="text-4xl">🧑‍🎓</span><p class="mt-2 text-lg font-semibold">Students</p></button>
       <button id="viewCoachingDebriefBtn" class="cube-button bg-indigo-600 text-white">  <span class="text-4xl">📝</span>  <p class="mt-2 text-lg font-semibold">Coaching Debrief</p></button>
       <button id="viewReportCardsBtn" class="cube-button bg-teal-600 text-white"><span class="text-4xl">📈</span><p class="mt-2 text-lg font-semibold">Report Cards</p></button>
+      <button id="viewFlashcardsBtn" class="cube-button bg-pink-600 text-white"><span class="text-4xl">🃏</span><p class="mt-2 text-lg font-semibold">Flashcards</p></button>
       <button id="viewFolderBtn" class="cube-button bg-gray-600 text-white"><span class="text-4xl">📂</span><p class="mt-2 text-lg font-semibold">My payment folder</p></button>
       <button id="logoutBtn" class="cube-button bg-red-600 text-white sm:col-span-2 lg:col-span-1"><span class="text-4xl">🚪</span><p class="mt-2 text-lg font-semibold">Log out</p></button>
     </div>
@@ -545,6 +546,22 @@ async function handleGoogleLogin(response) {
   </div>
 </div>
 
+  <!-- FLASHCARDS SECTION -->
+<div id="flashcardsSection" class="hidden app-section">
+  <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
+    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Flashcards</h2>
+    <button id="backToDashboardFromFlashcardsBtn"
+      class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
+      Back to Dashboard
+    </button>
+  </div>
+
+  <div id="flashcardsContainer" class="flex flex-col items-center gap-6">
+    <p class="text-gray-500">Loading flashcards...</p>
+  </div>
+</div>
+
+  
 
 <script>
 // API proxy
@@ -611,6 +628,11 @@ const callHistorySection = document.getElementById('callHistorySection');
 const callHistoryTableBody = document.getElementById('callHistoryTableBody');
 const backFromCallHistoryBtn = document.getElementById('backFromCallHistoryBtn');
 const historyMonthYear = document.getElementById('historyMonthYear');
+
+const viewFlashcardsBtn = document.getElementById('viewFlashcardsBtn');
+const flashcardsSection = document.getElementById('flashcardsSection');
+const backToDashboardFromFlashcardsBtn = document.getElementById('backToDashboardFromFlashcardsBtn');
+const flashcardsContainer = document.getElementById('flashcardsContainer');
 
 
 // Stato
@@ -2169,7 +2191,6 @@ confirmSendAllBtn?.addEventListener('click', async () => {
     }
   });
 })();
-    // 👇 QUI INCOLLI restoreSession
 (function restoreSession() {
   try {
     const raw = localStorage.getItem("coachSession");
@@ -2208,6 +2229,53 @@ confirmSendAllBtn?.addEventListener('click', async () => {
   setTimeout(() => {
     t.classList.add("hidden");
   }, ms);
+}
+
+  viewFlashcardsBtn.addEventListener('click', async () => {
+  if (!CURRENT_COACH_ID) return;
+  switchSection(flashcardsSection);
+  await loadFlashcards();  // funzione che scriviamo sotto
+});
+
+backToDashboardFromFlashcardsBtn.addEventListener('click', () => {
+  switchSection(dashboardSection);
+});
+
+  async function loadFlashcards() {
+  flashcardsContainer.innerHTML = '<p class="text-gray-500">Loading...</p>';
+  try {
+    // 👇 Per test: prendiamo studentId a mano (poi potremo renderlo dinamico)
+    const studentId = prompt("Enter Student ID to load flashcards:");
+    if (!studentId) {
+      flashcardsContainer.innerHTML = '<p class="text-gray-500">No student selected.</p>';
+      return;
+    }
+
+    const resp = await apiGet('getFlashcards', { studentId });
+    if (!resp.success) throw new Error(resp.error || "Unable to load flashcards.");
+
+    const cards = resp.cards || [];
+    if (!cards.length) {
+      flashcardsContainer.innerHTML = '<p class="text-gray-500">No flashcards found.</p>';
+      return;
+    }
+
+    // 👇 Per ora mostriamo lista semplice
+    let html = '<div class="grid gap-4">';
+    cards.forEach(c => {
+      html += `
+        <div class="p-6 bg-white rounded-xl shadow text-center">
+          <p class="text-xl font-bold">${c.en}</p>
+          <p class="text-gray-500 mt-2">${c.it}</p>
+          <p class="text-sm mt-2">Status: ${c.status || '-'}</p>
+        </div>`;
+    });
+    html += '</div>';
+    flashcardsContainer.innerHTML = html;
+
+  } catch (err) {
+    flashcardsContainer.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+  }
 }
 
   
