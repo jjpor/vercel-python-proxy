@@ -556,10 +556,20 @@ async function handleGoogleLogin(response) {
     </button>
   </div>
 
-  <div id="flashcardsContainer" class="flex flex-col items-center gap-6">
-    <p class="text-gray-500">Loading flashcards...</p>
+    <div id="flashcardsContainer" class="flex flex-col items-center gap-6">
+      <p class="text-gray-500">Loading flashcards...</p>
+    </div>
   </div>
-</div>
+    <div class="mb-4">
+    <label for="flashcardsStudentSelect" class="form-label block mb-2">Select Student</label>
+    <select id="flashcardsStudentSelect" class="form-input">
+      <option value="" disabled selected>Loading students...</option>
+    </select>
+  </div>
+  <div id="flashcardsContainer" class="flex flex-col items-center gap-6">
+    <p class="text-gray-500">Select a student to load flashcards.</p>
+  </div>
+
 
   
 
