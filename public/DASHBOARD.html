@@ -1908,8 +1908,7 @@ async function loadReportCardHistory() {
           if (!isNaN(dParsed)) ym = dParsed.toISOString().slice(0, 7);
         }
         return ym === filterValue;
-      } 
-      catch {
+      } catch {
         return false;
       }
     });
@@ -1917,6 +1916,17 @@ async function loadReportCardHistory() {
     if (!filtered.length) {
       reportCardHistoryTableBody.innerHTML = `
         <tr><td colspan="5" class="text-center p-4">No report cards found</td></tr>`;
+      
+      // 👉 gestione Send All anche se tabella vuota
+      const sendAllBtn = document.getElementById('sendAllReportCardsBtn');
+      if (sendAllBtn) {
+        if (CURRENT_COACH_ROLE === "Head Coach") {
+          sendAllBtn.classList.remove("hidden");
+        } else {
+          sendAllBtn.classList.add("hidden");
+        }
+      }
+
       return;
     }
 
@@ -1951,6 +1961,16 @@ async function loadReportCardHistory() {
       reportCardHistoryTableBody.appendChild(row);
     });
 
+    // 👉 gestione Send All dopo aver popolato la tabella
+    const sendAllBtn = document.getElementById('sendAllReportCardsBtn');
+    if (sendAllBtn) {
+      if (CURRENT_COACH_ROLE === "Head Coach") {
+        sendAllBtn.classList.remove("hidden");
+      } else {
+        sendAllBtn.classList.add("hidden");
+      }
+    }
+
   } catch (err) {
     reportCardHistoryTableBody.innerHTML = `
       <tr><td colspan="5" class="text-center p-4 text-red-500">
@@ -1961,8 +1981,7 @@ async function loadReportCardHistory() {
 
 // ricarica su cambio filtro
 historyFilterMonth.addEventListener('change', loadReportCardHistory);
-
-    
+   
 async function loadStudentCallsForMonth(studentId) {
   const table = document.getElementById('reportCardCallsTable');
   const tbody = document.getElementById('reportCardCallsTableBody');
