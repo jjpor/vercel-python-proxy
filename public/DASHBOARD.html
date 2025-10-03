@@ -95,7 +95,7 @@ async function handleGoogleLogin(response) {
     const resp = await apiPost("loginWithGoogle", { credential });
 
     if (!resp.success) {
-      alert("Google login fallito: " + resp.error);
+      showToast("Google login fallito: " + resp.error, 5000, "bg-red-600");
       location.reload(); 
       return;
     }
@@ -123,7 +123,7 @@ async function handleGoogleLogin(response) {
     await fetchMonthlyEarnings();
     await loadStudentIds();
   } catch (err) {
-    alert("Errore login Google: " + (err.message || err));
+    showToast("Errore login Google: " + (err.message || err), 5000, "bg-red-600");
   } finally {
     hideGlobalLoader(); // 👈 safety net in caso di errori
   }
@@ -448,6 +448,12 @@ async function handleGoogleLogin(response) {
         </div>
       </div>
     </div>
+    
+        <!-- Toast notification -->
+    <div id="toast" 
+         class="hidden fixed top-4 right-4 bg-green-600 text-white px-4 py-2 rounded-lg shadow-lg z-[99999]">
+    </div>
+
 
     <!-- filtro mese -->
     <div class="flex items-center gap-2 mt-2">
@@ -1086,10 +1092,10 @@ viewFolderBtn.addEventListener('click', async () => {
     if (resp.success && resp.url) {
       window.open(resp.url, "_blank");
     } else {
-      alert("No folder found");
+      showToast("No folder found", 4000, "bg-red-600");
     }
   } catch (err) {
-    alert("Error: " + err.message);
+    showToast("Error: " + err.message, 5000, "bg-red-600");
   } finally {
     hideGlobalLoader(); // 👈 loader off
   }
@@ -1735,12 +1741,12 @@ document.addEventListener('click', async (e) => {
       e.target.textContent = "Submitted";
 
       if (resp.status === "inserted") {
-        alert(`No-show submitted for ${studentId}`);
+        showToast(`No-show submitted for ${studentId}`, 4000, "bg-green-600");
       } else if (resp.status === "updated") {
-        alert(`No-show for ${studentId} was already submitted (updated).`);
+        showToast(`No-show for ${studentId} was already submitted (updated).`, 4000, "bg-green-600");
       }
     } catch (err) {
-      alert("Error: " + err.message);
+      showToast("Error: " + err.message, 5000, "bg-red-600");
     }
   }
 });
@@ -1766,7 +1772,7 @@ document.addEventListener('click', async (e) => {
         console.error("Error submitting no-show", err);
       }
     }
-    alert("All no-shows submitted!");
+    showToast("All no-shows submitted!", 4000, "bg-green-600");
   }
 });
 
@@ -2071,10 +2077,13 @@ confirmSendAllBtn?.addEventListener('click', async () => {
       month: now.getMonth()
     });
     if (!resp.success) throw new Error(resp.error || "Failed to send report cards");
-    alert(resp.message || "Report cards sent!");
+    
+    console.log("SendAll:", resp.message || "Report cards sent!");
+    showToast(resp.message || "Report cards sent!", 4000, "bg-green-600");
+
     await loadReportCardHistory(); // refresh tabella
   } catch (err) {
-    alert("Error: " + (err.message || err));
+    showToast("Error: " + (err.message || err), 5000, "bg-red-600");
   } finally {
     hideGlobalLoader();
   }
@@ -2184,6 +2193,22 @@ confirmSendAllBtn?.addEventListener('click', async () => {
     localStorage.removeItem("coachSession");
   }
 })();
+
+  function showToast(msg, ms = 4000, color = "bg-green-600") {
+  const t = document.getElementById("toast");
+  if (!t) return;
+
+  // reset colori e applica quello scelto
+  t.className = `fixed top-4 right-4 text-white px-4 py-2 rounded-lg shadow-lg z-[99999] ${color}`;
+
+  t.textContent = msg;
+  t.classList.remove("hidden");
+
+  // nasconde dopo X secondi
+  setTimeout(() => {
+    t.classList.add("hidden");
+  }, ms);
+}
 
   
 </script>
