@@ -659,6 +659,7 @@ let CURRENT_COACH_ROLE = null;
 let CURRENT_ALLOCATIONS_BY_STUDENT = {};
 let LAST_SELECTED_STUDENT = null;
 let LAST_DRAFTS = [];
+let pendingFlashcardUpdates = [];
 
 
 
@@ -2300,70 +2301,84 @@ async function loadFlashcards() {
 
         let currentIndex = 0;
 
-        function renderCard(index) {
+        function renderCard(index, cards, studentId, container) {
           const c = cards[index];
+        
           container.innerHTML = `
-            <div class="relative w-72 h-48 perspective">
-              <div id="flashcard" class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
-                <div class="absolute w-full h-full bg-white rounded-xl shadow flex items-center justify-center text-2xl font-bold backface-hidden">
+            <div class="relative w-72 h-48 perspective mx-auto">
+              <div id="flashcard" 
+                   class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
+                
+                <!-- Front -->
+                <div class="absolute w-full h-full flex items-center justify-center 
+                            text-2xl font-bold bg-white rounded-xl shadow backface-hidden">
                   ${c.en}
                 </div>
-                <div class="absolute w-full h-full bg-blue-600 text-white rounded-xl shadow flex items-center justify-center text-xl font-semibold transform rotateY-180 backface-hidden">
+                
+                <!-- Back -->
+                <div class="absolute w-full h-full flex items-center justify-center 
+                            text-xl font-semibold bg-blue-600 text-white rounded-xl shadow 
+                            backface-hidden rotate-y-180">
                   ${c.it}
                 </div>
               </div>
             </div>
-            <div class="flex gap-4 mt-6">
+        
+            <div class="flex gap-4 mt-6 justify-center">
               <button id="btnKnown" class="px-4 py-2 bg-green-600 text-white rounded-lg">✅ Lo sapevo</button>
               <button id="btnUnknown" class="px-4 py-2 bg-red-600 text-white rounded-lg">❌ Non lo sapevo</button>
             </div>
             <p class="mt-4 text-gray-500">Card ${index+1} of ${cards.length}</p>
           `;
-
-          // flip
+        
+          // Flip al click
           const cardEl = document.getElementById('flashcard');
           cardEl.addEventListener('click', () => {
-            cardEl.classList.toggle('rotate-y-180');
+            cardEl.classList.toggle("rotate-y-180");
           });
-
-          // risposta nota
-          document.getElementById('btnKnown').addEventListener('click', async () => {
-            try {
-              await apiPost('updateFlashcardStatus', {
-                studentId,
-                cards: [{ en: c.en, status: "known" }]
-              });
-            } catch (err) {
-              console.error("Update status failed:", err);
-            }
+        
+          // Click sui bottoni → aggiorna array locale
+          function handleAnswer(status) {
+            pendingFlashcardUpdates.push({
+              en: c.en,
+              status,
+              timestamp: new Date().toISOString()
+            });
             nextCard();
-          });
-
-          // risposta non nota
-          document.getElementById('btnUnknown').addEventListener('click', async () => {
-            try {
-              await apiPost('updateFlashcardStatus', {
-                studentId,
-                cards: [{ en: c.en, status: "unknown" }]
-              });
-            } catch (err) {
-              console.error("Update status failed:", err);
+          }
+        
+          document.getElementById('btnKnown').addEventListener('click', () => handleAnswer("known"));
+          document.getElementById('btnUnknown').addEventListener('click', () => handleAnswer("unknown"));
+        
+          function nextCard() {
+            const nextIndex = index + 1;
+            if (nextIndex < cards.length) {
+              renderCard(nextIndex, cards, studentId, container);
+            } else {
+              container.innerHTML = `<p class="text-xl text-green-600 font-bold">🎉 Hai completato tutte le flashcards!</p>`;
+              flushFlashcardUpdates(studentId);
             }
-            nextCard();
-          });
-        }
-
-        function nextCard() {
-          currentIndex++;
-          if (currentIndex < cards.length) {
-            renderCard(currentIndex);
-          } else {
-            container.innerHTML = `<p class="text-xl text-green-600 font-bold">🎉 Hai completato tutte le flashcards!</p>`;
           }
         }
 
+                async function flushFlashcardUpdates(studentId) {
+          if (!pendingFlashcardUpdates.length) return;
+        
+          try {
+            await apiPost('updateFlashcardStatus', {
+              studentId,
+              cards: pendingFlashcardUpdates
+            });
+            console.log("✅ Batch update inviato:", pendingFlashcardUpdates.length, "cards");
+            pendingFlashcardUpdates = [];
+          } catch (err) {
+            console.error("❌ Errore salvataggio batch:", err);
+          }
+        }
+
+
         // mostra la prima
-        renderCard(currentIndex);
+      renderCard(currentIndex, cards, studentId, container);
 
       } catch (err) {
         container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
