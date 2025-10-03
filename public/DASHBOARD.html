@@ -2012,6 +2012,37 @@ async function loadStudentCallsForMonth(studentId) {
   }
 }
 
+document.getElementById('sendAllReportCardsBtn')?.addEventListener('click', async () => {
+  if (CURRENT_COACH_ROLE !== "Head Coach") {
+    alert("Only Head Coach can send report cards.");
+    return;
+  }
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+
+  // opzionale: invio solo ultimo giorno del mese
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  if (tomorrow.getMonth() === now.getMonth()) {
+    alert("Report cards can only be sent at the end of the month.");
+    return;
+  }
+
+  try {
+    const resp = await apiPost('sendAllReportCards', { coachId: CURRENT_COACH_ID, year, month });
+    if (!resp.success) throw new Error(resp.error || "Failed to send report cards");
+
+    alert(resp.message || "Report cards sent!");
+    await loadReportCardHistory(); // refresh tabella
+  } catch (err) {
+    alert("Error: " + (err.message || err));
+  }
+});
+
+
+  
     // ---- AI helper for Report Card ----
 (function setupAIHelper(){
   const suggestBtn = document.getElementById('aiSuggestBtn');
