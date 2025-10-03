@@ -2300,65 +2300,105 @@ async function loadFlashcards() {
 
         let currentIndex = 0;
 
-        function renderCard(index, cards, studentId, container) {
-          const c = cards[index];
+function renderCard(index, cards, studentId, container) {
+  const c = cards[index];
+
+  container.innerHTML = `
+    <div class="relative w-72 h-48 perspective mx-auto">
+      <div id="flashcard" 
+           class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
         
-          container.innerHTML = `
-        <div class="relative w-72 h-48 perspective mx-auto">
-          <div id="flashcard" 
-               class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
-            
-            <!-- Front = IT (blu più scuro, testo bianco) -->
-            <div class="absolute w-full h-full flex items-center justify-center 
-                        text-2xl font-bold bg-blue-900 text-white rounded-xl shadow backface-hidden">
-              ${c.it}
-            </div>
-            
-            <!-- Back = EN (blu normale, testo bianco) -->
-            <div class="absolute w-full h-full flex items-center justify-center 
-                        text-xl font-semibold bg-blue-600 text-white rounded-xl shadow 
-                        backface-hidden rotate-y-180">
-              ${c.en}
-            </div>
-          </div>
+        <!-- Front = IT -->
+        <div class="absolute w-full h-full flex items-center justify-center 
+                    text-2xl font-bold bg-blue-900 text-white rounded-xl shadow backface-hidden">
+          ${c.it}
         </div>
-    
-        <div class="flex gap-4 mt-6 justify-center">
-          <button id="btnKnown" class="px-4 py-2 bg-green-600 text-white rounded-lg">✅ Lo sapevo</button>
-          <button id="btnUnknown" class="px-4 py-2 bg-red-600 text-white rounded-lg">❌ Non lo sapevo</button>
+        
+        <!-- Back = EN -->
+        <div class="absolute w-full h-full flex items-center justify-center 
+                    text-xl font-semibold bg-blue-600 text-white rounded-xl shadow 
+                    backface-hidden rotate-y-180">
+          ${c.en}
         </div>
-        <p class="mt-4 text-gray-500">Card ${index+1} of ${cards.length}</p>
-      `;
-            
-          // Flip al click
-          const cardEl = document.getElementById('flashcard');
-          cardEl.addEventListener('click', () => {
-            cardEl.classList.toggle("rotate-y-180");
-          });
-        
-          // Click sui bottoni → aggiorna array locale
-          function handleAnswer(status) {
-            pendingFlashcardUpdates.push({
-              en: c.en,
-              status,
-              timestamp: new Date().toISOString()
-            });
-            nextCard();
-          }
-        
-          document.getElementById('btnKnown').addEventListener('click', () => handleAnswer("known"));
-          document.getElementById('btnUnknown').addEventListener('click', () => handleAnswer("unknown"));
-        
-          function nextCard() {
-            const nextIndex = index + 1;
-            if (nextIndex < cards.length) {
-              renderCard(nextIndex, cards, studentId, container);
-            } else {
-              container.innerHTML = `<p class="text-xl text-green-600 font-bold">🎉 Hai completato tutte le flashcards!</p>`;
-              flushFlashcardUpdates(studentId);
-            }
-          }
-        }
+      </div>
+    </div>
+
+    <div class="flex gap-8 mt-6 justify-center items-center">
+      <button id="btnUnknown" 
+              class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-lg font-semibold">
+        ⬅️ Still learning
+      </button>
+      <button id="btnKnown" 
+              class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-lg font-semibold">
+        I know it ➡️
+      </button>
+    </div>
+    <p class="mt-4 text-gray-500">Card ${index+1} of ${cards.length}</p>
+  `;
+
+  const cardEl = document.getElementById('flashcard');
+
+  // --- Flip al click (desktop)
+  cardEl.addEventListener('click', () => {
+    cardEl.classList.toggle("rotate-y-180");
+  });
+
+  // --- Gestione risposta
+  function handleAnswer(status) {
+    pendingFlashcardUpdates.push({
+      en: c.en,
+      status,
+      timestamp: new Date().toISOString()
+    });
+    nextCard();
+  }
+
+  // Bottoni
+  document.getElementById('btnKnown').addEventListener('click', () => handleAnswer("known"));
+  document.getElementById('btnUnknown').addEventListener('click', () => handleAnswer("unknown"));
+
+  // --- Scorciatoie tastiera
+  document.onkeydown = (e) => {
+    if (e.key === "ArrowRight") handleAnswer("known");
+    if (e.key === "ArrowLeft") handleAnswer("unknown");
+    if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === " ") {
+      cardEl.classList.toggle("rotate-y-180");
+    }
+  };
+
+  // --- Swipe mobile
+  let touchStartX = 0;
+  cardEl.addEventListener("touchstart", (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+  });
+
+  cardEl.addEventListener("touchend", (e) => {
+    const touchEndX = e.changedTouches[0].screenX;
+    const diff = touchEndX - touchStartX;
+
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        handleAnswer("known"); // swipe right
+      } else {
+        handleAnswer("unknown"); // swipe left
+      }
+    } else {
+      cardEl.classList.toggle("rotate-y-180"); // tap breve = flip
+    }
+  });
+
+  // --- Next card
+  function nextCard() {
+    const nextIndex = index + 1;
+    if (nextIndex < cards.length) {
+      renderCard(nextIndex, cards, studentId, container);
+    } else {
+      container.innerHTML = `<p class="text-xl text-green-600 font-bold">🎉 You’ve completed all flashcards!</p>`;
+      flushFlashcardUpdates(studentId);
+      document.onkeydown = null; // disabilita shortcut dopo la fine
+    }
+  }
+}
 
           async function flushFlashcardUpdates(studentId) {
           if (!pendingFlashcardUpdates.length) return;
