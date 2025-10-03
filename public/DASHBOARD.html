@@ -428,6 +428,27 @@ async function handleGoogleLogin(response) {
       </button>
     </div>
 
+        <!-- Confirm Send-All Modal -->
+    <div id="sendAllConfirmModal" class="fixed inset-0 z-[10000] hidden">
+      <!-- backdrop -->
+      <div class="absolute inset-0 bg-black/50"></div>
+      <!-- dialog -->
+      <div class="absolute inset-0 flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-xl border border-gray-200">
+          <div class="p-6">
+            <h3 class="text-xl font-semibold text-gray-900">Send all report cards?</h3>
+            <p class="mt-2 text-gray-600">
+              This will send one consolidated email per client (first recipient in <b>To:</b>, others in <b>CC:</b>).
+            </p>
+            <div class="mt-6 flex items-center justify-end gap-3">
+              <button id="cancelSendAllBtn" class="px-4 py-2 rounded-lg bg-gray-200 text-gray-800 hover:bg-gray-300">Cancel</button>
+              <button id="confirmSendAllBtn" class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Confirm & Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- filtro mese -->
     <div class="flex items-center gap-2 mt-2">
       <label for="historyFilterMonth" class="font-medium">Filter by month:</label>
@@ -2012,32 +2033,50 @@ async function loadStudentCallsForMonth(studentId) {
   }
 }
 
-document.getElementById('sendAllReportCardsBtn')?.addEventListener('click', async () => {
+  // --- Send All: modal di conferma + overlay loader ---
+const sendAllBtn        = document.getElementById('sendAllReportCardsBtn');
+const confirmModal      = document.getElementById('sendAllConfirmModal');
+const confirmSendAllBtn = document.getElementById('confirmSendAllBtn');
+const cancelSendAllBtn  = document.getElementById('cancelSendAllBtn');
+
+function openSendAllModal() { confirmModal?.classList.remove('hidden'); }
+function closeSendAllModal() { confirmModal?.classList.add('hidden'); }
+
+// Apri modal (solo Head Coach)
+sendAllBtn?.addEventListener('click', () => {
   if (CURRENT_COACH_ROLE !== "Head Coach") {
     alert("Only Head Coach can send report cards.");
     return;
   }
+  openSendAllModal();
+});
 
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = now.getMonth();
+// Chiudi modal
+cancelSendAllBtn?.addEventListener('click', closeSendAllModal);
+// Chiudi anche cliccando il backdrop
+confirmModal?.addEventListener('click', (e) => {
+  if (e.target === confirmModal) closeSendAllModal();
+});
 
-  // opzionale: invio solo ultimo giorno del mese
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  if (tomorrow.getMonth() === now.getMonth()) {
-    alert("Report cards can only be sent at the end of the month.");
-    return;
-  }
+// Conferma → invia
+confirmSendAllBtn?.addEventListener('click', async () => {
+  closeSendAllModal();
 
+  showGlobalLoader();
   try {
-    const resp = await apiPost('sendAllReportCards', { coachId: CURRENT_COACH_ID, year, month });
+    const now = new Date();
+    const resp = await apiPost('sendAllReportCards', {
+      coachId: CURRENT_COACH_ID,
+      year: now.getFullYear(),
+      month: now.getMonth()
+    });
     if (!resp.success) throw new Error(resp.error || "Failed to send report cards");
-
     alert(resp.message || "Report cards sent!");
     await loadReportCardHistory(); // refresh tabella
   } catch (err) {
     alert("Error: " + (err.message || err));
+  } finally {
+    hideGlobalLoader();
   }
 });
 
