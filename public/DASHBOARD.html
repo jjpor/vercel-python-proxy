@@ -2305,32 +2305,32 @@ async function loadFlashcards() {
           const c = cards[index];
         
           container.innerHTML = `
-            <div class="relative w-72 h-48 perspective mx-auto">
-              <div id="flashcard" 
-                   class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
-                
-                <!-- Front = IT (scuro + testo bianco) -->
-                <div class="absolute w-full h-full flex items-center justify-center 
-                            text-2xl font-bold bg-gray-800 text-white rounded-xl shadow backface-hidden">
-                  ${c.it}
-                </div>
-                
-                <!-- Back = EN (chiaro + testo nero) -->
-                <div class="absolute w-full h-full flex items-center justify-center 
-                            text-xl font-semibold bg-white text-gray-900 rounded-xl shadow 
-                            backface-hidden rotate-y-180">
-                  ${c.en}
-                </div>
-              </div>
+        <div class="relative w-72 h-48 perspective mx-auto">
+          <div id="flashcard" 
+               class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
+            
+            <!-- Front = IT (blu più scuro, testo bianco) -->
+            <div class="absolute w-full h-full flex items-center justify-center 
+                        text-2xl font-bold bg-blue-900 text-white rounded-xl shadow backface-hidden">
+              ${c.it}
             </div>
-        
-            <div class="flex gap-4 mt-6 justify-center">
-              <button id="btnKnown" class="px-4 py-2 bg-green-600 text-white rounded-lg">✅ Lo sapevo</button>
-              <button id="btnUnknown" class="px-4 py-2 bg-red-600 text-white rounded-lg">❌ Non lo sapevo</button>
+            
+            <!-- Back = EN (blu normale, testo bianco) -->
+            <div class="absolute w-full h-full flex items-center justify-center 
+                        text-xl font-semibold bg-blue-600 text-white rounded-xl shadow 
+                        backface-hidden rotate-y-180">
+              ${c.en}
             </div>
-            <p class="mt-4 text-gray-500">Card ${index+1} of ${cards.length}</p>
-          `;
-        
+          </div>
+        </div>
+    
+        <div class="flex gap-4 mt-6 justify-center">
+          <button id="btnKnown" class="px-4 py-2 bg-green-600 text-white rounded-lg">✅ Lo sapevo</button>
+          <button id="btnUnknown" class="px-4 py-2 bg-red-600 text-white rounded-lg">❌ Non lo sapevo</button>
+        </div>
+        <p class="mt-4 text-gray-500">Card ${index+1} of ${cards.length}</p>
+      `;
+            
           // Flip al click
           const cardEl = document.getElementById('flashcard');
           cardEl.addEventListener('click', () => {
