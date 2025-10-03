@@ -2276,10 +2276,10 @@ async function loadFlashcards() {
       select.appendChild(opt);
     });
 
-    // reset
+    // reset UI
     container.innerHTML = '<p class="text-gray-500">Select a student to load flashcards.</p>';
 
-    // listener cambio
+    // listener cambio studente
     select.onchange = async () => {
       const studentId = select.value;
       container.innerHTML = loaderHTML("Loading flashcards...");
@@ -2294,134 +2294,147 @@ async function loadFlashcards() {
           return;
         }
 
-        let currentIndex = 0;
+        let pendingFlashcardUpdates = [];
 
-// Render card singola
-function renderCard(index, cards, studentId, container) {
-  const c = cards[index];
-  const progress = ((index) / cards.length) * 100;
+        // Render card singola
+        function renderCard(index, cards, studentId, container) {
+          const c = cards[index];
+          const progress = ((index) / cards.length) * 100;
 
-  container.innerHTML = `
-    <!-- Progress -->
-    <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
-      <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width:${progress}%"></div>
-    </div>
-    <p class="text-sm text-gray-500 mb-4">Card ${index+1} of ${cards.length}</p>
+          container.innerHTML = `
+            <!-- Progress -->
+            <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
+              <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width:${progress}%"></div>
+            </div>
+            <p class="text-sm text-gray-500 mb-4">Card ${index+1} of ${cards.length}</p>
 
-    <!-- Flashcard -->
-    <div class="relative w-72 h-48 perspective mx-auto">
-      <div id="flashcard" 
-           class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
-        
-        <!-- Front = IT -->
-        <div class="absolute w-full h-full flex items-center justify-center 
-                    text-2xl font-bold bg-blue-900 text-white rounded-xl shadow backface-hidden">
-          ${c.it}
-        </div>
-        
-        <!-- Back = EN -->
-        <div class="absolute w-full h-full flex items-center justify-center 
-                    text-2xl font-semibold bg-blue-600 text-white rounded-xl shadow backface-hidden rotate-y-180">
-          ${c.en}
-        </div>
-      </div>
-    </div>
+            <!-- Flashcard -->
+            <div class="relative w-72 h-48 perspective mx-auto">
+              <div id="flashcard" 
+                   class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
+                
+                <!-- Front = IT -->
+                <div class="absolute w-full h-full flex items-center justify-center 
+                            text-2xl font-bold bg-blue-900 text-white rounded-xl shadow backface-hidden">
+                  ${c.it}
+                </div>
+                
+                <!-- Back = EN -->
+                <div class="absolute w-full h-full flex items-center justify-center 
+                            text-2xl font-bold bg-blue-600 text-white rounded-xl shadow backface-hidden rotate-y-180">
+                  ${c.en}
+                </div>
+              </div>
+            </div>
 
-    <!-- Bottoni -->
-    <div class="flex gap-8 mt-6 justify-center items-center">
-      <button id="btnUnknown" 
-              class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-lg font-semibold">
-        ⬅️ Still learning
-      </button>
-      <button id="btnKnown" 
-              class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-lg font-semibold">
-        I know it ➡️
-      </button>
-    </div>
-  `;
+            <!-- Bottoni -->
+            <div class="flex gap-8 mt-6 justify-center items-center">
+              <button id="btnUnknown" 
+                      class="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg text-lg font-semibold">
+                ⬅️ Still learning
+              </button>
+              <button id="btnKnown" 
+                      class="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-lg font-semibold">
+                I know it ➡️
+              </button>
+            </div>
+          `;
 
-  const cardEl = document.getElementById('flashcard');
+          const cardEl = document.getElementById('flashcard');
 
-  // Flip al click
-  cardEl.addEventListener('click', () => {
-    cardEl.classList.toggle("rotate-y-180");
-  });
+          // Flip
+          cardEl.addEventListener('click', () => {
+            cardEl.classList.toggle("rotate-y-180");
+          });
 
-  // Gestione risposta
-  function handleAnswer(status) {
-    pendingFlashcardUpdates.push({
-      en: c.en,
-      status,
-      timestamp: new Date().toISOString()
-    });
-    nextCard();
-  }
+          // Gestione risposta
+          function handleAnswer(status) {
+            pendingFlashcardUpdates.push({
+              en: c.en,
+              status,
+              timestamp: new Date().toISOString()
+            });
+            nextCard();
+          }
 
-  // Bottoni
-  document.getElementById('btnKnown').addEventListener('click', () => handleAnswer("known"));
-  document.getElementById('btnUnknown').addEventListener('click', () => handleAnswer("unknown"));
+          // Bottoni
+          document.getElementById('btnKnown').addEventListener('click', () => handleAnswer("known"));
+          document.getElementById('btnUnknown').addEventListener('click', () => handleAnswer("unknown"));
 
-  // Scorciatoie tastiera
-  document.onkeydown = (e) => {
-    if (e.key === "ArrowRight") handleAnswer("known");
-    if (e.key === "ArrowLeft") handleAnswer("unknown");
-    if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === " ") {
-      cardEl.classList.toggle("rotate-y-180");
-    }
-  };
+          // Tastiera
+          document.onkeydown = (e) => {
+            if (e.key === "ArrowRight") handleAnswer("known");
+            if (e.key === "ArrowLeft") handleAnswer("unknown");
+            if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === " " || e.key === "Enter") {
+              cardEl.classList.toggle("rotate-y-180");
+            }
+          };
 
-  // Swipe mobile
-  let touchStartX = 0;
-  cardEl.addEventListener("touchstart", (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-  });
-  cardEl.addEventListener("touchend", (e) => {
-    const touchEndX = e.changedTouches[0].screenX;
-    const diff = touchEndX - touchStartX;
-    if (Math.abs(diff) > 50) {
-      if (diff > 0) handleAnswer("known");
-      else handleAnswer("unknown");
-    } else {
-      cardEl.classList.toggle("rotate-y-180");
-    }
-  });
+          // Swipe mobile
+          let touchStartX = 0;
+          cardEl.addEventListener("touchstart", (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+          });
+          cardEl.addEventListener("touchend", (e) => {
+            const touchEndX = e.changedTouches[0].screenX;
+            const diff = touchEndX - touchStartX;
+            if (Math.abs(diff) > 50) {
+              if (diff > 0) handleAnswer("known");
+              else handleAnswer("unknown");
+            } else {
+              cardEl.classList.toggle("rotate-y-180");
+            }
+          });
 
-  // Avanza
-  function nextCard() {
-    const nextIndex = index + 1;
-    if (nextIndex < cards.length) {
-      renderCard(nextIndex, cards, studentId, container);
-    } else {
-      // Riassunto finale
-      const known = pendingFlashcardUpdates.filter(c => c.status === "known").length;
-      const unknown = pendingFlashcardUpdates.filter(c => c.status === "unknown").length;
-      const percent = Math.round((known / (known + unknown)) * 100);
+          // Avanza
+          function nextCard() {
+            const nextIndex = index + 1;
+            if (nextIndex < cards.length) {
+              renderCard(nextIndex, cards, studentId, container);
+            } else {
+              // Riassunto finale
+              const known = pendingFlashcardUpdates.filter(c => c.status === "known").length;
+              const unknown = pendingFlashcardUpdates.filter(c => c.status === "unknown").length;
+              const percent = Math.round((known / (known + unknown)) * 100);
 
-      container.innerHTML = `
-        <p class="text-xl font-bold text-gray-800 mb-4">🎉 You’ve completed all flashcards!</p>
-        <p class="text-lg text-green-600">✅ Known: ${known}</p>
-        <p class="text-lg text-red-600">❌ Still learning: ${unknown}</p>
-        <p class="text-lg text-blue-600">📊 Success rate: ${percent}%</p>
-      `;
+              container.innerHTML = `
+                <p class="text-xl font-bold text-gray-800 mb-4">🎉 You’ve completed all flashcards!</p>
+                <p class="text-lg text-green-600">✅ Known: ${known}</p>
+                <p class="text-lg text-red-600">❌ Still learning: ${unknown}</p>
+                <p class="text-lg text-blue-600">📊 Success rate: ${percent}%</p>
+              `;
 
-      flushFlashcardUpdates(studentId);
-      document.onkeydown = null;
-    }
-  }
-}
+              flushFlashcardUpdates(studentId);
+              document.onkeydown = null;
+            }
+          }
+        }
 
-// Batch save
-async function flushFlashcardUpdates(studentId) {
-  if (!pendingFlashcardUpdates.length) return;
-  try {
-    await apiPost('updateFlashcardStatus', {
-      studentId,
-      cards: pendingFlashcardUpdates
-    });
-    console.log("✅ Batch update inviato:", pendingFlashcardUpdates.length, "cards");
-    pendingFlashcardUpdates = [];
+        // Batch save
+        async function flushFlashcardUpdates(studentId) {
+          if (!pendingFlashcardUpdates.length) return;
+          try {
+            await apiPost('updateFlashcardStatus', {
+              studentId,
+              cards: pendingFlashcardUpdates
+            });
+            console.log("✅ Batch update inviato:", pendingFlashcardUpdates.length, "cards");
+            pendingFlashcardUpdates = [];
+          } catch (err) {
+            console.error("❌ Errore salvataggio batch:", err);
+          }
+        }
+
+        // Mostra la prima card
+        renderCard(0, cards, studentId, container);
+
+      } catch (err) {
+        container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+      }
+    };
+
   } catch (err) {
-    console.error("❌ Errore salvataggio batch:", err);
+    container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
   }
 }
 
