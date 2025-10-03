@@ -2474,11 +2474,17 @@ async function loadFlashcards() {
 
         // Mostra la prima card
         renderCard(0, cards, studentId, container);
+     
+        } catch (err) {
+          container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+        }  // 👈 chiusura try/catch di select.onchange
+      };   // 👈 chiusura di select.onchange
 
   } catch (err) {
     container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
-  }
-}
+  } // 👈 chiusura try/catch del loadFlashcards esterno
+}   // 👈 chiusura di loadFlashcards
+
 
         
 </script>
