@@ -2283,6 +2283,11 @@ async function loadFlashcards() {
         if (!respCards.success) throw new Error(respCards.error || "Unable to load flashcards.");
         const cards = respCards.cards || [];
 
+        if (!cards.length) {
+          container.innerHTML = '<p class="text-gray-500">No flashcards found.</p>';
+          return;
+        }
+
         // calcola score
         cards.forEach(c => {
           const attempts = Number(c.attempts) || 0;
@@ -2293,63 +2298,91 @@ async function loadFlashcards() {
           if (c.score < 1) c.score = 1; // minimo 1 per non sparire
         });
         
-        // genera mazzo pesato
-        let weightedDeck = [];
-        cards.forEach(c => {
-          for (let i = 0; i < c.score; i++) {
-            weightedDeck.push(c);
-          }
-        });
+        // ✅ SMART WEIGHTED DECK
+        function buildSmartDeck(cards) {
+          // normalizza pesi
+          const total = cards.reduce((sum, c) => sum + (c.score || 1), 0);
+          let cumulative = 0;
+          const smartDeck = [];
         
-        // shuffle
-        function shuffle(arr) {
-          for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
+          for (const c of cards) {
+            const w = (c.score || 1) / total;
+            smartDeck.push({
+              range: { from: cumulative, to: cumulative + w },
+              card: c
+            });
+            cumulative += w;
           }
-          return arr;
+          // normalizza l'ultimo "to" a 1 per sicurezza floating point
+          smartDeck[smartDeck.length - 1].range.to = 1.0;
+          return smartDeck;
         }
-        weightedDeck = shuffle(weightedDeck);
+        
+        // estrarre una carta casuale
+        function pickCardFromSmartDeck(smartDeck) {
+          const x = Math.random();
 
+          // ricerca binaria x in [a, b) (caso x=1, esce dal while con mid=low=high=smartDeck.length - 1)
+          let low = 0;
+          let high = smartDeck.length - 1;
+          let mid  = Math.floor((low + high) / 2);
+        
+          while (low < high) {
+            const seg = smartDeck[mid].range;
+            if (x < seg.from) {
+              high = mid - 1;
+            } else if (x >= seg.to) {
+              low = mid + 1;
+            }
+            mid  = Math.floor((low + high) / 2);
+          }
 
-        if (!cards.length) {
-          container.innerHTML = '<p class="text-gray-500">No flashcards found.</p>';
-          return;
+          // estrai la carta
+          return smartDeck[mid].card;
         }
-
-        let pendingFlashcardUpdates = [];
-
-        // Render card singola
-        function renderCard(index, cards, studentId, container) {
-          const c = cards[index];
-          const progress = ((index) / cards.length) * 100;
-
+        
+        // ---- Preparazione sessione ----
+        const smartDeck = buildSmartDeck(cards);
+        const TOTAL_STEPS = 20;   // quante domande nella sessione
+        let stepIndex = 0;                                // progress corrente
+        let pendingFlashcardUpdates = [];                 // accumulo batch salvataggi
+        
+        // mappa per retry ("red ones") → ricostruire oggetti completi EN/IT
+        const cardsByEn = new Map(cards.map(c => [String(c.en || "").toLowerCase(), c]));
+        
+        // ---- Render di UNA singola card (API aggiornata) ----
+        function renderCard(index, total, card, studentId, container) {
+          const it = card.it || "";
+          const en = card.en || "";
+        
+          const progress = (index / total) * 100;
+        
           container.innerHTML = `
             <!-- Progress -->
             <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
               <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width:${progress}%"></div>
             </div>
-            <p class="text-sm text-gray-500 mb-4">Card ${index+1} of ${cards.length}</p>
-
+            <p class="text-sm text-gray-500 mb-4">Card ${index + 1} of ${total}</p>
+        
             <!-- Flashcard -->
             <div class="relative w-72 h-48 perspective mx-auto">
-              <div id="flashcard" 
+              <div id="flashcard"
                    class="absolute w-full h-full transition-transform duration-500 transform-style-preserve-3d cursor-pointer">
                 
                 <!-- Front = IT -->
                 <div class="absolute w-full h-full flex items-center justify-center 
                             text-2xl font-bold bg-blue-900 text-white rounded-xl shadow backface-hidden">
-                  ${c.it}
+                  ${it || "—"} 
                 </div>
                 
                 <!-- Back = EN -->
                 <div class="absolute w-full h-full flex items-center justify-center 
                             text-2xl font-bold bg-blue-600 text-white rounded-xl shadow backface-hidden rotate-y-180">
-                  ${c.en}
+                  ${en || "—"}
                 </div>
               </div>
             </div>
-
+        
             <!-- Bottoni -->
             <div class="flex gap-8 mt-6 justify-center items-center">
               <button id="btnUnknown" 
@@ -2362,121 +2395,123 @@ async function loadFlashcards() {
               </button>
             </div>
           `;
-
+        
           const cardEl = document.getElementById('flashcard');
-
-          // Flip
+        
+          // Flip con click
           cardEl.addEventListener('click', () => {
             cardEl.classList.toggle("rotate-y-180");
           });
-
+        
           // Gestione risposta
           function handleAnswer(status) {
             pendingFlashcardUpdates.push({
-              en: c.en,
+              en: en,
               status,
               timestamp: new Date().toISOString()
             });
-            nextCard();
+            stepIndex++;
+            if (stepIndex < TOTAL_STEPS) {
+              renderNextCard();     // ⬅️ niente nextCard su array, peschiamo di nuovo dallo smartDeck
+            } else {
+              showSummaryAndFlush(studentId, container);
+            }
           }
-
+        
           // Bottoni
           document.getElementById('btnKnown').addEventListener('click', () => handleAnswer("known"));
           document.getElementById('btnUnknown').addEventListener('click', () => handleAnswer("unknown"));
-
+        
           // Tastiera
           document.onkeydown = (e) => {
             if (e.key === "ArrowRight") handleAnswer("known");
-            if (e.key === "ArrowLeft") handleAnswer("unknown");
+            if (e.key === "ArrowLeft")  handleAnswer("unknown");
             if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === " " || e.key === "Enter") {
               cardEl.classList.toggle("rotate-y-180");
             }
           };
-
+        
           // Swipe mobile
           let touchStartX = 0;
-          cardEl.addEventListener("touchstart", (e) => {
-            touchStartX = e.changedTouches[0].screenX;
-          });
-          cardEl.addEventListener("touchend", (e) => {
-            const touchEndX = e.changedTouches[0].screenX;
-            const diff = touchEndX - touchStartX;
+          cardEl.addEventListener("touchstart", (e) => { touchStartX = e.changedTouches[0].screenX; });
+          cardEl.addEventListener("touchend",   (e) => {
+            const diff = e.changedTouches[0].screenX - touchStartX;
             if (Math.abs(diff) > 50) {
-              if (diff > 0) handleAnswer("known");
-              else handleAnswer("unknown");
+              if (diff > 0) handleAnswer("known"); else handleAnswer("unknown");
             } else {
               cardEl.classList.toggle("rotate-y-180");
             }
           });
-
-          // Avanza
-          function nextCard() {
-            const nextIndex = index + 1;
-            if (nextIndex < cards.length) {
-              renderCard(nextIndex, cards, studentId, container);
-            } else {
-              // Riassunto finale
-              const known = pendingFlashcardUpdates.filter(c => c.status === "known").length;
-              const unknown = pendingFlashcardUpdates.filter(c => c.status === "unknown").length;
-              const percent = Math.round((known / (known + unknown)) * 100);
-          
-              container.innerHTML = `
-                <p class="text-xl font-bold text-gray-800 mb-4">🎉 You’ve completed all flashcards!</p>
-                <p class="text-lg text-green-600">✅ Known: ${known}</p>
-                <p class="text-lg text-red-600">❌ Still learning: ${unknown}</p>
-                <p class="text-lg text-blue-600 mb-6">📊 Success rate: ${percent}%</p>
-                ${unknown > 0 ? `
-                  <button id="retryRedBtn" 
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700">
-                    🔄 Retry only the red ones
-                  </button>` : ``}
-              `;
-          
-              flushFlashcardUpdates(studentId);
-              document.onkeydown = null;
-          
-              // listener retry
-              if (unknown > 0) {
-                document.getElementById('retryRedBtn').addEventListener('click', () => {
-                  const redOnes = pendingFlashcardUpdates.filter(c => c.status === "unknown");
-                  if (!redOnes.length) return;
-                  // 👇 shuffle per non rifare sempre ordine fisso
-                  function shuffle(arr) {
-                    for (let i = arr.length - 1; i > 0; i--) {
-                      const j = Math.floor(Math.random() * (i + 1));
-                      [arr[i], arr[j]] = [arr[j], arr[i]];
-                    }
-                    return arr;
-                  }
-                  const retryDeck = shuffle(redOnes.map(c => ({ ...c })));
-                  pendingFlashcardUpdates = []; // reset round
-                  renderCard(0, retryDeck, studentId, container);
-                });
-              }
-            }
-          }
-
-
-          // Batch save
-          async function flushFlashcardUpdates(studentId) {
-            if (!pendingFlashcardUpdates.length) return;
-            try {
-              await apiPost('updateFlashcardStatus', {
-                studentId,
-                cards: pendingFlashcardUpdates
-              });
-              console.log("✅ Batch update inviato:", pendingFlashcardUpdates.length, "cards");
-              pendingFlashcardUpdates = [];
-            } catch (err) {
-              console.error("❌ Errore salvataggio batch:", err);
-            }
-          }
-
         }
-
-        // Mostra la prima card
-        renderCard(0, cards, studentId, container);
-     
+        
+        // pesca e renderizza la prossima carta in modo ponderato
+        function renderNextCard() {
+          const next = pickCardFromSmartDeck(smartDeck);
+          renderCard(stepIndex, TOTAL_STEPS, next, studentId, container);
+        }
+        
+        // riassunto + flush batch al backend + eventuale retry rossi
+        async function showSummaryAndFlush(studentId, container) {
+          const known   = pendingFlashcardUpdates.filter(c => c.status === "known").length;
+          const unknown = pendingFlashcardUpdates.filter(c => c.status === "unknown").length;
+          const percent = Math.round((known / Math.max(1, known + unknown)) * 100);
+        
+          container.innerHTML = `
+            <p class="text-xl font-bold text-gray-800 mb-4">🎉 You’ve completed the session!</p>
+            <p class="text-lg text-green-600">✅ Known: ${known}</p>
+            <p class="text-lg text-red-600">❌ Still learning: ${unknown}</p>
+            <p class="text-lg text-blue-600 mb-6">📊 Success rate: ${percent}%</p>
+            ${unknown > 0 ? `
+              <button id="retryRedBtn" 
+                class="px-4 py-2 bg-red-600 text-white rounded-lg shadow hover:bg-red-700">
+                🔄 Retry only the red ones
+              </button>` : ``}
+          `;
+        
+          // Flush aggiornamenti in batch
+          try {
+            if (pendingFlashcardUpdates.length) {
+              await apiPost('updateFlashcardStatus', { studentId, cards: pendingFlashcardUpdates });
+            }
+          } catch (err) {
+            console.error("❌ Errore salvataggio batch:", err);
+          } finally {
+            // non azzeriamo: ci servono per il retry
+          }
+        
+          // Retry solo i rossi
+          if (unknown > 0) {
+            document.getElementById('retryRedBtn').addEventListener('click', () => {
+              const redUpdates = pendingFlashcardUpdates.filter(c => c.status === "unknown");
+              const redCards = redUpdates
+                .map(u => cardsByEn.get(String(u.en || "").toLowerCase()))
+                .filter(Boolean);
+              if (!redCards.length) return;
+        
+              // reset sessione su redCards
+              pendingFlashcardUpdates = [];
+              stepIndex = 0;
+              // ricostruisci smartDeck con solo le rosse (peso almeno 1)
+              redCards.forEach(rc => { if (!rc.score || rc.score < 1) rc.score = 1; });
+              const redSmartDeck = buildSmartDeck(redCards);
+        
+              function renderNextRed() {
+                const next = pickCardFromSmartDeck(redSmartDeck);
+                renderCard(stepIndex, 10, next, studentId, container);
+              }
+              // override renderNextCard per il sotto-round
+              renderNextCard = renderNextRed;
+              renderNextCard();
+            });
+          }
+        
+          // rimuovi listener tastiera
+          document.onkeydown = null;
+        }
+        
+        // ---- Avvio sessione: prima carta
+        renderNextCard();
+             
             
       } catch (err) {
         container.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
