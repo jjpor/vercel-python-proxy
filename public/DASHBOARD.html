@@ -1141,43 +1141,85 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
       }
     });
 
-            // --- AI Debrief (Suggest / Refine) ---
-        const aiDebriefSuggestBtn = document.getElementById("aiDebriefSuggestBtn");
-        const aiDebriefRefineBtn  = document.getElementById("aiDebriefRefineBtn");
-        
-        aiDebriefSuggestBtn.addEventListener("click", async () => {
-          aiDebriefMsg.textContent = "⏳ Generating...";
-          try {
-            const resp = await apiPost("generateDebriefText", {
-              studentName: debriefStudentSelect.value,
-              mode: "suggest"
-            });
-            if (!resp.success) throw new Error(resp.error);
-            debriefHomework.value = resp.suggestion;
-            aiDebriefMsg.textContent = "✅ Suggested text inserted.";
-          } catch (err) {
-            console.error("AI suggest error:", err);
-            aiDebriefMsg.textContent = "❌ " + err.message;
-          }
-        });
-        
-        aiDebriefRefineBtn.addEventListener("click", async () => {
-          aiDebriefMsg.textContent = "⏳ Refining...";
-          try {
-            const resp = await apiPost("generateDebriefText", {
-              studentName: debriefStudentSelect.value,
-              mode: "refine",
-              currentText: debriefHomework.value
-            });
-            if (!resp.success) throw new Error(resp.error);
-            debriefHomework.value = resp.suggestion;
-            aiDebriefMsg.textContent = "✅ Refined text.";
-          } catch (err) {
-            console.error("AI refine error:", err);
-            aiDebriefMsg.textContent = "❌ " + err.message;
-          }
-        });
-
+      // =============== AI Preview Handler ===================
+      async function handleAIPreview(fieldType) {
+        const studentSelect = document.getElementById("debriefStudentSelect");
+        const studentName = studentSelect?.options[studentSelect.selectedIndex]?.text || "Student";
+      
+        const textArea = document.getElementById(`debrief_${fieldType}`);
+        const previewBox = document.getElementById(`aiPreview_${fieldType}`);
+        const currentText = textArea.value.trim();
+      
+        // mostra loader
+        previewBox.innerHTML = loaderHTML("Generating preview...");
+        previewBox.classList.remove("hidden");
+      
+        try {
+          const resp = await apiPost("generateDebriefText", {
+            fieldType,
+            currentText,
+            studentName
+          });
+      
+          if (!resp.success) throw new Error(resp.error || "AI generation failed");
+      
+          const suggestion = (resp.suggestion || "").trim();
+          if (!suggestion) throw new Error("Empty AI response");
+      
+          // crea box anteprima
+          previewBox.innerHTML = `
+            <div class="bg-gray-100 p-3 rounded-lg shadow-sm text-sm text-gray-800">
+              <div class="font-semibold mb-1">AI suggestion for ${capitalize(fieldType)}:</div>
+              <div class="whitespace-pre-line mb-3">${escapeHTML(suggestion)}</div>
+              <div class="flex gap-2">
+                <button class="px-2 py-1 bg-blue-600 text-white text-xs rounded"
+                        onclick="applyAISuggestion('${fieldType}', \`${escapeBackticks(suggestion)}\`)">
+                  ✅ Apply suggestion
+                </button>
+                <button class="px-2 py-1 bg-gray-300 text-xs rounded"
+                        onclick="discardAISuggestion('${fieldType}')">
+                  ❌ Discard
+                </button>
+              </div>
+              <p class="text-[11px] text-gray-500 mt-1">No changes will be made until you confirm.</p>
+            </div>
+          `;
+        } catch (err) {
+          previewBox.innerHTML = `<p class="text-red-600 text-sm">Error: ${escapeHTML(err.message)}</p>`;
+        }
+      }
+      
+      // accetta il suggerimento
+      function applyAISuggestion(fieldType, suggestion) {
+        const textArea = document.getElementById(`debrief_${fieldType}`);
+        textArea.value = suggestion.trim();
+        discardAISuggestion(fieldType);
+        showToast(`Applied AI suggestion for ${capitalize(fieldType)}`, "success");
+      }
+      
+      // annulla il suggerimento
+      function discardAISuggestion(fieldType) {
+        const previewBox = document.getElementById(`aiPreview_${fieldType}`);
+        previewBox.classList.add("hidden");
+        previewBox.innerHTML = "";
+      }
+      
+      // helper utils
+      function capitalize(s) {
+        return s.charAt(0).toUpperCase() + s.slice(1);
+      }
+      function escapeHTML(str) {
+        return str.replace(/[&<>'"]/g, c => ({
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#39;'
+        }[c]));
+      }
+      function escapeBackticks(str) {
+        return str.replace(/`/g, "\\`");
+      }
 
     
 // My payment folder
@@ -1199,7 +1241,6 @@ viewFolderBtn.addEventListener('click', async () => {
 });
 
 //Student Info
-
   // Student dropdown change
 document.getElementById('studentSelect').addEventListener('change', e => {
   const sid = e.target.value;
