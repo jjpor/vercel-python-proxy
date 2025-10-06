@@ -1075,15 +1075,15 @@ if (labelEl && !document.getElementById('debriefLoadDraftsBtn')) {
 
   btn.addEventListener('click', async () => {
     const studentId = debriefStudentSelect.value;
-    if (!studentId) {
-      showToast('Select a student first', 3000, 'bg-red-600');
-      return;
-    }
+
     container.innerHTML = loaderHTML("Loading drafts...");
     container.classList.remove('hidden');
     try {
-      const resp = await apiGet('getDebriefDrafts', { coachId: CURRENT_COACH_ID, studentId });
-      if (!resp.success || !resp.drafts?.length) {
+      const resp = await apiGet('getDebriefDrafts', {
+        coachId: CURRENT_COACH_ID,
+        studentId: studentId || null
+      });
+       if (!resp.success || !resp.drafts?.length) {
         container.innerHTML = '<p class="text-gray-500 text-sm">No drafts found.</p>';
         return;
       }
