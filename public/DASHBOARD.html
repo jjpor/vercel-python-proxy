@@ -1017,7 +1017,12 @@ async function fetchAndRenderStudentDetails(studentId) {
     submitBtn.disabled = !isValid;
 }
 
+// 🧩 Prevent duplicate "Load Drafts" button
+document.addEventListener("DOMContentLoaded", () => {
+  if (document.getElementById("debriefLoadDraftsBtn")) return;
+});
 
+  
 // Login
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
