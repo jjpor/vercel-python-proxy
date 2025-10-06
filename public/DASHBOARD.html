@@ -1016,13 +1016,7 @@ async function fetchAndRenderStudentDetails(studentId) {
     }
     submitBtn.disabled = !isValid;
 }
-
-// 🧩 Prevent duplicate "Load Drafts" button
-document.addEventListener("DOMContentLoaded", () => {
-  if (document.getElementById("debriefLoadDraftsBtn")) return;
-});
-
-  
+ 
 // Login
 loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -1126,65 +1120,6 @@ if (labelEl && !document.getElementById('debriefLoadDraftsBtn')) {
 
   
 viewCoachingDebriefBtn.addEventListener('click', async () => {
-
-    // Container per tabella bozze + bottone load
-    const debriefDraftsContainer = document.createElement('div');
-    debriefDraftsContainer.id = 'debriefDraftsContainer';
-    debriefDraftsContainer.className = 'hidden mt-4';
-    coachingDebriefSection.insertBefore(debriefDraftsContainer, document.getElementById('debriefFieldsContainer'));
-    
-    const loadDraftsBtn = document.createElement('button');
-    loadDraftsBtn.id = 'debriefLoadDraftsBtn';
-    loadDraftsBtn.textContent = '📂 Load Drafts';
-    loadDraftsBtn.className = 'ml-2 px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700';
-    document.querySelector('label[for="debriefStudentSelect"]').after(loadDraftsBtn);
-    
-    loadDraftsBtn.addEventListener('click', async () => {
-      const studentId = debriefStudentSelect.value;
-      if (!studentId) {
-        showToast('Select a student first', 3000, 'bg-red-600');
-        return;
-      }
-    
-      debriefDraftsContainer.innerHTML = loaderHTML("Loading drafts...");
-      debriefDraftsContainer.classList.remove('hidden');
-    
-      try {
-        const resp = await apiGet('getDebriefDrafts', { coachId: CURRENT_COACH_ID, studentId });
-        if (!resp.success || !resp.drafts?.length) {
-          debriefDraftsContainer.innerHTML = '<p class="text-gray-500 text-sm">No drafts found.</p>';
-          return;
-        }
-    
-        let html = `
-          <table class="min-w-full border border-gray-200 rounded-xl text-sm mt-2">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="px-3 py-2 border">Date</th>
-                <th class="px-3 py-2 border">Goals</th>
-                <th class="px-3 py-2 border">Topics</th>
-                <th class="px-3 py-2 border">Load</th>
-              </tr>
-            </thead>
-            <tbody>`;
-        resp.drafts.forEach(d => {
-          html += `
-            <tr class="border-b hover:bg-gray-50">
-              <td class="px-3 py-2">${d.dateISO || '-'}</td>
-              <td class="px-3 py-2">${(d.goals || '').slice(0, 50)}</td>
-              <td class="px-3 py-2">${(d.topics || '').slice(0, 50)}</td>
-              <td class="px-3 py-2 text-center">
-                <button class="px-2 py-1 bg-green-600 text-white rounded text-xs loadDraftBtn"
-                        data-row="${d.rowNumber}">Load</button>
-              </td>
-            </tr>`;
-        });
-        html += `</tbody></table>`;
-        debriefDraftsContainer.innerHTML = html;
-      } catch (err) {
-        debriefDraftsContainer.innerHTML = `<p class="text-red-500 text-sm">Error: ${err.message}</p>`;
-      }
-    });
 
   // listener globale per i bottoni Load (delegato)
     document.addEventListener('click', (e) => {
