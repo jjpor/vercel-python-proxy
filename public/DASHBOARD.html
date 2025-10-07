@@ -820,6 +820,16 @@ async function fetchAndRenderStudentDetails(studentId) {
     const calls = info.calls || [];
     delete info.calls;
 
+        // --- Fetch contracts per tabellina ---
+    let contracts = [];
+    try {
+      const respContracts = await apiGet('getStudentContracts', { studentId });
+      if (respContracts.success) contracts = respContracts.contracts || [];
+    } catch (e) {
+      console.warn("Contracts load error:", e);
+    }
+
+  
     // --- Link fields da trasformare in bottoni (con alias reali dallo sheet)
     const linkFieldDefs = {
       "Quizlet Link":       { label: "Quizlet",      aliases: ["Quizlet"] },
@@ -950,6 +960,38 @@ async function fetchAndRenderStudentDetails(studentId) {
     }
 
 
+// --- Active & Expired Contracts ---
+if (contracts && contracts.length) {
+  detailsHtml += `
+    <h3 class="text-xl font-semibold text-gray-800 mb-4 mt-2">Contracts</h3>
+    <div class="flex justify-center">
+      <table class="text-sm border border-gray-200 rounded-xl mb-6">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="py-2 px-4 text-left">Product</th>
+            <th class="py-2 px-4 text-center">Duration</th>
+            <th class="py-2 px-4 text-center">Left</th>
+            <th class="py-2 px-4 text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${contracts.map(c => `
+            <tr class="${c.leftCalls === 0 ? 'text-gray-400' : ''}">
+              <td class="py-2 px-4">${c.product?.productName || c.productId}</td>
+              <td class="py-2 px-4 text-center">${c.product?.duration || '-'}</td>
+              <td class="py-2 px-4 text-center">${c.leftCalls ?? '∞'}</td>
+              <td class="py-2 px-4 text-center">${c.leftCalls === 0 ? 'Ended' : 'Active'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+} else {
+  detailsHtml += `<p class="text-gray-500 italic text-center mb-4">No contracts found.</p>`;
+}
+
+    
     // --- Call History (nuovo formato)
     detailsHtml += `<h3 class="text-xl font-semibold text-gray-800 mb-4 mt-6">Call History</h3>
     <div class="overflow-x-auto"><table class="w-full text-sm border border-gray-200 rounded-xl">
