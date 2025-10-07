@@ -1789,7 +1789,10 @@ callTypeRadios.forEach(radio => {
                 productIdSelect.disabled = true; // <-- Aggiungo per coerenza
 
                 // Carica lista studenti IND
+              showGlobalLoader("Loading students...");
                 await loadStudentIds();
+              hideGlobalLoader();
+
 
                 // updateFormState NON va chiamato qui. Sarà chiamato dall'evento di cambio studente.
             }
