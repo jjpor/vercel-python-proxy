@@ -2162,6 +2162,7 @@ reportCardForm.addEventListener('submit', async (e) => {
       if (!resp.success) throw new Error(resp.error || 'Error logging call.');
 
       showMessage(callMessageBox, 'Call logged successfully!', true);
+      hideGlobalLoader();
       document.getElementById('callForm').reset();
       
       // reinserisci la data di oggi anche dopo il reset
