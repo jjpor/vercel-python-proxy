@@ -1747,35 +1747,53 @@ function recomputeUnitsAndRate() {
 callDurationSelect.addEventListener('change', recomputeUnitsAndRate);
 
 
-  // Toggle IND/GROUP
-callTypeRadios.forEach(radio => {
-  radio.addEventListener('change', () => {
-    if (radio.value === "GROUP" && radio.checked) {
-      // nascondi il campo Student ID
-      studentIdContainer.classList.add('hidden');
-
-      groupStudentsContainer.classList.remove('hidden');
-      remainingCallsDisplay.classList.add('hidden');
-      loadGroupProducts();
-    } else if (radio.value === "IND" && radio.checked) {
-      // mostra di nuovo il campo Student ID
-      studentIdContainer.classList.remove('hidden');
-
-      groupStudentsContainer.classList.add('hidden');
-      loadStudentIds();
-    }
-
-    productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
-    productIdSelect.disabled = true;
-    hourlyRateInput.value = '';
-    technicalDurationInput.value = '';
-    contractIdInput.value = '';
-    productIdInput.value = '';
-    callDurationSelect.value = '';
-    unitsInput.value = '';
-    updateFormState();
+  // --- Toggle IND / GROUP ---
+  callTypeRadios.forEach(radio => {
+    radio.addEventListener('change', async () => {
+      showGlobalLoader(); // 👈 blocca la pagina durante il cambio tipo
+  
+      try {
+        if (radio.value === "GROUP" && radio.checked) {
+          // nascondi campo singolo studente
+          studentIdContainer.classList.add('hidden');
+  
+          // mostra la sezione gruppo
+          groupStudentsContainer.classList.remove('hidden');
+          remainingCallsDisplay.classList.add('hidden');
+  
+          // carica prodotti gruppo
+          await loadGroupProducts();
+  
+        } else if (radio.value === "IND" && radio.checked) {
+          // mostra il campo singolo studente
+          studentIdContainer.classList.remove('hidden');
+  
+          // nascondi sezione gruppo
+          groupStudentsContainer.classList.add('hidden');
+  
+          // carica lista studenti IND
+          await loadStudentIds();
+        }
+  
+        // reset campi comuni
+        productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+        productIdSelect.disabled = true;
+        hourlyRateInput.value = '';
+        technicalDurationInput.value = '';
+        contractIdInput.value = '';
+        productIdInput.value = '';
+        callDurationSelect.value = '';
+        unitsInput.value = '';
+        updateFormState();
+  
+      } catch (err) {
+        console.error("Error toggling call type:", err);
+        showToast("Error loading data: " + (err.message || err), 4000, "bg-red-600");
+      } finally {
+        hideGlobalLoader(); // 👈 chiudi SEMPRE il loader
+      }
+    });
   });
-});
 
 
   // Apri form: reset senza azzerare subito le select
