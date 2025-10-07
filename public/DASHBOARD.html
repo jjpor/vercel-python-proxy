@@ -2173,12 +2173,11 @@ reportCardForm.addEventListener('submit', async (e) => {
       hourlyRateInput.value = '';
       technicalDurationInput.value = '';
       remainingCallsDisplay.classList.add('hidden');
-      updateFormState();
-      await fetchMonthlyEarnings();
-
     } catch (err) {
       showMessage(callMessageBox, err.message || String(err), false);
     } finally {
+      updateFormState();
+      await fetchMonthlyEarnings();
       submitBtn.innerHTML = orig;
       submitBtn.disabled = false;
     }
