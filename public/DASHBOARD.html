@@ -2177,7 +2177,7 @@ reportCardForm.addEventListener('submit', async (e) => {
       showMessage(callMessageBox, err.message || String(err), false);
     } finally {
       updateFormState();
-      await fetchMonthlyEarnings();
+      fetchMonthlyEarnings();
       submitBtn.innerHTML = orig;
       submitBtn.disabled = false;
     }
