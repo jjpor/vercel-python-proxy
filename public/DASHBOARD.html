@@ -2113,13 +2113,20 @@ reportCardForm.addEventListener('submit', async (e) => {
       };
 
 
-      if (callType === "IND") {
+            if (callType === "IND") {
         payload.studentId = studentIdSelect.value;
         payload.contractId = contractIdInput.value || '';
-      } else {
+      } else if (callType === "GROUP") {
+        // raccoglie tutti gli ID selezionati dal gruppo
         const selects = groupStudentsDynamic.querySelectorAll('select');
-        payload.studentIds = Array.from(selects).map(s => s.value);
+        const chosenIds = Array.from(selects).map(s => s.value).filter(Boolean);
+        
+        // se nessuno selezionato → errore
+        if (!chosenIds.length) throw new Error("Please select all group students before logging.");
+      
+        payload.studentIds = chosenIds;
         payload.contractId = null;
+        payload.isGroup = true; // 👈 utile lato backend (non obbligatorio ma chiaro)
       }
 
       const resp = await apiPost('logCall', payload);
