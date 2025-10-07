@@ -2159,6 +2159,7 @@ reportCardForm.addEventListener('submit', async (e) => {
       }
 
       const resp = await apiPost('logCall', payload);
+      logCallBtn.innerHTML = 'Log Call'; // chiudi loader subito dopo risposta
       if (!resp.success) throw new Error(resp.error || 'Error logging call.');
 
       showMessage(callMessageBox, 'Call logged successfully!', true);
