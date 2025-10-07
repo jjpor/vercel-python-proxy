@@ -2588,67 +2588,61 @@ async function loadFlashcards() {
             </div>
           `;
         
-        setTimeout(() => {
-          const cardEl = document.getElementById('flashcard');
-          const btnKnown = document.getElementById('btnKnown');
-          const btnUnknown = document.getElementById('btnUnknown');
-          if (!cardEl || !btnKnown || !btnUnknown) return;
-        
-          // Flip click
-          cardEl.addEventListener('click', () => {
-            cardEl.classList.toggle("rotate-y-180");
-          });
-        
-          // Bottoni
-          btnKnown.addEventListener('click', () => handleAnswer("known"));
-          btnUnknown.addEventListener('click', () => handleAnswer("unknown"));
-        }, 0);
-        
-          // Flip con click
-          cardEl.addEventListener('click', () => {
-            cardEl.classList.toggle("rotate-y-180");
-          });
-        
-          // Gestione risposta
-          function handleAnswer(status) {
-            pendingFlashcardUpdates.push({
-              en: en,
-              status,
-              timestamp: new Date().toISOString()
-            });
-            stepIndex++;
-            if (stepIndex < TOTAL_STEPS) {
-              renderNextCard();     // ⬅️ niente nextCard su array, peschiamo di nuovo dallo smartDeck
-            } else {
-              showSummaryAndFlush(studentId, container);
-            }
-          }
-        
-          // Bottoni
-          document.getElementById('btnKnown').addEventListener('click', () => handleAnswer("known"));
-          document.getElementById('btnUnknown').addEventListener('click', () => handleAnswer("unknown"));
-        
-          // Tastiera
-          document.onkeydown = (e) => {
-            if (e.key === "ArrowRight") handleAnswer("known");
-            if (e.key === "ArrowLeft")  handleAnswer("unknown");
-            if (e.key === "ArrowUp" || e.key === "ArrowDown" || e.key === " " || e.key === "Enter") {
-              cardEl.classList.toggle("rotate-y-180");
-            }
-          };
-        
-          // Swipe mobile
-          let touchStartX = 0;
-          cardEl.addEventListener("touchstart", (e) => { touchStartX = e.changedTouches[0].screenX; });
-          cardEl.addEventListener("touchend",   (e) => {
-            const diff = e.changedTouches[0].screenX - touchStartX;
-            if (Math.abs(diff) > 50) {
-              if (diff > 0) handleAnswer("known"); else handleAnswer("unknown");
-            } else {
-              cardEl.classList.toggle("rotate-y-180");
-            }
-          });
+    document.onkeydown = null;
+
+    requestAnimationFrame(() => {
+      const cardEl = document.getElementById('flashcard');
+      const btnKnown = document.getElementById('btnKnown');
+      const btnUnknown = document.getElementById('btnUnknown');
+      if (!cardEl || !btnKnown || !btnUnknown) return;
+    
+      // 🔄 Flip carta al click
+      cardEl.addEventListener('click', () => {
+        cardEl.classList.toggle("rotate-y-180");
+      });
+    
+      // ✅ Gestione risposta
+      function handleAnswer(status) {
+        pendingFlashcardUpdates.push({
+          en: en,
+          status,
+          timestamp: new Date().toISOString()
+        });
+        stepIndex++;
+        if (stepIndex < TOTAL_STEPS) {
+          renderNextCard(); // prossima carta dal mazzo
+        } else {
+          showSummaryAndFlush(studentId, container);
         }
+      }
+    
+      // 🧠 Bottoni
+      btnKnown.addEventListener('click', () => handleAnswer("known"));
+      btnUnknown.addEventListener('click', () => handleAnswer("unknown"));
+    
+      // ⌨️ Tastiera
+      document.onkeydown = (e) => {
+        if (e.key === "ArrowRight") handleAnswer("known");
+        if (e.key === "ArrowLeft")  handleAnswer("unknown");
+        if (["ArrowUp", "ArrowDown", " ", "Enter"].includes(e.key)) {
+          cardEl.classList.toggle("rotate-y-180");
+        }
+      };
+    
+      // 📱 Swipe mobile
+      let touchStartX = 0;
+      cardEl.addEventListener("touchstart", (e) => { touchStartX = e.changedTouches[0].screenX; });
+      cardEl.addEventListener("touchend", (e) => {
+        const diff = e.changedTouches[0].screenX - touchStartX;
+        if (Math.abs(diff) > 50) {
+          if (diff > 0) handleAnswer("known");
+          else handleAnswer("unknown");
+        } else {
+          cardEl.classList.toggle("rotate-y-180");
+        }
+      });
+    });
+
         
         // pesca e renderizza la prossima carta in modo ponderato
         function renderNextCard() {
