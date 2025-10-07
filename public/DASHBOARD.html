@@ -960,36 +960,48 @@ async function fetchAndRenderStudentDetails(studentId) {
     }
 
 
-// --- Active & Expired Contracts ---
-if (contracts && contracts.length) {
-  detailsHtml += `
-    <h3 class="text-xl font-semibold text-gray-800 mb-4 mt-2">Contracts</h3>
-    <div class="flex justify-center">
-      <table class="text-sm border border-gray-200 rounded-xl mb-6">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="py-2 px-4 text-left">Product</th>
-            <th class="py-2 px-4 text-center">Duration</th>
-            <th class="py-2 px-4 text-center">Left</th>
-            <th class="py-2 px-4 text-center">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${contracts.map(c => `
-            <tr class="${c.leftCalls === 0 ? 'text-gray-400' : ''}">
-              <td class="py-2 px-4">${c.product?.productName || c.productId}</td>
-              <td class="py-2 px-4 text-center">${c.product?.duration || '-'}</td>
-              <td class="py-2 px-4 text-center">${c.leftCalls ?? '∞'}</td>
-              <td class="py-2 px-4 text-center">${c.leftCalls === 0 ? 'Ended' : 'Active'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    </div>
-  `;
-} else {
-  detailsHtml += `<p class="text-gray-500 italic text-center mb-4">No contracts found.</p>`;
-}
+          // --- Active & Expired Contracts ---
+      if (contracts && contracts.length) {
+        detailsHtml += `
+          <h3 class="text-xl font-semibold text-gray-800 mb-4 mt-2">Contracts</h3>
+          <div class="flex justify-center">
+            <table class="text-sm border border-gray-200 rounded-xl mb-6">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="py-2 px-4 text-left">Product</th>
+                  <th class="py-2 px-4 text-center">Duration</th>
+                  <th class="py-2 px-4 text-center">Used</th>
+                  <th class="py-2 px-4 text-center">Left</th>
+                  <th class="py-2 px-4 text-center">Expiration</th>
+                  <th class="py-2 px-4 text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${contracts.map(c => {
+                  const total = c.product?.totalCalls || (c.leftCalls && c.leftCalls > 0 ? c.leftCalls : 0);
+                  const used = (c.product?.totalCalls && c.leftCalls !== undefined)
+                    ? Math.max(0, c.product.totalCalls - c.leftCalls)
+                    : (c.leftCalls === 0 ? "All" : "-");
+                  const expiration = c.maxEndDate || c.endDate || "-";
+                  const status = c.leftCalls === 0 ? "Ended" : "Active";
+                  return `
+                    <tr class="${c.leftCalls === 0 ? 'text-gray-400' : ''}">
+                      <td class="py-2 px-4">${c.product?.productName || c.productId}</td>
+                      <td class="py-2 px-4 text-center">${c.product?.duration || '-'}</td>
+                      <td class="py-2 px-4 text-center">${used}</td>
+                      <td class="py-2 px-4 text-center">${c.leftCalls ?? '∞'}</td>
+                      <td class="py-2 px-4 text-center">${expiration}</td>
+                      <td class="py-2 px-4 text-center">${status}</td>
+                    </tr>`;
+                }).join('')}
+              </tbody>
+            </table>
+          </div>
+        `;
+      } else {
+        detailsHtml += `<p class="text-gray-500 italic text-center mb-4">No contracts found.</p>`;
+      }
+      
 
     
     // --- Call History (nuovo formato)
