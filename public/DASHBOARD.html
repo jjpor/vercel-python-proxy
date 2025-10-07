@@ -1747,54 +1747,58 @@ function recomputeUnitsAndRate() {
 callDurationSelect.addEventListener('change', recomputeUnitsAndRate);
 
 
-  // --- Toggle IND / GROUP ---
-  callTypeRadios.forEach(radio => {
-    radio.addEventListener('change', async () => {
-      showGlobalLoader(); // 👈 blocca la pagina durante il cambio tipo
-  
-      try {
-        if (radio.value === "GROUP" && radio.checked) {
-          // nascondi campo singolo studente
-          studentIdContainer.classList.add('hidden');
-  
-          // mostra la sezione gruppo
-          groupStudentsContainer.classList.remove('hidden');
-          remainingCallsDisplay.classList.add('hidden');
-  
-          // carica prodotti gruppo
-          await loadGroupProducts();
-  
-        } else if (radio.value === "IND" && radio.checked) {
-          // mostra il campo singolo studente
-          studentIdContainer.classList.remove('hidden');
-  
-          // nascondi sezione gruppo
-          groupStudentsContainer.classList.add('hidden');
-  
-          // carica lista studenti IND
-          await loadStudentIds();
-        }
-  
-        // reset campi comuni
-        productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
-        productIdSelect.disabled = true;
-        hourlyRateInput.value = '';
-        technicalDurationInput.value = '';
-        contractIdInput.value = '';
-        productIdInput.value = '';
-        callDurationSelect.value = '';
-        unitsInput.value = '';
-        updateFormState();
-  
-      } catch (err) {
-        console.error("Error toggling call type:", err);
-        showToast("Error loading data: " + (err.message || err), 4000, "bg-red-600");
-      } finally {
-        hideGlobalLoader(); // 👈 chiudi SEMPRE il loader
+// --- Toggle IND / GROUP ---
+callTypeRadios.forEach(radio => {
+  radio.addEventListener('change', async () => {
+    showGlobalLoader();
+ 
+    try {
+      // ** ----------------------------------------------------------- **
+      // ** LOGICA PRINCIPALE (Aggiungiamo updateFormState al blocco GROUP)
+      // ** ----------------------------------------------------------- **
+      if (radio.value === "GROUP" && radio.checked) {
+        studentIdContainer.classList.add('hidden');
+        groupStudentsContainer.classList.remove('hidden');
+        remainingCallsDisplay.classList.add('hidden');
+ 
+        // 1. Carica la lista dei prodotti (asincrono)
+        await loadGroupProducts(); 
+        
+        // 2. Aggiorna lo stato del form DOPO che i prodotti sono caricati
+        //    (Questo seleziona il prodotto di default e popola gli altri campi)
+        updateFormState(); // <-- CHIAMATA CORRETTA QUI
+ 
+      } else if (radio.value === "IND" && radio.checked) {
+        studentIdContainer.classList.remove('hidden');
+        groupStudentsContainer.classList.add('hidden');
+        
+        // La logica di loadStudentIds() o l'evento di cambio studente
+        // dovrebbe gestire l'updateFormState per INDIVIDUAL.
+        await loadStudentIds();
       }
-    });
+ 
+      // ** ----------------------------------------------------------- **
+      // ** RESET CAMPI COMUNI (updateFormState va tolto da qui)
+      // ** ----------------------------------------------------------- **
+      productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+      productIdSelect.disabled = true;
+      hourlyRateInput.value = '';
+      technicalDurationInput.value = '';
+      contractIdInput.value = '';
+      productIdInput.value = '';
+      callDurationSelect.value = '';
+      unitsInput.value = '';
+      
+      // updateFormState(); // <-- Rimuovere questa riga!
+ 
+    } catch (err) {
+      console.error("Error toggling call type:", err);
+      showToast("Error loading data: " + (err.message || err), 4000, "bg-red-600");
+    } finally {
+      hideGlobalLoader();
+    }
   });
-
+});
 
   // Apri form: reset senza azzerare subito le select
     logCallBtn.addEventListener('click', async () => {
