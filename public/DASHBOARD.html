@@ -2588,7 +2588,21 @@ async function loadFlashcards() {
             </div>
           `;
         
+        setTimeout(() => {
           const cardEl = document.getElementById('flashcard');
+          const btnKnown = document.getElementById('btnKnown');
+          const btnUnknown = document.getElementById('btnUnknown');
+          if (!cardEl || !btnKnown || !btnUnknown) return;
+        
+          // Flip click
+          cardEl.addEventListener('click', () => {
+            cardEl.classList.toggle("rotate-y-180");
+          });
+        
+          // Bottoni
+          btnKnown.addEventListener('click', () => handleAnswer("known"));
+          btnUnknown.addEventListener('click', () => handleAnswer("unknown"));
+        }, 0);
         
           // Flip con click
           cardEl.addEventListener('click', () => {
