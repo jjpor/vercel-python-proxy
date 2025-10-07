@@ -1668,6 +1668,7 @@ productIdSelect.addEventListener('change', async () => {
   // --- GROUP ---
   else {
     try {
+      console.log("🧩 getGroupStudents called with:", selectedProductId);
       const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
       const studs = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
 
