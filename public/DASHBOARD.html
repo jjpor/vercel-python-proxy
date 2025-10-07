@@ -2664,6 +2664,7 @@ async function loadFlashcards() {
           try {
             if (pendingFlashcardUpdates.length) {
               await apiPost('updateFlashcardStatus', { studentId, cards: pendingFlashcardUpdates });
+              renderNextCard();
             }
           } catch (err) {
             console.error("❌ Errore salvataggio batch:", err);
