@@ -1749,55 +1749,58 @@ callDurationSelect.addEventListener('change', recomputeUnitsAndRate);
 
 // --- Toggle IND / GROUP ---
 callTypeRadios.forEach(radio => {
-  radio.addEventListener('change', async () => {
-    showGlobalLoader();
+    radio.addEventListener('change', async () => {
+        showGlobalLoader();
+
+        try {
+            // ** 1. RESET DEI CAMPI TECNICI (SEMPRE)**
+            // Li resettiamo all'inizio per pulire i valori vecchi indipendentemente dal tipo
+            hourlyRateInput.value = '';
+            technicalDurationInput.value = '';
+            contractIdInput.value = '';
+            productIdInput.value = '';
+            callDurationSelect.value = '';
+            unitsInput.value = '';
+
+            // ** 2. LOGICA PRINCIPALE **
+            if (radio.value === "GROUP" && radio.checked) {
+                // nascondi/mostra sezioni
+                studentIdContainer.classList.add('hidden');
+                groupStudentsContainer.classList.remove('hidden');
+                remainingCallsDisplay.classList.add('hidden');
+                
+                // Resetta la selezione dei prodotti PRIMA del caricamento
+                productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
+                productIdSelect.disabled = true;
+
+                // Carica la lista dei prodotti (asincrono)
+                await loadGroupProducts(); 
+                
+                // Aggiorna lo stato del form DOPO il caricamento, per popolare i dati tecnici
+                updateFormState(); // <-- CHIAMATA CORRETTA
+
+            } else if (radio.value === "IND" && radio.checked) {
+                // nascondi/mostra sezioni
+                studentIdContainer.classList.remove('hidden');
+                groupStudentsContainer.classList.add('hidden');
+                
+                // In INDIVIDUAL, il reset dei prodotti deve mostrare "Select a Student ID first"
+                productIdSelect.innerHTML = '<option value="" disabled selected>Select a Student ID first</option>';
+                productIdSelect.disabled = true; // <-- Aggiungo per coerenza
+
+                // Carica lista studenti IND
+                await loadStudentIds();
+
+                // updateFormState NON va chiamato qui. Sarà chiamato dall'evento di cambio studente.
+            }
  
-    try {
-      // ** ----------------------------------------------------------- **
-      // ** LOGICA PRINCIPALE (Aggiungiamo updateFormState al blocco GROUP)
-      // ** ----------------------------------------------------------- **
-      if (radio.value === "GROUP" && radio.checked) {
-        studentIdContainer.classList.add('hidden');
-        groupStudentsContainer.classList.remove('hidden');
-        remainingCallsDisplay.classList.add('hidden');
- 
-        // 1. Carica la lista dei prodotti (asincrono)
-        await loadGroupProducts(); 
-        
-        // 2. Aggiorna lo stato del form DOPO che i prodotti sono caricati
-        //    (Questo seleziona il prodotto di default e popola gli altri campi)
-        updateFormState(); // <-- CHIAMATA CORRETTA QUI
- 
-      } else if (radio.value === "IND" && radio.checked) {
-        studentIdContainer.classList.remove('hidden');
-        groupStudentsContainer.classList.add('hidden');
-        
-        // La logica di loadStudentIds() o l'evento di cambio studente
-        // dovrebbe gestire l'updateFormState per INDIVIDUAL.
-        await loadStudentIds();
-      }
- 
-      // ** ----------------------------------------------------------- **
-      // ** RESET CAMPI COMUNI (updateFormState va tolto da qui)
-      // ** ----------------------------------------------------------- **
-      productIdSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
-      productIdSelect.disabled = true;
-      hourlyRateInput.value = '';
-      technicalDurationInput.value = '';
-      contractIdInput.value = '';
-      productIdInput.value = '';
-      callDurationSelect.value = '';
-      unitsInput.value = '';
-      
-      // updateFormState(); // <-- Rimuovere questa riga!
- 
-    } catch (err) {
-      console.error("Error toggling call type:", err);
-      showToast("Error loading data: " + (err.message || err), 4000, "bg-red-600");
-    } finally {
-      hideGlobalLoader();
-    }
-  });
+        } catch (err) {
+            console.error("Error toggling call type:", err);
+            showToast("Error loading data: " + (err.message || err), 4000, "bg-red-600");
+        } finally {
+            hideGlobalLoader();
+        }
+    });
 });
 
   // Apri form: reset senza azzerare subito le select
