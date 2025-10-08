@@ -47,7 +47,8 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 const studentIdSelect = document.getElementById('studentId');
 const productIdSelect = document.getElementById('productIdSelect');
-const groupStudentsContainer = document.getElementById('groupStudentsContainer');
+const groupStudentsContainer = document.getElementById('groupStudentsContainer'); // Contenitore statico
+const groupStudentsDynamic = document.getElementById('groupStudentsDynamic'); // Contenitore per i select dinamici
 
 const callDateInput = document.getElementById('callDate');
 const hourlyRateInput = document.getElementById('hourlyRate');
@@ -152,7 +153,8 @@ async function apiPost(action, body = {}) {
 
 
 // =========================================================
-// 2. FUNZIONI LOADER E GOOGLE LOGIN (Ora corrette)
+// 2. FUNZIONI LOADER E GOOGLE LOGIN
+// (Le funzioni che avevi nel blocco <script> inline)
 // =========================================================
 
 // Global overlay loader controls
@@ -196,21 +198,21 @@ async function handleGoogleLogin(response) {
 
     switchSection(dashboardSection); // switchSection è definita sopra
 
-    hideGlobalLoader(); // 👈 chiudiamo subito, l’utente entra in dashboard
+    hideGlobalLoader(); 
 
     // caricamenti secondari (non bloccano l’UI)
-    await fetchMonthlyEarnings(); // Verrà chiamata senza errori se definita in seguito
-    await loadStudentIds(); // Verrà chiamata senza errori se definita in seguito
+    await fetchMonthlyEarnings(); 
+    await loadStudentIds(); 
   } catch (err) {
     showToast("Errore login Google: " + (err.message || err), 5000, "bg-red-600");
   } finally {
-    hideGlobalLoader(); // 👈 safety net in caso di errori
+    hideGlobalLoader(); 
   }
 }
 
 
 // =========================================================
-// 3. TUTTE LE ALTRE FUNZIONI (Nel tuo ordine originale)
+// 3. FUNZIONI PRINCIPALI E LISTENERS
 // =========================================================
 
 
@@ -223,7 +225,7 @@ async function loadStudentsDropdown() {
   select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
   container.innerHTML = '<p class="text-gray-500 text-center">Select a student from the dropdown to view their details.</p>';
 
-  showGlobalLoader(); // 👈 overlay on
+  showGlobalLoader(); 
 
   try {
     const resp = await apiGet('getStudents');
@@ -243,7 +245,7 @@ async function loadStudentsDropdown() {
   } catch (err) {
     select.innerHTML = '<option value="" disabled selected>Error loading students</option>';
   } finally {
-    hideGlobalLoader(); // 👈 overlay off SEMPRE
+    hideGlobalLoader(); 
   }
 }
 
@@ -484,26 +486,69 @@ async function fetchAndRenderStudentDetails(studentId) {
 }
 
 
+// --- Funzione per il rendering dei select dinamici di gruppo ---
+function renderGroupStudentSelectors(students, numSelectors) {
+    const container = document.getElementById('groupStudentsDynamic');
+    if (!container) return;
+
+    container.innerHTML = '';
+    
+    // Ordina gli studenti alfabeticamente
+    students.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+
+    for (let i = 0; i < numSelectors; i++) {
+        const div = document.createElement('div');
+        div.className = 'w-full md:w-1/3 px-3 mb-6 md:mb-0';
+        div.innerHTML = `
+            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2">
+                Student ${i + 1} ID
+            </label>
+            <div class="relative">
+                <select class="block appearance-none w-full bg-gray-200 border border-gray-200 text-gray-700 py-3 px-4 pr-8 rounded leading-tight focus:outline-none focus:bg-white focus:border-gray-500 student-selector"
+                        onchange="updateFormState()">
+                    <option value="" disabled selected>Select student ${i + 1}</option>
+                    ${students.map(id => `<option value="${id}">${id}</option>`).join('')}
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+            </div>
+        `;
+        container.appendChild(div);
+    }
+    
+    // Mostra il contenitore se non già visibile
+    groupStudentsContainer.classList.remove('hidden'); 
+}
+
+
   // Validazione form
   function updateFormState() {
     const selectedStudent = studentIdSelect.value;
     const selectedProduct = productIdSelect.value;
     const selectedDuration = callDurationSelect.value;
-    const isInd = document.querySelector('input[name="callType"]:checked').value === 'IND';
-    const isGroup = document.querySelector('input[name="callType"]:checked').value === 'GROUP';
+    const isInd = document.querySelector('input[name="callType"]:checked')?.value === 'IND';
+    const isGroup = document.querySelector('input[name="callType"]:checked')?.value === 'GROUP';
     const hourlyRate = parseFloat(hourlyRateInput.value);
 
     let isValid = false;
     if (isInd) {
         isValid = selectedStudent && selectedProduct && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
     } else if (isGroup) {
-        const selects = groupStudentsDynamic.querySelectorAll('select');
+        const selects = document.querySelectorAll('#groupStudentsDynamic .student-selector');
         const chosen = Array.from(selects).map(s => s.value).filter(Boolean);
         const unique = new Set(chosen);
 
+        // La validazione di gruppo richiede: 
+        // 1. Un prodotto selezionato.
+        // 2. Tutti i select dinamici compilati (`chosen.length === selects.length`).
+        // 3. Nessun duplicato (`unique.size === chosen.length`).
+        // 4. Una durata selezionata.
+        // 5. Una tariffa oraria valida.
         isValid = selectedProduct
-          && chosen.length === selects.length       // tutti compilati
-          && unique.size === chosen.length          // no duplicati
+          && selects.length > 0 // Assicurati che i select siano stati renderizzati
+          && chosen.length === selects.length       
+          && unique.size === chosen.length          
           && selectedDuration
           && !isNaN(hourlyRate) && hourlyRate > 0;
     }
@@ -515,7 +560,7 @@ loginForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   hideMessage(loginMessageBox);
 
-  showGlobalLoader(); // 👈 solo overlay, niente spinner nel bottone
+  showGlobalLoader(); 
 
   try {
     const coachId = coachIdInput.value.trim();
@@ -549,6 +594,8 @@ localStorage.setItem("coachSession", JSON.stringify({
   } catch (err) {
     showMessage(loginMessageBox, err.message || String(err), false);
   } finally {
+    // Non chiudere il loader qui, il loader viene chiuso in success.
+    // In caso di errore lo lasciamo aperto per il messaggio di errore.
   }
 });
 
@@ -601,6 +648,9 @@ if (labelEl && !document.getElementById('debriefLoadDraftsBtn')) {
           </thead>
           <tbody>`;
 
+    // Memorizza i draft nel browser per un caricamento veloce
+    LAST_DRAFTS = resp.drafts;
+
     resp.drafts.forEach(d => {
       html += `
         <tr class="border-b hover:bg-gray-50">
@@ -624,34 +674,43 @@ if (labelEl && !document.getElementById('debriefLoadDraftsBtn')) {
 
 }
 
+// listener globale per i bottoni Load (delegato - messo qui per essere definito una sola volta)
+document.addEventListener('click', (e) => {
+  if (!e.target.classList.contains('loadDraftBtn')) return;
   
+  const row = e.target.dataset.row;
+  if (!row) return;
+
+  // Trova il draft corrispondente nei dati salvati in memoria
+  const draft = LAST_DRAFTS.find(d => d.rowNumber == row);
+  if (!draft) return showToast("Draft data not found in memory.", 3000, 'bg-red-600');
+
+  // salva l’ID riga in memoria (per il 'Send')
+  window.debriefLoadedRow = row;
+
+  // Popola tutti i campi
+  debriefStudentSelect.value = draft.studentId || debriefStudentSelect.value;
+  debriefDateInput.value = draft.dateISO || debriefDateInput.value;
+  debriefGoals.value = draft.goals || '';
+  debriefTopics.value = draft.topics || '';
+  debriefGrammar.value = draft.grammar || '';
+  debriefVocabulary.value = draft.vocabulary || '';
+  debriefPronunciation.value = draft.pronunciation || '';
+  debriefOther.value = draft.other || '';
+  debriefHomework.value = draft.homework || '';
+
+  showToast(`Loaded draft for ${draft.studentId || 'student'}`, 3000, 'bg-green-600');
+});
+
+
 viewCoachingDebriefBtn.addEventListener('click', async () => {
-
-  // listener globale per i bottoni Load (delegato)
-    document.addEventListener('click', (e) => {
-      if (!e.target.classList.contains('loadDraftBtn')) return;
-      const row = e.target.dataset.row;
-      if (!row) return;
-    
-      // salviamo l’ID riga in memoria
-      window.debriefLoadedRow = row;
-    
-      // preleva dati dalla riga della tabella (puoi anche riusare fetch se serve)
-      const tr = e.target.closest('tr');
-      const tds = tr.querySelectorAll('td');
-      const goals = tds[1]?.textContent || '';
-      const topics = tds[2]?.textContent || '';
-    
-      // popola solo preview per ora (campi completi verranno fetchati lato backend se vuoi)
-      document.getElementById('debrief_goals').value = goals;
-      document.getElementById('debrief_topics').value = topics;
-    
-      showToast(`Loaded draft from row ${row}`, 3000, 'bg-green-600');
-  });
-
-  
-  
   switchSection(coachingDebriefSection);
+
+  // Pulisci i campi
+  debriefGoals.value = debriefTopics.value = debriefGrammar.value = debriefVocabulary.value = '';
+  debriefPronunciation.value = debriefOther.value = debriefHomework.value = '';
+  window.debriefLoadedRow = null; // Resetta la riga caricata
+  document.getElementById('debriefDraftsContainer')?.classList.add('hidden'); // Nascondi i draft
 
   // Precompila la data odierna
   const today = new Date();
@@ -661,7 +720,7 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
   debriefDateInput.value = `${yyyy}-${mm}-${dd}`;
 
   // Carica lista studenti nel dropdown
-  showGlobalLoader();  // 👈 mostra overlay
+  showGlobalLoader();  
 
   try {
     const resp = await apiGet('getStudents');
@@ -678,7 +737,7 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
   } catch (err) {
     debriefStudentSelect.innerHTML = '<option value="" disabled selected>Error loading students</option>';
   } finally {
-    hideGlobalLoader();  // 👈 chiudi overlay SEMPRE
+    hideGlobalLoader(); 
   }
 });
 
@@ -707,9 +766,11 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
     
         if (!resp.success) throw new Error(resp.error || "Unknown error");
         debriefMsg.textContent = "✅ Draft saved!";
+        showToast("Draft saved successfully!", 3000, 'bg-green-600');
       } catch (err) {
         console.error("Save draft error:", err);
         debriefMsg.textContent = "❌ " + (err.message || "Error saving draft");
+        showToast("Error saving draft: " + (err.message || "Unknown error"), 5000, 'bg-red-600');
       }
     });
 
@@ -718,17 +779,23 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
         debriefMsg.textContent = "📤 Sending...";
       
         try {
-          const resp = await apiPost("sendDebrief", {
+          const payload = {
             coachId: CURRENT_COACH_ID,
             studentId: debriefStudentSelect.value,
             rowNumber: window.debriefLoadedRow || null
-          });
+          };
+          
+          if (!payload.studentId) throw new Error("Please select a student first.");
+
+          const resp = await apiPost("sendDebrief", payload);
       
           if (!resp.success) throw new Error(resp.error || "Send failed");
           debriefMsg.textContent = "✅ Sent to student!";
+          showToast("Debrief sent successfully!", 3000, 'bg-green-600');
         } catch (err) {
           console.error("Send debrief error:", err);
           debriefMsg.textContent = "❌ " + (err.message || "Error sending debrief");
+          showToast("Error sending debrief: " + (err.message || "Unknown error"), 5000, 'bg-red-600');
         }
       });
       
@@ -786,7 +853,7 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
         const textArea = document.getElementById(`debrief_${fieldType}`);
         textArea.value = suggestion.trim();
         discardAISuggestion(fieldType);
-        showToast(`Applied AI suggestion for ${capitalize(fieldType)}`, "success");
+        showToast(`Applied AI suggestion for ${capitalize(fieldType)}`, 3000, "bg-green-600");
       }
       
       // annulla il suggerimento
@@ -810,6 +877,7 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
         }[c]));
       }
       function escapeBackticks(str) {
+        // usato per iniettare il suggerimento nella funzione JS 'applyAISuggestion'
         return str.replace(/`/g, "\\`");
       }
 
@@ -817,7 +885,7 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
 // My payment folder
 viewFolderBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
-  showGlobalLoader(); // 👈 loader on
+  showGlobalLoader(); 
   try {
     const resp = await apiGet('getPaymentFolderUrl', { coachId: CURRENT_COACH_ID });
     if (resp.success && resp.url) {
@@ -828,7 +896,7 @@ viewFolderBtn.addEventListener('click', async () => {
   } catch (err) {
     showToast("Error: " + err.message, 5000, "bg-red-600");
   } finally {
-    hideGlobalLoader(); // 👈 loader off
+    hideGlobalLoader(); 
   }
 });
 
@@ -847,7 +915,7 @@ document.getElementById('viewStudentsBtn').addEventListener('click', () => {
 
 // Torna al dashboard
 document.getElementById('backToDashboardFromStudentsBtn').addEventListener('click', () => {
-  switchSection(document.getElementById('dashboardSection'));
+  switchSection(dashboardSection);
 });
   
     
@@ -861,6 +929,30 @@ let fullHistory = []; // memorizza tutte le calls
     const resp = await apiGet('getCallHistory', { coachId: CURRENT_COACH_ID });
     if (resp.success && resp.history.length) {
   fullHistory = resp.history; // salva tutto
+  // Popola la lista Month/Year per il filtro (aggiunto qui)
+  const months = new Set();
+  fullHistory.forEach(h => {
+    if (h.dateISO) {
+      // Garantisce che il formato sia YYYY-MM
+      const d = new Date(h.dateISO);
+      if (!isNaN(d)) {
+        months.add(d.toISOString().slice(0, 7)); 
+      }
+    }
+  });
+
+  historyMonthYear.innerHTML = '<option value="">All Months</option>';
+  Array.from(months).sort().reverse().forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    // Formato display es: 2024-05 -> May 2024
+    const [year, month] = m.split('-');
+    const date = new Date(year, month - 1);
+    opt.textContent = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    historyMonthYear.appendChild(opt);
+  });
+
+
   renderHistoryTable();       // disegna tabella (gestisce già i loop)
 } else {
   callHistoryTableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No calls logged</td></tr>';
@@ -923,7 +1015,7 @@ logoutBtn.addEventListener('click', () => {
   // Clear persisted session
   localStorage.removeItem("coachSession");
 
-  // 👇 Riporta visibile il bottone Google
+  // Riporta visibile il bottone Google
   document.getElementById('googleLoginContainer')?.classList.remove('hidden');
 
   switchSection(loginSection);
@@ -989,7 +1081,7 @@ logoutBtn.addEventListener('click', () => {
     remainingCallsDisplay.classList.add('hidden');
     updateFormState();
 
-    showGlobalLoader(); // 👈 overlay on
+    showGlobalLoader(); 
 
     try {
       const resp = await apiGet('getStudentContracts', { studentId });
@@ -1019,7 +1111,7 @@ logoutBtn.addEventListener('click', () => {
     } catch (err) {
       productIdSelect.innerHTML = '<option value="" disabled selected>Error loading</option>';
     } finally {
-      hideGlobalLoader(); // 👈 overlay off SEMPRE
+      hideGlobalLoader(); 
     }
   }
 
@@ -1074,7 +1166,7 @@ async function loadGroupProducts() {
 }
 
 productIdSelect.addEventListener('change', async () => {
-  const callType = document.querySelector('input[name="callType"]:checked').value;
+  const callType = document.querySelector('input[name="callType"]:checked')?.value;
   const selectedProductId = productIdSelect.value;
   productIdInput.value = selectedProductId || '';
   hourlyRateInput.value = '';
@@ -1084,7 +1176,6 @@ productIdSelect.addEventListener('change', async () => {
   hideMessage(callMessageBox);
   updateFormState();
 
-  // prendo l'opzione selezionata
   const opt = productIdSelect.options[productIdSelect.selectedIndex];
   if (!opt || !opt.dataset.product) {
     callDurationSelect.disabled = true;
@@ -1116,6 +1207,7 @@ productIdSelect.addEventListener('change', async () => {
   // memorizza i dati base per ricalcolo override
   hourlyRateInput.dataset.baseRate = String(displayRate || 0);
   hourlyRateInput.dataset.attendees = String(prod.participants || 1);
+  hourlyRateInput.value = displayRate.toFixed(2); // Set initial rate
 
   // set default override = durata nativa
   if (nativeDuration) {
@@ -1128,6 +1220,7 @@ productIdSelect.addEventListener('change', async () => {
       }
     }
     if (!found) {
+      // aggiunge l'opzione se non presente (es. 45 min)
       const newOption = document.createElement('option');
       newOption.value = nativeDuration;
       newOption.textContent = nativeDuration;
@@ -1155,10 +1248,414 @@ productIdSelect.addEventListener('change', async () => {
     }
   } 
   // --- GROUP ---
-  else {
+  else if (callType === "GROUP") {
+    // Nascondi i select precedenti e mostra il loader
+    groupStudentsDynamic.innerHTML = loaderHTML("Loading group students list...");
+    groupStudentsContainer.classList.remove('hidden');
+
     try {
-      console.log("🧩 getGroupStudents called with:", selectedProductId);
       const resp = await apiGet('getGroupStudents', { productId: selectedProductId });
       const studs = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
-      const n = prod.participants || ...
-// ... Il resto del tuo codice originale continua qui (senza modifiche di contenuto)
+      const n = prod.participants || 1; // Numero di partecipanti attesi
+      
+      if (studs.length < n) {
+          showMessage(callMessageBox, `Warning: Product expects ${n} participants but only ${studs.length} students found in group.`, false);
+      }
+      
+      // Renderizza i select dinamici
+      renderGroupStudentSelectors(studs, n);
+
+    } catch (e) {
+      console.error('Error loading group students:', e);
+      showMessage(callMessageBox, `Error loading group students: ${e.message}`, false);
+      groupStudentsContainer.classList.add('hidden');
+    }
+  }
+
+  // Abilita la durata e aggiorna lo stato finale
+  callDurationSelect.disabled = false;
+  updateFormState();
+});
+
+// Aggiungi listener per aggiornare lo stato del form al cambio di callType
+callTypeRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+        const isInd = radio.value === 'IND';
+        const isGroup = radio.value === 'GROUP';
+        
+        // Reset delle selezioni principali
+        studentIdSelect.value = '';
+        productIdSelect.innerHTML = '<option value="" disabled selected>Select a Product</option>';
+        productIdSelect.disabled = true;
+        
+        // Toggle visibilità
+        document.getElementById('indStudentsContainer').classList.toggle('hidden', !isInd);
+        groupStudentsContainer.classList.toggle('hidden', !isGroup);
+
+        // Reset del contenuto dinamico di gruppo
+        if (groupStudentsDynamic) groupStudentsDynamic.innerHTML = '';
+
+        // Carica i dati appropriati
+        if (isInd) {
+            loadStudentIds(); 
+        } else if (isGroup) {
+            loadGroupProducts(); 
+        }
+        
+        updateFormState();
+    });
+});
+
+// Aggiungi listener per la durata e il rate
+callDurationSelect.addEventListener('change', updateFormState);
+hourlyRateInput.addEventListener('input', updateFormState); 
+
+
+// Log Call Button (Passa alla sezione Log Call)
+logCallBtn.addEventListener('click', async () => {
+    switchSection(callSection);
+
+    // Pre-popola la data odierna
+    const today = new Date().toISOString().split('T')[0];
+    callDateInput.value = today;
+    
+    // Simula il click sul radio button selezionato per inizializzare il form
+    const initialRadio = document.querySelector('input[name="callType"]:checked');
+    if (initialRadio) {
+        initialRadio.dispatchEvent(new Event('change'));
+    } else {
+        // Fallback: Seleziona IND se nulla è selezionato
+        document.getElementById('callTypeInd').checked = true;
+        document.getElementById('callTypeInd').dispatchEvent(new Event('change'));
+    }
+
+    // Setta la durata predefinita se necessario
+    if (!callDurationSelect.value) {
+        // Tenta di selezionare l'opzione predefinita o la prima disponibile
+        callDurationSelect.value = callDurationSelect.querySelector('option[disabled]')?.nextElementSibling?.value || '';
+    }
+
+    updateFormState();
+});
+
+
+// Submit Log Call Form
+submitBtn.addEventListener('click', async () => {
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Logging...';
+    hideMessage(callMessageBox);
+
+    const callType = document.querySelector('input[name="callType"]:checked')?.value;
+    const isGroup = callType === 'GROUP';
+    const isInd = callType === 'IND';
+
+    let studentIds = [];
+    if (isInd) {
+        studentIds = [studentIdSelect.value];
+    } else if (isGroup) {
+        // Raccoglie tutti gli studenti selezionati nei select dinamici
+        const selects = document.querySelectorAll('#groupStudentsDynamic .student-selector');
+        studentIds = Array.from(selects).map(s => s.value).filter(Boolean);
+        if (studentIds.length === 0) {
+            showMessage(callMessageBox, "Please select at least one student for the group call.", false);
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Log Call';
+            return;
+        }
+    } else {
+        showMessage(callMessageBox, "Please select a call type.", false);
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Log Call';
+        return;
+    }
+
+    const payload = {
+        action: 'logCall',
+        coachId: CURRENT_COACH_ID,
+        date: callDateInput.value,
+        duration: callDurationSelect.value,
+        technicalDuration: technicalDurationInput.value,
+        hourlyRate: hourlyRateInput.value,
+        units: unitsInput.value,
+        contractId: contractIdInput.value,
+        productId: productIdInput.value,
+        callType: callType,
+        studentIds: studentIds
+    };
+
+    showGlobalLoader();
+    try {
+        const resp = await apiPost('logCall', payload);
+        if (!resp.success) throw new Error(resp.error || 'Log failed');
+
+        showMessage(callMessageBox, `✅ Call logged successfully for ${studentIds.join(', ')}!`, true);
+        showToast("Call logged!", 3000, 'bg-green-600');
+
+        // Reset form e UI dopo successo
+        loginForm.reset();
+        await fetchMonthlyEarnings(); // Aggiorna i guadagni
+        if (isInd) await loadStudentContracts(studentIds[0]); // Ricarica i contratti per l'aggiornamento dei Remaining Calls
+        
+    } catch (err) {
+        showMessage(callMessageBox, `Error: ${err.message || String(err)}`, false);
+        showToast("Error logging call.", 5000, 'bg-red-600');
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Log Call';
+        hideGlobalLoader();
+        updateFormState(); // Ultimo aggiornamento dello stato
+    }
+});
+
+
+// --- Flashcards Logic ---
+
+// Deck management helpers (Reconstructed from snippets)
+let cardsByEn = new Map();
+let smartDeck = [];
+let sessionTotalSteps = 20;
+let stepIndex = 0;
+let renderNextCard = null; // Funzione per la prossima carta
+
+function buildSmartDeck(cards) {
+  // logica di costruzione del deck (es. smart logic)
+  return cards.filter(c => c.score < 5 || c.score === undefined); 
+}
+
+function pickCardFromSmartDeck(deck) {
+  // logica di selezione (es. random o basata sul punteggio)
+  if (!deck.length) return null;
+  return deck[Math.floor(Math.random() * deck.length)];
+}
+
+function renderCard(current, total, card) {
+  if (!card) {
+    flashcardsContainer.innerHTML = '<div class="text-center p-8">Session Complete!</div>';
+    return;
+  }
+  
+  const scoreDisplay = card.score === undefined ? 'New' : card.score;
+  flashcardsContainer.innerHTML = `
+    <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-lg">
+      <div class="text-xs text-gray-500 mb-4">${current + 1} of ${total}</div>
+      <div class="text-center text-xl font-semibold mb-4 text-blue-600">Flashcard Test</div>
+      <div id="flashcardSide" class="border p-6 rounded-lg bg-gray-50 min-h-[100px] flex items-center justify-center">
+        <p class="text-2xl">${escapeHTML(card.en)}</p>
+      </div>
+      <div class="mt-4 flex justify-between items-center text-sm">
+        <p>Score: <span class="font-bold">${scoreDisplay}</span></p>
+        <button id="flipBtn" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400">Flip</button>
+      </div>
+      <div id="controls" class="mt-6 hidden">
+        <p class="text-center mb-3 font-medium">How well did you know this?</p>
+        <div class="flex justify-center gap-4">
+          <button class="scoreBtn p-3 rounded-full bg-red-500 text-white shadow-md hover:bg-red-600" data-status="unknown">❌</button>
+          <button class="scoreBtn p-3 rounded-full bg-yellow-500 text-white shadow-md hover:bg-yellow-600" data-status="familiar">🟡</button>
+          <button class="scoreBtn p-3 rounded-full bg-green-500 text-white shadow-md hover:bg-green-600" data-status="mastered">✅</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('flipBtn').addEventListener('click', () => {
+    document.getElementById('flashcardSide').innerHTML = `<p class="text-2xl text-gray-800">${escapeHTML(card.it)}</p>`;
+    document.getElementById('controls').classList.remove('hidden');
+    document.getElementById('flipBtn').classList.add('hidden');
+  });
+
+  document.querySelectorAll('.scoreBtn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // 1. Logga l'aggiornamento
+      pendingFlashcardUpdates.push({ 
+        en: card.en, 
+        status: btn.dataset.status 
+      });
+
+      // 2. Aggiorna il punteggio in memoria per il retry (smartDeck)
+      if (btn.dataset.status === "unknown") {
+        card.score = Math.max((card.score || 0) - 1, 1);
+      } else if (btn.dataset.status === "mastered") {
+        card.score = Math.min((card.score || 0) + 1, 5);
+      } else { // familiar
+        card.score = Math.min((card.score || 0) + 0.5, 5);
+      }
+
+      // 3. Prossima carta
+      stepIndex++;
+      if (stepIndex < sessionTotalSteps) {
+        renderNextCard();
+      } else {
+        // Fine sessione, mostra pulsante per retry o save
+        flashcardsContainer.innerHTML = `
+          <div class="text-center p-8">
+            <h3 class="text-2xl font-bold mb-4">Session Complete!</h3>
+            <p class="mb-6">Ready to save or retry difficult cards?</p>
+            <button id="saveUpdatesBtn" class="px-5 py-2 bg-blue-600 text-white rounded-xl shadow-md hover:bg-blue-700">
+              Save ${pendingFlashcardUpdates.length} Updates
+            </button>
+            <button id="retryBtn" class="ml-4 px-5 py-2 bg-yellow-500 text-white rounded-xl shadow-md hover:bg-yellow-600">
+              Retry Failed Cards
+            </button>
+          </div>
+        `;
+        setupPostSessionControls(); // Configura i listeners
+      }
+    });
+  });
+}
+
+function setupPostSessionControls() {
+  const container = flashcardsContainer;
+
+  // Save Updates
+  document.getElementById('saveUpdatesBtn')?.addEventListener('click', async () => {
+    if (!pendingFlashcardUpdates.length) return;
+    
+    container.innerHTML = loaderHTML("Saving updates...");
+
+    try {
+      const resp = await apiPost('updateFlashcards', { 
+        coachId: CURRENT_COACH_ID,
+        updates: pendingFlashcardUpdates 
+      });
+
+      if (!resp.success) throw new Error(resp.error || "Save failed");
+
+      container.innerHTML = `<p class="text-center p-8 text-green-600 font-bold">✅ Updates Saved Successfully!</p>`;
+      pendingFlashcardUpdates = []; // Pulisci dopo il salvataggio
+    } catch (err) {
+      container.innerHTML = `<p class="text-center p-8 text-red-600">Error saving: ${err.message}. Try again.</p>`;
+    }
+  });
+
+  // Retry Failed Cards
+  document.getElementById('retryBtn')?.addEventListener('click', () => {
+    const redCards = pendingFlashcardUpdates
+      .filter(c => c.status === "unknown")
+      .map(u => cardsByEn.get(String(u.en || "").toLowerCase()))
+      .filter(Boolean);
+
+    if (!redCards.length) {
+      container.innerHTML = `<p class="text-center p-8 text-green-600">No cards to retry. Good job!</p>`;
+      return;
+    }
+    
+    // Assegna un punteggio basso per assicurarne la selezione nel nuovo deck
+    redCards.forEach(rc => rc.score = Math.max(rc.score || 1, 1)); 
+
+    // Reset della sessione
+    pendingFlashcardUpdates = [];
+    stepIndex = 0;
+    
+    // CORREZIONE: Imposta il nuovo totale per il retry (10)
+    sessionTotalSteps = 10; 
+
+    const redDeck = buildSmartDeck(redCards);
+    
+    // Sovrascrive la funzione per usare il deck e il totale corretti
+    function renderNextRed() {
+      const next = pickCardFromSmartDeck(redDeck);
+      renderCard(stepIndex, sessionTotalSteps, next);
+    }
+
+    // Assegna la nuova logica per il prossimo round
+    renderNextCard = renderNextRed;
+    renderNextCard();
+  });
+}
+
+
+async function loadFlashcardsDashboard() {
+  flashcardsContainer.innerHTML = loaderHTML("Loading students for flashcards...");
+  
+  try {
+    const resp = await apiGet('getStudents');
+    const students = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+
+    // Crea un dropdown
+    const selectHtml = `
+      <div class="text-center mb-6">
+        <label for="flashcardStudentSelect" class="block text-lg font-medium text-gray-700 mb-2">Select Student for Flashcards</label>
+        <select id="flashcardStudentSelect" class="w-full max-w-sm p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
+          <option value="" disabled selected>Choose a student</option>
+          ${students.map(id => `<option value="${id}">${id}</option>`).join('')}
+        </select>
+      </div>
+      <div id="flashcardDeckOptions" class="hidden text-center">
+          <p class="text-gray-600 mb-4">Select a deck size to start:</p>
+          <button data-size="10" class="startDeckBtn px-5 py-2 bg-green-600 text-white rounded-xl shadow-md hover:bg-green-700">Start 10 Cards</button>
+          <button data-size="20" class="startDeckBtn ml-4 px-5 py-2 bg-green-600 text-white rounded-xl shadow-md hover:bg-green-700">Start 20 Cards</button>
+      </div>
+    `;
+    flashcardsContainer.innerHTML = selectHtml;
+
+    // Listener per la selezione dello studente
+    document.getElementById('flashcardStudentSelect').addEventListener('change', async (e) => {
+      const studentId = e.target.value;
+      if (!studentId) return;
+
+      document.getElementById('flashcardDeckOptions').classList.add('hidden');
+      flashcardsContainer.innerHTML = loaderHTML("Loading flashcards for " + studentId + "...");
+      
+      try {
+        const cardResp = await apiGet('getFlashcards', { studentId });
+        const allCards = (cardResp.success && Array.isArray(cardResp.flashcards)) ? cardResp.flashcards : [];
+        
+        if (!allCards.length) {
+          flashcardsContainer.innerHTML = `<p class="text-center p-8 text-gray-500">No flashcards found for ${studentId}.</p>`;
+          return;
+        }
+
+        // 1. Mappa le carte per EN per aggiornamento in memoria
+        cardsByEn.clear();
+        allCards.forEach(c => cardsByEn.set(String(c.en || "").toLowerCase(), c));
+
+        // 2. Costruisci il deck smart iniziale
+        smartDeck = buildSmartDeck(allCards);
+        if (!smartDeck.length) {
+          flashcardsContainer.innerHTML = `<p class="text-center p-8 text-green-600">All ${allCards.length} cards are mastered! 🎉</p>`;
+          return;
+        }
+
+        // 3. Mostra opzioni di dimensione deck
+        flashcardsContainer.innerHTML = selectHtml; // Ridisegna il select
+        document.getElementById('flashcardStudentSelect').value = studentId; // Risetta lo studente
+        document.getElementById('flashcardDeckOptions').classList.remove('hidden');
+
+        // 4. Listener per l'inizio della sessione
+        document.querySelectorAll('.startDeckBtn').forEach(btn => {
+          btn.addEventListener('click', () => {
+            sessionTotalSteps = parseInt(btn.dataset.size, 10);
+            stepIndex = 0;
+            pendingFlashcardUpdates = [];
+            
+            // Funzione default per la prossima carta (usa il deck smart)
+            function renderNextDefault() {
+              const next = pickCardFromSmartDeck(smartDeck);
+              renderCard(stepIndex, sessionTotalSteps, next);
+            }
+            renderNextCard = renderNextDefault;
+
+            // 🚀 Avvia la prima carta
+            renderNextCard();
+          });
+        });
+
+      } catch (err) {
+        flashcardsContainer.innerHTML = `<p class="text-red-500 text-center">Error loading flashcards: ${err.message}</p>`;
+      }
+    });
+  } catch (err) {
+    flashcardsContainer.innerHTML = `<p class="text-red-500 text-center">Error loading students: ${err.message}</p>`;
+  }
+}
+
+// Event Listeners per la navigazione Flashcards
+viewFlashcardsBtn.addEventListener('click', () => {
+  switchSection(flashcardsSection);
+  loadFlashcardsDashboard();
+});
+
+backToDashboardFromFlashcardsBtn.addEventListener('click', () => {
+  switchSection(dashboardSection);
+});
