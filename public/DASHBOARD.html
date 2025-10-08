@@ -5,52 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Call Logging Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-     body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f3f4f6; }
-    .container { max-width: 900px; }
-    .form-input { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:1rem; background:#fff; transition:all .2s; }
-    .form-input:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,.2); }
-    .form-label { font-weight:500; color:#4b5563; }
-    .cube-button { display:flex; flex-direction:column; justify-content:center; align-items:center; padding:24px; border-radius:12px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,.1); transition:all .3s; cursor:pointer; }
-    .cube-button:hover { transform:translateY(-4px); box-shadow:0 6px 10px rgba(0,0,0,.15); }
-    .spinner-container { display:flex; justify-content:center; align-items:center; gap:8px; }
-    .spinner-dot { width:12px; height:12px; background:#fff; border-radius:50%; animation:bounce 1s ease-in-out infinite; }
-    .spinner-dot:nth-child(2){ animation-delay:.1s; }
-    .spinner-dot:nth-child(3){ animation-delay:.2s; }
-    @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-10px);} }
-            /* Fullscreen overlay loader */
-        #globalLoader {
-          position: fixed;
-          inset: 0; /* top, right, bottom, left: 0 */
-          background: rgba(255,255,255,0.7); /* bianco semi-trasparente */
-          display: none; /* nascosto di default */
-          justify-content: center;
-          align-items: center;
-          z-index: 9999; /* sopra tutto */
-        }
-        
-        .loader-circle {
-          border: 6px solid #e5e7eb; /* grigino */
-          border-top: 6px solid #3b82f6; /* blu */
-          border-radius: 50%;
-          width: 60px;
-          height: 60px;
-          animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-
-        /* Flashcards flip effect */
-        .perspective { perspective: 1000px; }
-        .transform-style-preserve-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; }
-        .rotate-y-180 { transform: rotateY(180deg); }
-
-    
-  </style>
+  <link rel="stylesheet" href="styles/dashboard.css">
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
   <!-- Global loader overlay -->
