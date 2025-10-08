@@ -26,9 +26,12 @@ const logCallBtn = document.getElementById('logCallBtn');
 const viewStudentsBtn = document.getElementById('viewStudentsBtn');
 const viewFolderBtn = document.getElementById('viewFolderBtn');
 const viewCallLogBtn = document.getElementById('viewCallLogBtn');
-const viewReportCardsBtn = document.getElementById('viewReportCardsBtn');
+const viewReportCardsBtn = document.getElementById('viewReportCardsBtn'); // <-- Elemento importante
+
 const viewCoachingDebriefBtn = document.getElementById('viewCoachingDebriefBtn');
 const coachingDebriefSection = document.getElementById('coachingDebriefSection');
+const backToDashboardFromDebriefBtn = document.getElementById('backToDashboardFromDebriefBtn'); // <-- Elemento aggiunto
+
   // Coaching Debrief DOM
 const debriefStudentSelect   = document.getElementById('debriefStudentSelect');
 const debriefDateInput       = document.getElementById('debriefDateInput');
@@ -47,8 +50,8 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 const studentIdSelect = document.getElementById('studentId');
 const productIdSelect = document.getElementById('productIdSelect');
-const groupStudentsContainer = document.getElementById('groupStudentsContainer'); // Contenitore statico
-const groupStudentsDynamic = document.getElementById('groupStudentsDynamic'); // Contenitore per i select dinamici
+const groupStudentsContainer = document.getElementById('groupStudentsContainer'); 
+const groupStudentsDynamic = document.getElementById('groupStudentsDynamic'); 
 
 const callDateInput = document.getElementById('callDate');
 const hourlyRateInput = document.getElementById('hourlyRate');
@@ -72,6 +75,12 @@ const viewFlashcardsBtn = document.getElementById('viewFlashcardsBtn');
 const flashcardsSection = document.getElementById('flashcardsSection');
 const backToDashboardFromFlashcardsBtn = document.getElementById('backToDashboardFromFlashcardsBtn');
 const flashcardsContainer = document.getElementById('flashcardsContainer');
+
+// Riferimenti per la correzione Flashcards
+const flashcardSetupContainer = document.getElementById('flashcardSetupContainer'); // Assumo un contenitore statico esterno
+let flashcardStudentSelect = document.getElementById('flashcardStudentSelect');
+let flashcardDeckOptions = document.getElementById('flashcardDeckOptions');
+
 
 // Stato
 let CURRENT_COACH_ID = null;
@@ -154,7 +163,6 @@ async function apiPost(action, body = {}) {
 
 // =========================================================
 // 2. FUNZIONI LOADER E GOOGLE LOGIN
-// (Le funzioni che avevi nel blocco <script> inline)
 // =========================================================
 
 // Global overlay loader controls
@@ -169,14 +177,14 @@ function hideGlobalLoader() {
  
   
 async function handleGoogleLogin(response) {
-  showGlobalLoader(); // 👈 showGlobalLoader è definita sopra
+  showGlobalLoader(); 
 
   try {
     const credential = response.credential; 
-    const resp = await apiPost("loginWithGoogle", { credential }); // apiPost è definita sopra
+    const resp = await apiPost("loginWithGoogle", { credential }); 
 
     if (!resp.success) {
-      showToast("Google login fallito: " + resp.error, 5000, "bg-red-600"); // showToast è definita sopra
+      showToast("Google login fallito: " + resp.error, 5000, "bg-red-600"); 
       location.reload(); 
       return;
     }
@@ -196,7 +204,7 @@ async function handleGoogleLogin(response) {
     coachNameDisplay.textContent = CURRENT_COACH_NAME;
     callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
 
-    switchSection(dashboardSection); // switchSection è definita sopra
+    switchSection(dashboardSection); 
 
     hideGlobalLoader(); 
 
@@ -214,6 +222,46 @@ async function handleGoogleLogin(response) {
 // =========================================================
 // 3. FUNZIONI PRINCIPALI E LISTENERS
 // =========================================================
+
+// --- INIZIALIZZAZIONE & PERSISTENZA SESSIONE ---
+function initApp() {
+    const sessionData = localStorage.getItem("coachSession");
+
+    if (sessionData) {
+        try {
+            const session = JSON.parse(sessionData);
+            if (session.id && session.name && session.role) {
+                CURRENT_COACH_ID = session.id;
+                CURRENT_COACH_NAME = session.name;
+                CURRENT_COACH_ROLE = session.role;
+
+                coachNameDisplay.textContent = CURRENT_COACH_NAME;
+                callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+                
+                // Switcha la UI senza animazione e senza switchSection
+                loginSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+
+                document.getElementById('googleLoginContainer')?.classList.add('hidden');
+
+                // Avvia i caricamenti asincroni
+                fetchMonthlyEarnings();
+                loadStudentIds();
+                return; 
+            }
+        } catch (e) {
+            console.error("Failed to parse session data:", e);
+            localStorage.removeItem("coachSession"); 
+        }
+    }
+
+    // Se non loggato, assicurati che la login sia visibile
+    loginSection.classList.remove('hidden');
+    dashboardSection.classList.add('hidden');
+}
+
+// Chiamata all'inizializzazione all'inizio del caricamento
+window.addEventListener('load', initApp);
 
 
 // --- Load Students Dropdown
@@ -741,6 +789,13 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
   }
 });
 
+// Aggiungi listener per il pulsante Back to Dashboard dal Debrief
+if (backToDashboardFromDebriefBtn) {
+    backToDashboardFromDebriefBtn.addEventListener('click', () => {
+        switchSection(dashboardSection);
+    });
+}
+
 
         // --- Save Draft Debrief ---
     debriefSaveDraftBtn.addEventListener('click', async () => {
@@ -899,6 +954,26 @@ viewFolderBtn.addEventListener('click', async () => {
     hideGlobalLoader(); 
   }
 });
+
+
+// Report Cards Folder
+viewReportCardsBtn.addEventListener('click', async () => {
+  if (!CURRENT_COACH_ID) return;
+  showGlobalLoader(); 
+  try {
+    const resp = await apiGet('getReportCardsUrl', { coachId: CURRENT_COACH_ID }); // <-- Nuova API
+    if (resp.success && resp.url) {
+      window.open(resp.url, "_blank");
+    } else {
+      showToast("No Report Cards folder found", 4000, "bg-red-600");
+    }
+  } catch (err) {
+    showToast("Error: " + err.message, 5000, "bg-red-600");
+  } finally {
+    hideGlobalLoader(); 
+  }
+});
+
 
 //Student Info
   // Student dropdown change
@@ -1415,7 +1490,7 @@ let cardsByEn = new Map();
 let smartDeck = [];
 let sessionTotalSteps = 20;
 let stepIndex = 0;
-let renderNextCard = null; // Funzione per la prossima carta
+let renderNextCard = null; 
 
 function buildSmartDeck(cards) {
   // logica di costruzione del deck (es. smart logic)
@@ -1521,7 +1596,8 @@ function setupPostSessionControls() {
 
       if (!resp.success) throw new Error(resp.error || "Save failed");
 
-      container.innerHTML = `<p class="text-center p-8 text-green-600 font-bold">✅ Updates Saved Successfully!</p>`;
+      container.innerHTML = `<p class="text-center p-8 text-green-600 font-bold">✅ Updates Saved Successfully!</p>
+                             <button class="mt-4 px-5 py-2 bg-gray-500 text-white rounded-xl shadow-md hover:bg-gray-600" onclick="loadFlashcardsDashboard()">New Session</button>`;
       pendingFlashcardUpdates = []; // Pulisci dopo il salvataggio
     } catch (err) {
       container.innerHTML = `<p class="text-center p-8 text-red-600">Error saving: ${err.message}. Try again.</p>`;
@@ -1536,7 +1612,8 @@ function setupPostSessionControls() {
       .filter(Boolean);
 
     if (!redCards.length) {
-      container.innerHTML = `<p class="text-center p-8 text-green-600">No cards to retry. Good job!</p>`;
+      container.innerHTML = `<p class="text-center p-8 text-green-600">No cards to retry. Good job!🎉</p>
+                             <button class="mt-4 px-5 py-2 bg-gray-500 text-white rounded-xl shadow-md hover:bg-gray-600" onclick="loadFlashcardsDashboard()">New Session</button>`;
       return;
     }
     
@@ -1564,91 +1641,121 @@ function setupPostSessionControls() {
   });
 }
 
+// Funzione di gestione del cambio studente (separata per non doverla ricreare)
+async function handleFlashcardStudentChange(e) {
+  const studentId = e.target.value;
+  if (!studentId) return;
 
+  flashcardDeckOptions.classList.add('hidden');
+  flashcardsContainer.innerHTML = loaderHTML("Loading flashcards for " + studentId + "...");
+
+  try {
+    const cardResp = await apiGet('getFlashcards', { studentId });
+    const allCards = (cardResp.success && Array.isArray(cardResp.flashcards)) ? cardResp.flashcards : [];
+    
+    if (!allCards.length) {
+      flashcardsContainer.innerHTML = `<p class="text-center p-8 text-gray-500">No flashcards found for ${studentId}.</p>`;
+      return;
+    }
+
+    // 1. Mappa le carte per EN per aggiornamento in memoria
+    cardsByEn.clear();
+    allCards.forEach(c => cardsByEn.set(String(c.en || "").toLowerCase(), c));
+
+    // 2. Costruisci il deck smart iniziale
+    smartDeck = buildSmartDeck(allCards);
+    if (!smartDeck.length) {
+      flashcardsContainer.innerHTML = `<p class="text-center p-8 text-green-600">All ${allCards.length} cards are mastered! 🎉</p>`;
+      return;
+    }
+
+    // 3. Mostra opzioni di dimensione deck e setup listeners
+    document.getElementById('flashcardsContainer').innerHTML = `<p class="text-gray-500 text-center">Select a deck size above to start the session.</p>`;
+    flashcardDeckOptions.classList.remove('hidden');
+
+    // 4. Listener per l'inizio della sessione (rimuovi/aggiungi per evitare duplicati)
+    document.querySelectorAll('#flashcardDeckOptions .startDeckBtn').forEach(btn => {
+      // Rimuovi vecchi listener clonando e sostituendo l'elemento
+      const newBtn = btn.cloneNode(true);
+      btn.parentNode.replaceChild(newBtn, btn);
+
+      newBtn.addEventListener('click', () => {
+        sessionTotalSteps = parseInt(newBtn.dataset.size, 10);
+        stepIndex = 0;
+        pendingFlashcardUpdates = [];
+        
+        function renderNextDefault() {
+          const next = pickCardFromSmartDeck(smartDeck);
+          renderCard(stepIndex, sessionTotalSteps, next);
+        }
+        renderNextCard = renderNextDefault;
+
+        // Nascondi le opzioni
+        flashcardDeckOptions.classList.add('hidden');
+        
+        // Avvia la prima carta
+        renderNextCard();
+      });
+    });
+
+  } catch (err) {
+    flashcardsContainer.innerHTML = `<p class="text-red-500 text-center">Error loading flashcards: ${err.message}</p>`;
+  }
+}
+
+
+// Funzione che gestisce il setup iniziale delle Flashcards
 async function loadFlashcardsDashboard() {
-  flashcardsContainer.innerHTML = loaderHTML("Loading students for flashcards...");
+  // Se non ho ancora gli elementi di setup, li creo e li posiziono prima del container
+  if (!flashcardStudentSelect || !flashcardDeckOptions) {
+    if (!flashcardSetupContainer) {
+        // Se manca il container principale, lo creiamo (assumendo sia nel flashcardsSection)
+        const newSetupContainer = document.createElement('div');
+        newSetupContainer.id = 'flashcardSetupContainer';
+        flashcardsSection.insertBefore(newSetupContainer, flashcardsContainer);
+        flashcardSetupContainer = newSetupContainer;
+    }
+    
+    // Aggiungi la struttura se non esiste
+    flashcardSetupContainer.innerHTML = `
+        <div class="text-center mb-6">
+          <label for="flashcardStudentSelect" class="block text-lg font-medium text-gray-700 mb-2">Select Student for Flashcards</label>
+          <select id="flashcardStudentSelect" class="w-full max-w-sm p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"></select>
+        </div>
+        <div id="flashcardDeckOptions" class="hidden text-center">
+            <p class="text-gray-600 mb-4">Select a deck size to start:</p>
+            <button data-size="10" class="startDeckBtn px-5 py-2 bg-green-600 text-white rounded-xl shadow-md hover:bg-green-700">Start 10 Cards</button>
+            <button data-size="20" class="startDeckBtn ml-4 px-5 py-2 bg-green-600 text-white rounded-xl shadow-md hover:bg-green-700">Start 20 Cards</button>
+        </div>
+    `;
+    // Aggiorna i riferimenti DOM
+    flashcardStudentSelect = document.getElementById('flashcardStudentSelect');
+    flashcardDeckOptions = document.getElementById('flashcardDeckOptions');
+    // Aggiungi subito il listener di change (che verrà rimosso/aggiunto in handleFlashcardStudentChange)
+    flashcardStudentSelect.addEventListener('change', handleFlashcardStudentChange);
+  }
+
+
+  // Reset UI
+  flashcardDeckOptions.classList.add('hidden');
+  flashcardsContainer.innerHTML = loaderHTML("Loading students list...");
   
   try {
     const resp = await apiGet('getStudents');
     const students = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
 
-    // Crea un dropdown
-    const selectHtml = `
-      <div class="text-center mb-6">
-        <label for="flashcardStudentSelect" class="block text-lg font-medium text-gray-700 mb-2">Select Student for Flashcards</label>
-        <select id="flashcardStudentSelect" class="w-full max-w-sm p-3 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500">
-          <option value="" disabled selected>Choose a student</option>
-          ${students.map(id => `<option value="${id}">${id}</option>`).join('')}
-        </select>
-      </div>
-      <div id="flashcardDeckOptions" class="hidden text-center">
-          <p class="text-gray-600 mb-4">Select a deck size to start:</p>
-          <button data-size="10" class="startDeckBtn px-5 py-2 bg-green-600 text-white rounded-xl shadow-md hover:bg-green-700">Start 10 Cards</button>
-          <button data-size="20" class="startDeckBtn ml-4 px-5 py-2 bg-green-600 text-white rounded-xl shadow-md hover:bg-green-700">Start 20 Cards</button>
-      </div>
-    `;
-    flashcardsContainer.innerHTML = selectHtml;
-
-    // Listener per la selezione dello studente
-    document.getElementById('flashcardStudentSelect').addEventListener('change', async (e) => {
-      const studentId = e.target.value;
-      if (!studentId) return;
-
-      document.getElementById('flashcardDeckOptions').classList.add('hidden');
-      flashcardsContainer.innerHTML = loaderHTML("Loading flashcards for " + studentId + "...");
-      
-      try {
-        const cardResp = await apiGet('getFlashcards', { studentId });
-        const allCards = (cardResp.success && Array.isArray(cardResp.flashcards)) ? cardResp.flashcards : [];
-        
-        if (!allCards.length) {
-          flashcardsContainer.innerHTML = `<p class="text-center p-8 text-gray-500">No flashcards found for ${studentId}.</p>`;
-          return;
-        }
-
-        // 1. Mappa le carte per EN per aggiornamento in memoria
-        cardsByEn.clear();
-        allCards.forEach(c => cardsByEn.set(String(c.en || "").toLowerCase(), c));
-
-        // 2. Costruisci il deck smart iniziale
-        smartDeck = buildSmartDeck(allCards);
-        if (!smartDeck.length) {
-          flashcardsContainer.innerHTML = `<p class="text-center p-8 text-green-600">All ${allCards.length} cards are mastered! 🎉</p>`;
-          return;
-        }
-
-        // 3. Mostra opzioni di dimensione deck
-        flashcardsContainer.innerHTML = selectHtml; // Ridisegna il select
-        document.getElementById('flashcardStudentSelect').value = studentId; // Risetta lo studente
-        document.getElementById('flashcardDeckOptions').classList.remove('hidden');
-
-        // 4. Listener per l'inizio della sessione
-        document.querySelectorAll('.startDeckBtn').forEach(btn => {
-          btn.addEventListener('click', () => {
-            sessionTotalSteps = parseInt(btn.dataset.size, 10);
-            stepIndex = 0;
-            pendingFlashcardUpdates = [];
-            
-            // Funzione default per la prossima carta (usa il deck smart)
-            function renderNextDefault() {
-              const next = pickCardFromSmartDeck(smartDeck);
-              renderCard(stepIndex, sessionTotalSteps, next);
-            }
-            renderNextCard = renderNextDefault;
-
-            // 🚀 Avvia la prima carta
-            renderNextCard();
-          });
-        });
-
-      } catch (err) {
-        flashcardsContainer.innerHTML = `<p class="text-red-500 text-center">Error loading flashcards: ${err.message}</p>`;
-      }
+    flashcardStudentSelect.innerHTML = '<option value="" disabled selected>Choose a student</option>';
+    students.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' })).forEach(id => {
+        flashcardStudentSelect.innerHTML += `<option value="${id}">${id}</option>`;
     });
+
+    flashcardsContainer.innerHTML = `<p class="text-gray-500 text-center p-8">Select a student from the dropdown to load their flashcards.</p>`;
+
   } catch (err) {
     flashcardsContainer.innerHTML = `<p class="text-red-500 text-center">Error loading students: ${err.message}</p>`;
   }
 }
+
 
 // Event Listeners per la navigazione Flashcards
 viewFlashcardsBtn.addEventListener('click', () => {
