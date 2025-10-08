@@ -2218,13 +2218,6 @@ document.getElementById('viewReportCardsBtn').addEventListener('click', async ()
   await loadReportCardHistory();
 });
 
-backToReportCardsBtn.addEventListener('click', () => {
-  reportCardForm.reset();
-  const callsTable = document.getElementById('reportCardCallsTable');
-  if (callsTable) callsTable.classList.add('hidden');
-  switchSection(reportCardsSection);
-});
-
 async function loadReportCardsPending() {
   reportCardsContainer.innerHTML = loaderHTML("Loading pending report cards...");
   reportCardNoShowsContainer.innerHTML = "";
