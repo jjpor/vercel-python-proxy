@@ -7,6 +7,13 @@
   <script src="https://cdn.tailwindcss.com"></script>
   
   <style>
+    
+        /* === FIX scroll doppia in Google Sites iframe === */
+    html, body {
+      height: 100%;
+      overflow: hidden;     /* blocca lo scroll interno */
+    }
+
      body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f3f4f6; }
     .container { max-width: 900px; }
     .form-input { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:1rem; background:#fff; transition:all .2s; }
