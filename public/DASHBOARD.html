@@ -13,6 +13,40 @@
     .form-label { font-weight:500; color:#4b5563; }
     .cube-button { display:flex; flex-direction:column; justify-content:center; align-items:center; padding:24px; border-radius:12px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,.1); transition:all .3s; cursor:pointer; }
     .cube-button:hover { transform:translateY(-4px); box-shadow:0 6px 10px rgba(0,0,0,.15); }
+        :root{
+      --yellow-start:#ffe87a; --yellow-end:#ffb300;
+      --blue-start:#66ccff;   --blue-end:#0056d6;
+      --green-start:#6df5a3;  --green-end:#009e3b;
+      --pink-start:#ff9ec4;   --pink-end:#e0006b;
+      --orange-start:#ffb266; --orange-end:#ff5a00;
+      --purple-start:#c68eff; --purple-end:#7a1faf;
+      --red-start:#ff8080;    --red-end:#d10000;
+      --teal-start:#82f3f0;   --teal-end:#008b8f;
+      --gray-start:#9aa0a6;   --gray-end:#5f6368;
+    }
+    
+    /* Base componenti riusabili */
+    .btn-gradient{color:#fff!important; padding:8px 18px; border-radius:10px;
+      font-weight:600; box-shadow:0 3px 8px rgba(0,0,0,.15);
+      transition:transform .2s, box-shadow .2s}
+    .btn-gradient:hover{transform:translateY(-2px); box-shadow:0 5px 12px rgba(0,0,0,.25)}
+    
+    .card-ui{background:#fff; border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.12)}
+    
+    /* Varianti gradient da applicare ovunque */
+    .g-yellow{ background:linear-gradient(90deg,var(--yellow-start),var(--yellow-end)) }
+    .g-blue  { background:linear-gradient(90deg,var(--blue-start),var(--blue-end)) }
+    .g-green { background:linear-gradient(90deg,var(--green-start),var(--green-end)) }
+    .g-pink  { background:linear-gradient(90deg,var(--pink-start),var(--pink-end)) }
+    .g-orange{ background:linear-gradient(90deg,var(--orange-start),var(--orange-end)) }
+    .g-purple{ background:linear-gradient(90deg,var(--purple-start),var(--purple-end)) }
+    .g-red   { background:linear-gradient(90deg,var(--red-start),var(--red-end)) }
+    .g-teal  { background:linear-gradient(90deg,var(--teal-start),var(--teal-end)) }
+    .g-gray  { background:linear-gradient(90deg,var(--gray-start),var(--gray-end)) }
+    
+    /* Bottoni “cube” esistenti → testo bianco di default */
+    .cube-button{ color:#fff; }
+
     .spinner-container { display:flex; justify-content:center; align-items:center; gap:8px; }
     .spinner-dot { width:12px; height:12px; background:#fff; border-radius:50%; animation:bounce 1s ease-in-out infinite; }
     .spinner-dot:nth-child(2){ animation-delay:.1s; }
@@ -53,6 +87,35 @@
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+  
+      <!-- === SMARTALK GLOBAL HEADER === -->
+      <header class="fixed top-0 left-0 w-full z-50 bg-white shadow-md">
+        <nav class="container mx-auto px-4 sm:px-6 py-2 flex items-center justify-between">
+          <a href="https://www.smartalk.online/home">
+            <img src="https://res.cloudinary.com/dk5bqpodg/image/upload/v1756747292/smartalk_banner_ke1kkq.svg"
+                 alt="Smartalk Logo" class="h-10 sm:h-12">
+          </a>
+          <ul class="flex items-center space-x-6 sm:space-x-8 text-base sm:text-lg">
+            <li><a href="https://www.smartalk.online/about-us"
+                   class="hover:text-blue-600 transition-colors duration-300 font-semibold">About Us</a></li>
+            <li><a href="https://www.smartalk.online/#contact"
+                   class="hover:text-blue-600 transition-colors duration-300 font-semibold">Contact</a></li>
+            <li><a href="https://www.smartalk.online/dashboard"
+                   class="hover:text-blue-600 transition-colors duration-300 font-semibold">Dashboard</a></li>
+            <li class="hidden sm:block">
+              <a href="https://www.smartalk.online"
+                 class="hover:text-blue-600 transition-colors duration-300">
+                <img src="https://res.cloudinary.com/dk5bqpodg/image/upload/v1756760488/it_flag_icon_skdtam.png"
+                     alt="Italian Flag" class="w-6 h-auto rounded-full">
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </header>
+
+<!-- Offset for fixed header -->
+<div class="h-[72px]"></div>
+
   <!-- Global loader overlay -->
 <div id="globalLoader">
   <div class="loader-circle"></div>
@@ -2776,5 +2839,21 @@ async function loadFlashcards() {
 
         
 </script>
+
+  
+      <!-- === SMARTALK FOOTER MINIMALE === -->
+    <footer class="bg-gray-50 py-6 text-center border-t border-gray-200 mt-10">
+      <div class="flex justify-center space-x-8 text-sm sm:text-base font-semibold text-gray-600">
+        <a href="https://www.smartalk.online/terms"
+           class="hover:text-blue-600 transition-colors duration-300">
+          Terms and Conditions
+        </a>
+        <a href="https://www.smartalk.online/policy"
+           class="hover:text-blue-600 transition-colors duration-300">
+          Policy
+        </a>
+      </div>
+    </footer>
+
 </body>
 </html>
