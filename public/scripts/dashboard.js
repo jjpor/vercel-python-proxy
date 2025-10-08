@@ -1,4 +1,3 @@
-<script>
  // Global overlay loader controls
 function showGlobalLoader() {
   const el = document.getElementById('globalLoader');
@@ -2197,6 +2196,3 @@ async function loadFlashcards() {
     container.innerHTML = `<p class="text-red-500 text-center">Error loading students: ${err.message}</p>`;
   }
 }
-
-        
-</script>
