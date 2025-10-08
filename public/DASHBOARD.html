@@ -380,11 +380,13 @@ async function handleGoogleLogin(response) {
   </div>
 
   <!-- CALL FORM -->
-  <div id="callSection" class="hidden app-section">
-    <div class="text-center">
-      <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Log a new call</h1>
-      <p class="mt-2 text-gray-500">Logged in as <span id="callSectionCoachNameDisplay" class="font-bold text-blue-600"></span>.</p>
-    </div>
+    <div id="callSection" class="hidden app-section">
+  <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
+    <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Log a new call</h2>
+    <button id="backToDashboardFromReportsBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
+      Back to Dashboard
+    </button>
+  </div>
 
     <div class="flex gap-6 items-center mt-4">
       <label class="flex items-center gap-2"><input type="radio" name="callType" value="IND" checked> IND</label>
@@ -464,8 +466,7 @@ async function handleGoogleLogin(response) {
 
       <div class="md:col-span-2 mt-4">
         <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed">Log Call</button>
-        <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white py-3 px-6 rounded-xl hover:bg-gray-500">Back to Dashboard</button>
-      </div>
+        </div>
     </form>
     <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
   </div>
