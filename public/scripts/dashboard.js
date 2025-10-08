@@ -1,4 +1,57 @@
 <script>
+ // Global overlay loader controls
+function showGlobalLoader() {
+  const el = document.getElementById('globalLoader');
+  if (el) el.style.display = 'flex';
+}
+function hideGlobalLoader() {
+  const el = document.getElementById('globalLoader');
+  if (el) el.style.display = 'none';
+}
+ 
+  
+async function handleGoogleLogin(response) {
+  showGlobalLoader(); // 👈 overlay a schermo intero
+
+  try {
+    const credential = response.credential; 
+    const resp = await apiPost("loginWithGoogle", { credential });
+
+    if (!resp.success) {
+      showToast("Google login fallito: " + resp.error, 5000, "bg-red-600");
+      location.reload(); 
+      return;
+    }
+
+    document.getElementById('googleLoginContainer').classList.add('hidden');
+
+    CURRENT_COACH_ID = resp.coachId;
+    CURRENT_COACH_NAME = resp.coachName;
+    CURRENT_COACH_ROLE = resp.role;
+        // Persist session
+    localStorage.setItem("coachSession", JSON.stringify({
+      id: CURRENT_COACH_ID,
+      name: CURRENT_COACH_NAME,
+      role: CURRENT_COACH_ROLE
+    }));
+
+    coachNameDisplay.textContent = CURRENT_COACH_NAME;
+    callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+
+    switchSection(dashboardSection);
+
+    hideGlobalLoader(); // 👈 chiudiamo subito, l’utente entra in dashboard
+
+    // caricamenti secondari (non bloccano l’UI)
+    await fetchMonthlyEarnings();
+    await loadStudentIds();
+  } catch (err) {
+    showToast("Errore login Google: " + (err.message || err), 5000, "bg-red-600");
+  } finally {
+    hideGlobalLoader(); // 👈 safety net in caso di errori
+  }
+}
+
 // API proxy
 const base_url = "https://vercel-python-proxy.vercel.app/api";
 const deployment_id = "AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD";
