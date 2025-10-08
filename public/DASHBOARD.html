@@ -6,108 +6,223 @@
   <title>Call Logging Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
   
-  <style>
-    
-    html, body {
-      height: 100%;
-      overflow: hidden;     /* blocca lo scroll interno */
-    }
+<style>
 
-     body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f3f4f6; }
-    .container { max-width: 900px; }
-    .form-input { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:1rem; background:#fff; transition:all .2s; }
-    .form-input:focus { outline:none; border-color:#3b82f6; box-shadow:0 0 0 2px rgba(59,130,246,.2); }
-    .form-label { font-weight:500; color:#4b5563; }
-    .cube-button { display:flex; flex-direction:column; justify-content:center; align-items:center; padding:24px; border-radius:12px; text-align:center; box-shadow:0 4px 6px rgba(0,0,0,.1); transition:all .3s; cursor:pointer; }
-    .cube-button:hover { transform:translateY(-4px); box-shadow:0 6px 10px rgba(0,0,0,.15); }
-        :root{
-      --yellow-start:#ffe87a; --yellow-end:#ffb300;
-      --blue-start:#66ccff;   --blue-end:#0056d6;
-      --green-start:#6df5a3;  --green-end:#009e3b;
-      --pink-start:#ff9ec4;   --pink-end:#e0006b;
-      --orange-start:#ffb266; --orange-end:#ff5a00;
-      --purple-start:#c68eff; --purple-end:#7a1faf;
-      --red-start:#ff8080;    --red-end:#d10000;
-      --teal-start:#82f3f0;   --teal-end:#008b8f;
-      --gray-start:#9aa0a6;   --gray-end:#5f6368;
-    }
-    
-    /* Base componenti riusabili */
-    .btn-gradient{color:#fff!important; padding:8px 18px; border-radius:10px;
-      font-weight:600; box-shadow:0 3px 8px rgba(0,0,0,.15);
-      transition:transform .2s, box-shadow .2s}
-    .btn-gradient:hover{transform:translateY(-2px); box-shadow:0 5px 12px rgba(0,0,0,.25)}
-    
-    .card-ui{background:#fff; border-radius:16px; box-shadow:0 6px 18px rgba(0,0,0,.12)}
-    
-    /* Varianti gradient da applicare ovunque */
-    .g-yellow{ background:linear-gradient(90deg,var(--yellow-start),var(--yellow-end)) }
-    .g-blue  { background:linear-gradient(90deg,var(--blue-start),var(--blue-end)) }
-    .g-green { background:linear-gradient(90deg,var(--green-start),var(--green-end)) }
-    .g-pink  { background:linear-gradient(90deg,var(--pink-start),var(--pink-end)) }
-    .g-orange{ background:linear-gradient(90deg,var(--orange-start),var(--orange-end)) }
-    .g-purple{ background:linear-gradient(90deg,var(--purple-start),var(--purple-end)) }
-    .g-red   { background:linear-gradient(90deg,var(--red-start),var(--red-end)) }
-    .g-teal  { background:linear-gradient(90deg,var(--teal-start),var(--teal-end)) }
-    .g-gray  { background:linear-gradient(90deg,var(--gray-start),var(--gray-end)) }
-    
-    /* Bottoni “cube” esistenti → testo bianco di default */
-    .cube-button{ color:#fff; }
+/* ===========================
+   🌈 PALETTE E VARIABILI
+=========================== */
+:root {
+  --yellow-start:#ffe87a; --yellow-end:#ffb300;
+  --blue-start:#66ccff;   --blue-end:#0056d6;
+  --green-start:#6df5a3;  --green-end:#009e3b;
+  --pink-start:#ff9ec4;   --pink-end:#e0006b;
+  --orange-start:#ffb266; --orange-end:#ff5a00;
+  --purple-start:#c68eff; --purple-end:#7a1faf;
+  --red-start:#ff8080;    --red-end:#d10000;
+  --teal-start:#82f3f0;   --teal-end:#008b8f;
+  --gray-start:#9aa0a6;   --gray-end:#5f6368;
+}
 
-    .spinner-container { display:flex; justify-content:center; align-items:center; gap:8px; }
-    .spinner-dot { width:12px; height:12px; background:#fff; border-radius:50%; animation:bounce 1s ease-in-out infinite; }
-    .spinner-dot:nth-child(2){ animation-delay:.1s; }
-    .spinner-dot:nth-child(3){ animation-delay:.2s; }
-    @keyframes bounce { 0%,100%{ transform:translateY(0);} 50%{ transform:translateY(-10px);} }
-            /* Fullscreen overlay loader */
-        #globalLoader {
-          position: fixed;
-          inset: 0; /* top, right, bottom, left: 0 */
-          background: rgba(255,255,255,0.7); /* bianco semi-trasparente */
-          display: none; /* nascosto di default */
-          justify-content: center;
-          align-items: center;
-          z-index: 9999; /* sopra tutto */
-        }
-        
-        .loader-circle {
-          border: 6px solid #e5e7eb; /* grigino */
-          border-top: 6px solid #3b82f6; /* blu */
-          border-radius: 50%;
-          width: 60px;
-          height: 60px;
-          animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
+/* ===========================
+   ⚙️ STRUTTURA BASE
+=========================== */
+html, body {
+  overflow-x: hidden;
+  overflow-y: auto;
+  height: 100%;
+}
 
-        /* Flashcards flip effect */
-        .perspective { perspective: 1000px; }
-        .transform-style-preserve-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; }
-        .rotate-y-180 { transform: rotateY(180deg); }
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #ffffff;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
 
-              /* === FIX doppia scrollbar === */
-      html, body {
-        overflow-x: hidden;       /* mai scrollbar orizzontale */
-        overflow-y: auto;         /* solo una verticale quando serve */
-      }
-      
-      .container {
-        overflow: visible !important;  /* evita scroll interno al container */
-      }
-      
-      body {
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        align-items: center;
-      }
+.container {
+  max-width: 900px;
+  overflow: visible !important;
+}
 
-  </style>
+/* ===========================
+   🧩 ELEMENTI BASE FORM
+=========================== */
+.form-input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 1rem;
+  background: #fff;
+  transition: all .2s;
+}
+.form-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 2px rgba(59,130,246,.2);
+}
+.form-label {
+  font-weight: 500;
+  color: #4b5563;
+}
+
+/* ===========================
+   🧱 CARD E PULSANTI
+=========================== */
+.card-ui {
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 18px rgba(0,0,0,.12);
+  transition: transform 0.3s ease;
+}
+.card-ui:hover { transform: translateY(-3px); }
+
+.cube-button, .btn-gradient, button, a.btn-gradient {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-weight: 600;
+  border-radius: 10px;
+  color: #fff !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+.cube-button:hover,
+.btn-gradient:hover,
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 12px rgba(0,0,0,0.25);
+}
+
+.btn-gradient {
+  padding: 8px 18px;
+  font-size: 0.85rem;
+}
+
+/* ===========================
+   🌈 GRADIENT VARIANTS
+=========================== */
+.g-yellow{ background:linear-gradient(90deg,var(--yellow-start),var(--yellow-end)); }
+.g-blue  { background:linear-gradient(90deg,var(--blue-start),var(--blue-end)); }
+.g-green { background:linear-gradient(90deg,var(--green-start),var(--green-end)); }
+.g-pink  { background:linear-gradient(90deg,var(--pink-start),var(--pink-end)); }
+.g-orange{ background:linear-gradient(90deg,var(--orange-start),var(--orange-end)); }
+.g-purple{ background:linear-gradient(90deg,var(--purple-start),var(--purple-end)); }
+.g-red   { background:linear-gradient(90deg,var(--red-start),var(--red-end)); }
+.g-teal  { background:linear-gradient(90deg,var(--teal-start),var(--teal-end)); }
+.g-gray  { background:linear-gradient(90deg,var(--gray-start),var(--gray-end)); }
+
+/* ===========================
+   🔄 SPINNER & LOADER
+=========================== */
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+.spinner-dot {
+  width: 12px;
+  height: 12px;
+  background: #fff;
+  border-radius: 50%;
+  animation: bounce 1s ease-in-out infinite;
+}
+.spinner-dot:nth-child(2){ animation-delay:.1s; }
+.spinner-dot:nth-child(3){ animation-delay:.2s; }
+@keyframes bounce {
+  0%,100% { transform:translateY(0); }
+  50% { transform:translateY(-10px); }
+}
+
+/* Overlay loader fullscreen */
+#globalLoader {
+  position: fixed;
+  inset: 0;
+  background: rgba(255,255,255,0.7);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.loader-circle {
+  border: 6px solid #e5e7eb;
+  border-top: 6px solid #3b82f6;
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* ===========================
+   🧠 FLASHCARDS EFFECT
+=========================== */
+.perspective { perspective: 1000px; }
+.transform-style-preserve-3d { transform-style: preserve-3d; }
+.backface-hidden { backface-visibility: hidden; }
+.rotate-y-180 { transform: rotateY(180deg); }
+
+/* ===========================
+   🧮 METRIC & LABEL STYLES
+=========================== */
+.metric {
+  color: white;
+  font-weight: 700;
+  font-size: 1.4rem;
+}
+.label {
+  font-size: 0.75rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: white;
+}
+
+/* ===========================
+   ✅ TABLES & UTILITIES
+=========================== */
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+th, td {
+  border: 1px solid #e5e7eb;
+}
+th {
+  background-color: #f9fafb;
+  font-weight: 600;
+}
+
+/* ===========================
+   🧭 HEADER FIX
+=========================== */
+header {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%;
+  z-index: 50;
+  background: #fff;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+nav ul a {
+  transition: color 0.3s;
+}
+nav ul a:hover {
+  color: #0056d6;
+}
+
+</style>
+
+
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start p-4">
   
