@@ -370,15 +370,17 @@ async function handleGoogleLogin(response) {
     CURRENT_COACH_ID = resp.coachId;
     CURRENT_COACH_NAME = resp.coachName;
     CURRENT_COACH_ROLE = resp.role;
+    const coachNameDisplayEl = document.getElementById('coachNameDisplay');
+    const callSectionCoachNameDisplayEl = document.getElementById('callSectionCoachNameDisplay');
+    if (coachNameDisplayEl) coachNameDisplayEl.textContent = CURRENT_COACH_NAME;
+    if (callSectionCoachNameDisplayEl) callSectionCoachNameDisplayEl.textContent = CURRENT_COACH_NAME;
+
         // Persist session
     localStorage.setItem("coachSession", JSON.stringify({
       id: CURRENT_COACH_ID,
       name: CURRENT_COACH_NAME,
       role: CURRENT_COACH_ROLE
     }));
-
-    coachNameDisplay.textContent = CURRENT_COACH_NAME;
-    callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
 
     switchSection(dashboardSection);
 
