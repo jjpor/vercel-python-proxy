@@ -26,11 +26,11 @@ const logCallBtn = document.getElementById('logCallBtn');
 const viewStudentsBtn = document.getElementById('viewStudentsBtn');
 const viewFolderBtn = document.getElementById('viewFolderBtn');
 const viewCallLogBtn = document.getElementById('viewCallLogBtn');
-const viewReportCardsBtn = document.getElementById('viewReportCardsBtn'); // <-- Elemento importante
+const viewReportCardsBtn = document.getElementById('viewReportCardsBtn'); 
 
 const viewCoachingDebriefBtn = document.getElementById('viewCoachingDebriefBtn');
 const coachingDebriefSection = document.getElementById('coachingDebriefSection');
-const backToDashboardFromDebriefBtn = document.getElementById('backToDashboardFromDebriefBtn'); // <-- Elemento aggiunto
+const backToDashboardFromDebriefBtn = document.getElementById('backToDashboardFromDebriefBtn'); 
 
   // Coaching Debrief DOM
 const debriefStudentSelect   = document.getElementById('debriefStudentSelect');
@@ -48,10 +48,13 @@ const debriefMsg             = document.getElementById('debriefMsg');
 
 const logoutBtn = document.getElementById('logoutBtn');
 
+// Log Call DOM Refs
+const backToDashboardFromCallBtn = document.getElementById('backToDashboardFromCallBtn'); // Nuovo ref
 const studentIdSelect = document.getElementById('studentId');
 const productIdSelect = document.getElementById('productIdSelect');
 const groupStudentsContainer = document.getElementById('groupStudentsContainer'); 
 const groupStudentsDynamic = document.getElementById('groupStudentsDynamic'); 
+const indStudentsContainer = document.getElementById('indStudentsContainer'); // Nuovo ref per IND
 
 const callDateInput = document.getElementById('callDate');
 const hourlyRateInput = document.getElementById('hourlyRate');
@@ -77,7 +80,7 @@ const backToDashboardFromFlashcardsBtn = document.getElementById('backToDashboar
 const flashcardsContainer = document.getElementById('flashcardsContainer');
 
 // Riferimenti per la correzione Flashcards
-const flashcardSetupContainer = document.getElementById('flashcardSetupContainer'); // Assumo un contenitore statico esterno
+const flashcardSetupContainer = document.getElementById('flashcardSetupContainer');
 let flashcardStudentSelect = document.getElementById('flashcardStudentSelect');
 let flashcardDeckOptions = document.getElementById('flashcardDeckOptions');
 
@@ -158,6 +161,22 @@ async function apiPost(action, body = {}) {
   });
   if (!res.ok) throw new Error(`POST ${action} failed: ${res.status}`);
   return res.json();
+}
+
+// Calcola le unità di pagamento in base alla durata
+function calculateUnits() {
+    const duration = parseFloat(callDurationSelect.value);
+    
+    // Non è necessario verificare hourlyRate qui, perché unitsInput è calcolato
+    // solo in base alla durata. La tariffa oraria è un dato di input separato.
+    if (isNaN(duration) || duration <= 0) {
+        unitsInput.value = '';
+        return;
+    }
+
+    // Units sono la Durata in minuti / 60
+    const units = duration / 60;
+    unitsInput.value = units.toFixed(3); 
 }
 
 
@@ -581,20 +600,16 @@ function renderGroupStudentSelectors(students, numSelectors) {
 
     let isValid = false;
     if (isInd) {
+        // IND: deve avere studente, prodotto, durata e tariffa
         isValid = selectedStudent && selectedProduct && selectedDuration && !isNaN(hourlyRate) && hourlyRate > 0;
     } else if (isGroup) {
         const selects = document.querySelectorAll('#groupStudentsDynamic .student-selector');
         const chosen = Array.from(selects).map(s => s.value).filter(Boolean);
         const unique = new Set(chosen);
 
-        // La validazione di gruppo richiede: 
-        // 1. Un prodotto selezionato.
-        // 2. Tutti i select dinamici compilati (`chosen.length === selects.length`).
-        // 3. Nessun duplicato (`unique.size === chosen.length`).
-        // 4. Una durata selezionata.
-        // 5. Una tariffa oraria valida.
+        // GROUP: prodotto, tutti i select dinamici compilati, nessun duplicato, durata e tariffa
         isValid = selectedProduct
-          && selects.length > 0 // Assicurati che i select siano stati renderizzati
+          && selects.length > 0
           && chosen.length === selects.length       
           && unique.size === chosen.length          
           && selectedDuration
@@ -961,7 +976,7 @@ viewReportCardsBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   showGlobalLoader(); 
   try {
-    const resp = await apiGet('getReportCardsUrl', { coachId: CURRENT_COACH_ID }); // <-- Nuova API
+    const resp = await apiGet('getReportCardsUrl', { coachId: CURRENT_COACH_ID });
     if (resp.success && resp.url) {
       window.open(resp.url, "_blank");
     } else {
@@ -1153,8 +1168,10 @@ logoutBtn.addEventListener('click', () => {
     technicalDurationInput.value = '';
     contractIdInput.value = '';
     productIdInput.value = '';
+    unitsInput.value = ''; // Reset units
     remainingCallsDisplay.classList.add('hidden');
     updateFormState();
+    calculateUnits(); // Ricalcola
 
     showGlobalLoader(); 
 
@@ -1204,9 +1221,11 @@ logoutBtn.addEventListener('click', () => {
       technicalDurationInput.value = '';
       contractIdInput.value = '';
       productIdInput.value = '';
+      unitsInput.value = ''; // Reset units
       remainingCallsDisplay.classList.add('hidden');
     }
     updateFormState();
+    calculateUnits();
   });
 
 // --- GROUP: load products & students ---
@@ -1228,8 +1247,9 @@ async function loadGroupProducts() {
 
     prods.forEach(p => {
       const opt = document.createElement('option');
+      const durationDisplay = p.duration ? ` (${p.duration} min)` : '';
       opt.value = p.productId;
-      opt.textContent = `${p.productName || p.productId} (${p.productId})`;
+      opt.textContent = `${p.productName || p.productId}${durationDisplay}`;
       opt.dataset.product = JSON.stringify(p); // contiene duration + rates
       productIdSelect.appendChild(opt);
     });
@@ -1254,6 +1274,7 @@ productIdSelect.addEventListener('change', async () => {
   const opt = productIdSelect.options[productIdSelect.selectedIndex];
   if (!opt || !opt.dataset.product) {
     callDurationSelect.disabled = true;
+    unitsInput.value = ''; // Reset units
     return;
   }
 
@@ -1263,6 +1284,7 @@ productIdSelect.addEventListener('change', async () => {
   } catch (e) {
     console.error('Error parsing product data', e);
     callDurationSelect.disabled = true;
+    unitsInput.value = ''; // Reset units
     return;
   }
 
@@ -1349,6 +1371,7 @@ productIdSelect.addEventListener('change', async () => {
 
   // Abilita la durata e aggiorna lo stato finale
   callDurationSelect.disabled = false;
+  calculateUnits(); // <-- ADDED: Calcola le units
   updateFormState();
 });
 
@@ -1363,12 +1386,26 @@ callTypeRadios.forEach(radio => {
         productIdSelect.innerHTML = '<option value="" disabled selected>Select a Product</option>';
         productIdSelect.disabled = true;
         
-        // Toggle visibilità
-        document.getElementById('indStudentsContainer').classList.toggle('hidden', !isInd);
-        groupStudentsContainer.classList.toggle('hidden', !isGroup);
+        // Reset rate/duration related fields
+        hourlyRateInput.value = '';
+        technicalDurationInput.value = '';
+        contractIdInput.value = '';
+        unitsInput.value = ''; // Reset units
 
-        // Reset del contenuto dinamico di gruppo
-        if (groupStudentsDynamic) groupStudentsDynamic.innerHTML = '';
+        // Toggle visibilità
+        if (indStudentsContainer) {
+            indStudentsContainer.classList.toggle('hidden', !isInd);
+        }
+        groupStudentsContainer.classList.toggle('hidden', !isGroup); 
+
+        // Gestione pulizia/messaggio per i gruppi
+        if (isGroup) {
+            // Mostra messaggio per selezione prodotto
+            groupStudentsDynamic.innerHTML = '<p class="text-gray-500 text-center py-4">Select a product to load the group members list.</p>';
+        } else {
+            // Pulisce il contenuto dinamico di gruppo se si passa a IND
+            if (groupStudentsDynamic) groupStudentsDynamic.innerHTML = '';
+        }
 
         // Carica i dati appropriati
         if (isInd) {
@@ -1381,9 +1418,16 @@ callTypeRadios.forEach(radio => {
     });
 });
 
-// Aggiungi listener per la durata e il rate
-callDurationSelect.addEventListener('change', updateFormState);
-hourlyRateInput.addEventListener('input', updateFormState); 
+// Aggiungi listener per la durata e il rate (per ricalcolare le units)
+callDurationSelect.addEventListener('change', () => {
+    calculateUnits(); // <-- ADDED
+    updateFormState();
+});
+
+hourlyRateInput.addEventListener('input', () => {
+    calculateUnits(); // <-- ADDED (Anche se il rate non influenza le units, è bene chiamarlo se il campo è modificabile)
+    updateFormState();
+}); 
 
 
 // Log Call Button (Passa alla sezione Log Call)
@@ -1410,8 +1454,16 @@ logCallBtn.addEventListener('click', async () => {
         callDurationSelect.value = callDurationSelect.querySelector('option[disabled]')?.nextElementSibling?.value || '';
     }
 
+    calculateUnits(); // <-- ADDED: Calcolo iniziale delle units
     updateFormState();
 });
+
+// Torna al dashboard dal Log Call
+if (backToDashboardFromCallBtn) {
+    backToDashboardFromCallBtn.addEventListener('click', () => {
+        switchSection(dashboardSection);
+    });
+}
 
 
 // Submit Log Call Form
@@ -1443,6 +1495,9 @@ submitBtn.addEventListener('click', async () => {
         submitBtn.textContent = 'Log Call';
         return;
     }
+    
+    // Assicurati che le units siano calcolate prima di inviare
+    calculateUnits();
 
     const payload = {
         action: 'logCall',
