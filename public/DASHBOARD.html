@@ -8,12 +8,10 @@
   
   <style>
     
-        /* === FIX scroll doppia in Google Sites iframe === */
-    html, body {
-      height: 100%;
-      overflow: hidden;     /* blocca lo scroll interno */
-    }
-
+      html, body {
+      height: auto;
+      overflow: auto;
+      }
      body {font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f3f4f6; }
     .container { max-width: 900px; }
     .form-input { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; font-size:1rem; background:#fff; transition:all .2s; }
@@ -113,7 +111,7 @@
 <body class="bg-gray-100 min-h-screen flex flex-col items-center justify-start p-4">
   
     <!-- Header fisso e responsivo -->
-    <header class="fixed top-0 left-0 w-full z-50 bg-white shadow-md">
+      <header class="w-full bg-white shadow-md">
         <!-- Riduco la padding verticale (da py-3 a py-2) per compensare l'altezza del logo -->
         <nav class="container mx-auto px-4 sm:px-6 py-2 flex items-center justify-between">
             <!-- Logo Smartalk ingrandito ulteriormente e reso cliccabile -->
