@@ -863,8 +863,8 @@ async function handleGoogleLogin(response) {
 <div id="reportCardFormSection" class="hidden app-section">
   <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
     <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">Write Report Card</h2>
-    <button id="backToReportCardsBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
-      Back
+    <button id="backToDashboardFromReportFormBtn" class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
+      Back to Dashboard
     </button>
   </div>
 
@@ -1018,7 +1018,13 @@ const flashcardsSection = document.getElementById('flashcardsSection');
 const backToDashboardFromFlashcardsBtn = document.getElementById('backToDashboardFromFlashcardsBtn');
 const flashcardsContainer = document.getElementById('flashcardsContainer');
 
-
+// 🔁 Universal Back-to-Dashboard handler
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('[id^="backToDashboard"]') 
+             || e.target.closest('#backFromCallHistoryBtn');
+  if (btn) switchSection(dashboardSection);
+});
+  
 // Stato
 let CURRENT_COACH_ID = null;
 let CURRENT_COACH_NAME = null;
@@ -1725,11 +1731,6 @@ document.getElementById('viewStudentsBtn').addEventListener('click', () => {
   switchSection(document.getElementById('studentsSection'));
   loadStudentsDropdown();
 });
-
-// Torna al dashboard
-document.getElementById('backToDashboardFromStudentsBtn').addEventListener('click', () => {
-  switchSection(document.getElementById('dashboardSection'));
-});
   
     
 // Call History
@@ -1751,8 +1752,7 @@ let fullHistory = []; // memorizza tutte le calls
     callHistoryTableBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-500">Error: ${err.message}</td></tr>`;
   }
 });
-backFromCallHistoryBtn.addEventListener('click', () => switchSection(dashboardSection));
-  // cambio mese
+ // cambio mese
 historyMonthYear.addEventListener('change', renderHistoryTable);
 
 function renderHistoryTable() {
@@ -2218,20 +2218,11 @@ document.getElementById('viewReportCardsBtn').addEventListener('click', async ()
   await loadReportCardHistory();
 });
 
-
-document.getElementById('backToDashboardFromReportsBtn').addEventListener('click', () => {
-  switchSection(dashboardSection);
-});
-
 backToReportCardsBtn.addEventListener('click', () => {
   reportCardForm.reset();
   const callsTable = document.getElementById('reportCardCallsTable');
   if (callsTable) callsTable.classList.add('hidden');
   switchSection(reportCardsSection);
-});
-
-document.getElementById('backToDashboardFromDebriefBtn').addEventListener('click', () => {
-  switchSection(dashboardSection);
 });
 
 async function loadReportCardsPending() {
@@ -2840,10 +2831,6 @@ viewFlashcardsBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   switchSection(flashcardsSection);
   await loadFlashcards();
-});
-
-backToDashboardFromFlashcardsBtn.addEventListener('click', () => {
-  switchSection(dashboardSection);
 });
 
 async function loadFlashcards() {
