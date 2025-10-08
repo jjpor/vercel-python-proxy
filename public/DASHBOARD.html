@@ -138,7 +138,7 @@
       </header>
 
 <!-- Offset for fixed header -->
-<div class="h-[56px]"></div>
+<div class="h-[20px]"></div>
 
   <!-- Global loader overlay -->
 <div id="globalLoader">
@@ -2861,6 +2861,12 @@ async function loadFlashcards() {
   }
 }
 
+<script>
+  window.addEventListener("load", () => {
+    const h = document.body.scrollHeight;
+    window.parent.postMessage({ frameHeight: h }, "*");
+  });
+</script>
         
 </script>
 </body>
