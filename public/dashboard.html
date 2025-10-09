@@ -9,17 +9,27 @@
 </head>
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
   
-  <!-- HEADER -->
+<!-- HEADER NAV -->
 <header id="mainHeader" class="w-full bg-white shadow-md fixed top-0 left-0 z-50">
   <div class="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-    <h1 id="sectionTitle" class="text-xl font-semibold text-gray-800">Dashboard</h1>
-    <nav id="breadcrumb" class="text-sm text-gray-500">
-      Home / <span class="text-gray-800 font-medium">Dashboard</span>
+    <!-- LOGO -->
+    <div class="flex items-center gap-2">
+      <img src="https://res.cloudinary.com/dk5bqpodg/image/upload/v1756747292/smartalk_banner_ke1kkq.svg"
+           alt="Smartalk Logo" class="h-8">
+    </div>
+
+    <!-- NAVIGATION -->
+    <nav class="flex flex-wrap gap-4 text-sm font-medium text-gray-700">
+      <button onclick="switchSection(dashboardSection)" class="hover:text-blue-600">Dashboard</button>
+      <button onclick="switchSection(studentsSection)" class="hover:text-blue-600">Students</button>
+      <button onclick="switchSection(coachingDebriefSection)" class="hover:text-blue-600">Debriefs</button>
+      <button onclick="switchSection(reportCardsSection)" class="hover:text-blue-600">Reports</button>
+      <button onclick="switchSection(flashcardsSection)" class="hover:text-blue-600">Flashcards</button>
     </nav>
   </div>
 </header>
 
-<!-- spacer per evitare che il contenuto venga coperto -->
+<!-- spacer per non far coprire il contenuto -->
 <div class="h-16"></div>
 
   <!-- Global loader overlay -->
