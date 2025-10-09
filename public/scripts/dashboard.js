@@ -1,7 +1,4 @@
-document.addEventListener("DOMContentLoaded", () => {
-  console.log("✅ DOM fully loaded, initializing dashboard...");
-
-// Global overlay loader controls
+ // Global overlay loader controls
 function showGlobalLoader() {
   const el = document.getElementById('globalLoader');
   if (el) el.style.display = 'flex';
@@ -13,10 +10,10 @@ function hideGlobalLoader() {
  
   
 async function handleGoogleLogin(response) {
-  try {
-    showGlobalLoader(); // spostato DENTRO il try
+  showGlobalLoader(); // 👈 overlay a schermo intero
 
-    const credential = response.credential;
+  try {
+    const credential = response.credential; 
     const resp = await apiPost("loginWithGoogle", { credential });
 
     if (!resp.success) {
@@ -48,13 +45,12 @@ async function handleGoogleLogin(response) {
     await fetchMonthlyEarnings();
     await loadStudentIds();
   } catch (err) {
-    console.error("Google login error:", err);
-    hideGlobalLoader(); // 👈 chiudi SEMPRE anche in caso di errore esterno
     showToast("Errore login Google: " + (err.message || err), 5000, "bg-red-600");
   } finally {
-    hideGlobalLoader(); // safety net
+    hideGlobalLoader(); // 👈 safety net in caso di errori
   }
 }
+
 // API proxy
 const base_url = "https://vercel-python-proxy.vercel.app/api";
 const deployment_id = "AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD";
@@ -2200,52 +2196,3 @@ async function loadFlashcards() {
     container.innerHTML = `<p class="text-red-500 text-center">Error loading students: ${err.message}</p>`;
   }
 }
-  // --- SESSION HANDLER --- //
-async function checkAndLoadSession() {
-  const sessionString = localStorage.getItem("coachSession");
-
-  if (sessionString) {
-    try {
-      const session = JSON.parse(sessionString);
-      if (session && session.id) {
-        console.log("Sessione trovata. Caricamento dashboard...");
-
-        // Imposta le variabili globali
-        CURRENT_COACH_ID = session.id;
-        CURRENT_COACH_NAME = session.name;
-        CURRENT_COACH_ROLE = session.role;
-
-        // Aggiorna l'interfaccia
-        const coachNameDisplay = document.getElementById('coachNameDisplay');
-        const callSectionCoachNameDisplay = document.getElementById('callSectionCoachNameDisplay');
-        if (coachNameDisplay) coachNameDisplay.textContent = CURRENT_COACH_NAME;
-        if (callSectionCoachNameDisplay) callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
-
-        document.getElementById('googleLoginContainer')?.classList.add('hidden');
-
-        // Mostra la dashboard
-        switchSection(dashboardSection);
-
-        // Avvia caricamenti paralleli (con catch per sicurezza)
-        fetchMonthlyEarnings?.().catch(e => console.error("Errore nel caricamento guadagni:", e));
-        loadStudentIds?.().catch(e => console.error("Errore nel caricamento studenti:", e));
-
-        return true;
-      }
-    } catch (e) {
-      console.error("Errore nel parsing della sessione salvata:", e);
-      localStorage.removeItem("coachSession");
-    }
-  }
-
-  console.log("Nessuna sessione trovata. Mostro il login.");
-  switchSection(loginSection);
-  return false;
-}
-
-// ✅ Chiama la funzione al caricamento
-checkAndLoadSession();
-
-  hideGlobalLoader(); // chiude eventuale spinner iniziale
-  console.log("✅ Dashboard initialized");
-});
