@@ -142,3 +142,30 @@ body {
   backdrop-filter: blur(4px);
   background: rgba(226, 232, 240, 0.6);
 }
+
+/* ===========================
+   📱 RESPONSIVE FIX — CALENDAR
+=========================== */
+@media (max-width: 640px) {
+  /* calendar prende più spazio visivo sul mobile */
+  .cube-button#calendarPlaceholder,
+  .cube-button.bg-slate-200 {
+    min-height: 300px;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1023px) {
+  /* su tablet: più arioso ma non gigante */
+  .cube-button#calendarPlaceholder,
+  .cube-button.bg-slate-200 {
+    min-height: 250px;
+  }
+}
+
+@media (min-width: 1024px) {
+  /* su desktop: altezza grande e bilanciata */
+  .cube-button#calendarPlaceholder,
+  .cube-button.bg-slate-200 {
+    min-height: 280px;
+  }
+}
