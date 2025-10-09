@@ -248,129 +248,144 @@
 
 <!-- COACHING DEBRIEF -->
 <div id="coachingDebriefSection" class="hidden app-section">
-  <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <h2 class="text-2xl font-semibold">Coaching Debrief</h2>
-    <button id="backToDashboardFromDebriefBtn"
-      class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
-      Back to Dashboard
-    </button>
-  </div>
-
-  <!-- Meta Info: Student + Date -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-    <div>
-      <label for="debriefStudentSelect" class="block text-sm font-medium mb-1">Student</label>
-      <select id="debriefStudentSelect" class="w-full border rounded-lg px-3 py-2">
-        <!-- populated via JS -->
-      </select>
+  <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
+    <!-- HEADER -->
+    <div class="flex items-center justify-between border-b pb-4 mb-6">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">💬</span>
+        <h2 class="text-2xl font-semibold text-gray-800">Coaching Debrief</h2>
+      </div>
+      <button id="backToDashboardFromDebriefBtn"
+        class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
+        Back to Dashboard
+      </button>
     </div>
-    <div>
-      <label for="debriefDateInput" class="block text-sm font-medium mb-1">Date</label>
-      <input id="debriefDateInput" type="date" class="w-full border rounded-lg px-3 py-2" />
-    </div>
-  </div>
 
-  <!-- Session Board Placeholder (future step) -->
-  <div id="sessionBoardContainer" class="mb-8 hidden">
-    <!-- will show last topics/homework summary -->
-  </div>
-
-  <!-- Debrief Fields -->
-  <div id="debriefFieldsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="space-y-4">
+    <!-- META INFO -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div>
-        <label class="block font-semibold mb-1">
-          Goals
-          <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-                  onclick="handleAIPreview('goals')">⚡ AI Preview</button>
-        </label>
-        <textarea id="debrief_goals" rows="3"
-                  class="w-full border border-gray-300 rounded p-2 text-sm"></textarea>
-        <div id="aiPreview_goals" class="mt-2 hidden"></div>
+        <label for="debriefStudentSelect" class="block text-sm font-medium mb-1">Student</label>
+        <select id="debriefStudentSelect" class="w-full border rounded-lg px-3 py-2">
+          <!-- populated via JS -->
+        </select>
       </div>
-
       <div>
-        <label class="block font-semibold mb-1">
-          Topics
-          <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-                  onclick="handleAIPreview('topics')">⚡ AI Preview</button>
-        </label>
-        <textarea id="debrief_topics" rows="3"
-                  class="w-full border border-gray-300 rounded p-2 text-sm"></textarea>
-        <div id="aiPreview_topics" class="mt-2 hidden"></div>
-      </div>
-
-      <div>
-        <label class="block font-semibold mb-1">
-          Grammar
-          <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-                  onclick="handleAIPreview('grammar')">⚡ AI Preview</button>
-        </label>
-        <textarea id="debrief_grammar" rows="3"
-                  class="w-full border border-gray-300 rounded p-2 text-sm"></textarea>
-        <div id="aiPreview_grammar" class="mt-2 hidden"></div>
-      </div>
-
-      <div>
-        <label class="block font-semibold mb-1">
-          Vocabulary
-          <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-                  onclick="handleAIPreview('vocabulary')">⚡ AI Preview</button>
-        </label>
-        <textarea id="debrief_vocabulary" rows="3"
-                  class="w-full border border-gray-300 rounded p-2 text-sm"></textarea>
-        <div id="aiPreview_vocabulary" class="mt-2 hidden"></div>
+        <label for="debriefDateInput" class="block text-sm font-medium mb-1">Date</label>
+        <input id="debriefDateInput" type="date" class="w-full border rounded-lg px-3 py-2" />
       </div>
     </div>
 
-    <div class="space-y-4">
-      <div>
-        <label class="block font-semibold mb-1">
-          Pronunciation
-          <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-                  onclick="handleAIPreview('pronunciation')">⚡ AI Preview</button>
-        </label>
-        <textarea id="debrief_pronunciation" rows="3"
-                  class="w-full border border-gray-300 rounded p-2 text-sm"></textarea>
-        <div id="aiPreview_pronunciation" class="mt-2 hidden"></div>
+    <!-- LAYOUT A DUE COLONNE -->
+    <div class="flex flex-col lg:flex-row gap-6">
+      <!-- LEFT COLUMN (Main Debrief Fields) -->
+      <div class="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-4">
+            <div>
+              <label class="block font-semibold mb-1 text-gray-700">
+                Goals
+                <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
+                        onclick="handleAIPreview('goals')">⚡ AI Preview</button>
+              </label>
+              <textarea id="debrief_goals" rows="3"
+                        class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block font-semibold mb-1 text-gray-700">
+                Topics
+                <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
+                        onclick="handleAIPreview('topics')">⚡ AI Preview</button>
+              </label>
+              <textarea id="debrief_topics" rows="3"
+                        class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block font-semibold mb-1 text-gray-700">
+                Grammar
+                <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
+                        onclick="handleAIPreview('grammar')">⚡ AI Preview</button>
+              </label>
+              <textarea id="debrief_grammar" rows="3"
+                        class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+          </div>
+
+          <div class="space-y-4">
+            <div>
+              <label class="block font-semibold mb-1 text-gray-700">
+                Vocabulary
+                <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
+                        onclick="handleAIPreview('vocabulary')">⚡ AI Preview</button>
+              </label>
+              <textarea id="debrief_vocabulary" rows="3"
+                        class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block font-semibold mb-1 text-gray-700">
+                Pronunciation
+                <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
+                        onclick="handleAIPreview('pronunciation')">⚡ AI Preview</button>
+              </label>
+              <textarea id="debrief_pronunciation" rows="3"
+                        class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+
+            <div>
+              <label class="block font-semibold mb-1 text-gray-700">
+                Homework
+                <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
+                        onclick="handleAIPreview('homework')">⚡ AI Preview</button>
+              </label>
+              <textarea id="debrief_homework" rows="3"
+                        class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <div>
-        <label class="block font-semibold mb-1">
-          Homework
-          <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-                  onclick="handleAIPreview('homework')">⚡ AI Preview</button>
-        </label>
-        <textarea id="debrief_homework" rows="3"
-                  class="w-full border border-gray-300 rounded p-2 text-sm"></textarea>
-        <div id="aiPreview_homework" class="mt-2 hidden"></div>
-      </div>
+      <!-- RIGHT COLUMN (Sidebar) -->
+      <aside class="w-full lg:w-72 bg-white border border-gray-200 rounded-xl shadow-sm p-5 space-y-6">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">🧭 Session Summary</h3>
+          <ul class="text-sm text-gray-600 space-y-1">
+            <li><strong>Student:</strong> <span id="summaryStudent">—</span></li>
+            <li><strong>Date:</strong> <span id="summaryDate">—</span></li>
+            <li><strong>Status:</strong> <span id="summaryStatus">Draft</span></li>
+          </ul>
+        </div>
 
-      <div>
-        <label class="block font-semibold mb-1">
-          Other
-          <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-                  onclick="handleAIPreview('other')">⚡ AI Preview</button>
-        </label>
-        <textarea id="debrief_other" rows="3"
-                  class="w-full border border-gray-300 rounded p-2 text-sm"></textarea>
-        <div id="aiPreview_other" class="mt-2 hidden"></div>
-      </div>
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800 mb-2">🕓 Recent Drafts</h3>
+          <ul id="recentDrafts" class="text-sm text-gray-600 space-y-2">
+            <li class="border-b pb-1">• <span>Alessia M. – Oct 4</span></li>
+            <li class="border-b pb-1">• <span>Francesco F. – Oct 3</span></li>
+            <li>• <span>Fabrizio F. – Oct 1</span></li>
+          </ul>
+        </div>
+
+        <div class="pt-2 border-t">
+          <button class="w-full bg-indigo-600 text-white text-sm font-semibold py-2 px-3 rounded-lg hover:bg-indigo-700">
+            🃏 Generate Flashcards
+          </button>
+        </div>
+      </aside>
     </div>
-  </div>
 
-  <!-- Actions -->
-  <div class="flex items-center gap-3 mt-8">
-    <button id="debriefSaveDraftBtn"
-      class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:opacity-90">
-      💾 Save Draft
-    </button>
-    <button id="debriefSendBtn"
-      class="px-4 py-2 rounded-lg bg-green-600 text-white hover:opacity-90">
-      📤 Send Debrief
-    </button>
-    <span id="debriefMsg" class="ml-2 text-sm text-gray-500"></span>
+    <!-- ACTIONS -->
+    <div class="flex items-center gap-3 mt-8">
+      <button id="debriefSaveDraftBtn"
+        class="px-4 py-2 rounded-lg bg-gray-800 text-white hover:bg-gray-900 shadow-md">
+        💾 Save Draft
+      </button>
+      <button id="debriefSendBtn"
+        class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 shadow-md">
+        📤 Send Debrief
+      </button>
+      <span id="debriefMsg" class="ml-2 text-sm text-gray-500"></span>
+    </div>
   </div>
 </div>
 
