@@ -175,17 +175,14 @@
     Back to Dashboard
   </button>
 </div>
-
     <div class="flex gap-6 items-center mt-4">
       <label class="flex items-center gap-2"><input type="radio" name="callType" value="IND" checked> IND</label>
       <label class="flex items-center gap-2"><input type="radio" name="callType" value="GROUP"> GROUP</label>
     </div>
-
     <form id="callForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
       <input type="hidden" id="units">
       <input type="hidden" id="contractId">
       <input type="hidden" id="productId">
-
       <!-- Student (IND only) -->
       <div id="studentIdContainer">
         <label for="studentId" class="form-label block mb-2">Student ID</label>
@@ -193,7 +190,6 @@
           <option value="" disabled selected>Loading Student IDs...</option>
         </select>
       </div>
-
           <!-- Product -->
     <div class="md:col-span-1">
       <label for="productIdSelect" class="form-label block mb-2">Product</label>
@@ -202,13 +198,11 @@
       </select>
       <div id="remainingCalls" class="mt-2 p-2 rounded-lg text-sm bg-gray-200 text-gray-700 hidden"></div>
     </div>
-    
-    <!-- Group students -->
+        <!-- Group students -->
     <div id="groupStudentsContainer" class="hidden md:col-span-1">
       <label class="form-label block mb-2">Select Students</label>
       <div id="groupStudentsDynamic" class="space-y-2"></div>
     </div>
-
       <!-- Date -->
       <div>
         <label for="callDate" class="form-label block mb-2">Date</label>
@@ -235,7 +229,6 @@
           <option value="120">120</option>
         </select>
       </div>
-
             <!-- Attendance -->
       <div>
         <label for="attendance" class="form-label block mb-2">Attendance</label>
@@ -244,14 +237,11 @@
           <option value="NO">NO</option>
         </select>
       </div>
-      
             <!-- Notes -->
       <div class="md:col-span-2">
         <label for="notes" class="form-label block mb-2">Notes</label>
         <textarea id="notes" class="form-input" rows="3" placeholder="Write any notes here..."></textarea>
       </div>
-
-
       <div class="md:col-span-2 mt-4">
         <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed">Log Call</button>
         <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white py-3 px-6 rounded-xl hover:bg-gray-500">Back to Dashboard</button>
@@ -260,7 +250,7 @@
     <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
   </div>
 
-<!-- Students Section -->
+<!-- STUDENTS -->
 <div id="studentsSection" class="hidden app-section">
 <div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-3">
   <div class="flex items-center gap-3">
@@ -272,7 +262,6 @@
     Back to Dashboard
   </button>
 </div>
-
   <div class="space-y-4">
     <div>
       <label for="studentSelect" class="form-label block mb-2">Select a Student</label>
@@ -285,10 +274,9 @@
     </div>
   </div>
 </div>
-
+  
 <!-- COACHING DEBRIEF -->
 <div id="coachingDebriefSection" class="hidden app-section">
-
   <!-- HEADER -->
 <div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-3">
   <div class="flex items-center gap-3">
@@ -300,7 +288,6 @@
     ← Back to Dashboard
   </button>
 </div>
-
 <!-- META INFO -->
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
   <div>
@@ -314,7 +301,6 @@
     <input id="debriefDateInput" type="date" class="form-input" />
   </div>
 </div>
-
 <!-- MAIN FIELDS -->
 <div id="debriefFieldsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
   <div class="space-y-6">
@@ -355,7 +341,6 @@
       <div id="aiPreview_vocabulary" class="mt-2 hidden"></div>
     </div>
   </div>
-
   <div class="space-y-6">
     <div>
       <label class="block font-semibold mb-1 text-gray-800">
@@ -386,7 +371,6 @@
     </div>
   </div>
 </div>
-
 <!-- ACTION BUTTONS -->
 <div class="flex items-center justify-between flex-wrap gap-3 mb-8">
   <button id="debriefLoadDraftsBtn"
@@ -404,7 +388,6 @@
     </button>
   </div>
 </div>
-
 <!-- TABLE OF DRAFTS -->
 <div id="debriefDraftsContainer" class="hidden">
   <h3 class="text-xl font-semibold text-gray-800 mb-3">Saved Drafts</h3>
@@ -428,31 +411,32 @@
     </table>
   </div>
 </div>
-
 <span id="debriefMsg" class="block mt-4 text-sm text-gray-500"></span>
-
-
 </div>
-
   
-  <!-- CALL HISTORY -->
+<!-- CALL HISTORY -->
 <div id="callHistorySection" class="hidden app-section">
-  <div class="text-center mb-6">
-    <h1 class="text-3xl font-bold text-gray-800">Call History</h1>
-    <p class="mt-2 text-gray-500">Your logged calls</p>
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-3">
+    <div class="flex items-center gap-3">
+      <span class="text-3xl">📞</span>
+      <h2 class="text-2xl font-semibold text-gray-800">Call History</h2>
+    </div>
+    <button id="backFromCallHistoryBtn"
+      class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500 transition">
+      Back to Dashboard
+    </button>
   </div>
-<div class="flex items-center justify-between mb-4 gap-4">
-  <div class="flex items-center">
-    <label for="historyMonthYear" class="mr-2 font-medium">Filter by month:</label>
-    <input type="month" id="historyMonthYear" class="form-input w-auto inline-block">
+  <!-- SUBTEXT -->
+  <p class="text-gray-500 mb-6">Your logged calls</p>
+  <!-- FILTER -->
+  <div class="flex items-center justify-between mb-6 gap-4">
+    <div class="flex items-center">
+      <label for="historyMonthYear" class="mr-2 font-medium">Filter by month:</label>
+      <input type="month" id="historyMonthYear" class="form-input w-auto inline-block">
+    </div>
   </div>
-
-  <button id="backFromCallHistoryBtn"
-    class="bg-gray-400 text-white py-2 px-6 rounded-lg hover:bg-gray-500">
-    Back to Dashboard
-  </button>
-</div>
-
+  <!-- TABLE -->
   <div class="overflow-x-auto">
     <table class="min-w-full border border-gray-200 rounded-xl">
       <thead class="bg-gray-100">
