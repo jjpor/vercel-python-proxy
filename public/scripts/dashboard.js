@@ -1,4 +1,5 @@
- // Global overlay loader controls
+document.addEventListener("DOMContentLoaded", () => {
+// Global overlay loader controls
 function showGlobalLoader() {
   const el = document.getElementById('globalLoader');
   if (el) el.style.display = 'flex';
@@ -2197,3 +2198,4 @@ async function loadFlashcards() {
     container.innerHTML = `<p class="text-red-500 text-center">Error loading students: ${err.message}</p>`;
   }
 }
+}); // chiusura evento DOMContentLoaded
