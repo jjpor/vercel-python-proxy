@@ -1,4 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("✅ DOM fully loaded, initializing dashboard...");
+
 // Global overlay loader controls
 function showGlobalLoader() {
   const el = document.getElementById('globalLoader');
@@ -2198,4 +2200,6 @@ async function loadFlashcards() {
     container.innerHTML = `<p class="text-red-500 text-center">Error loading students: ${err.message}</p>`;
   }
 }
-}); // chiusura evento DOMContentLoaded
+  hideGlobalLoader(); // chiude eventuale spinner iniziale
+  console.log("✅ Dashboard initialized");
+});
