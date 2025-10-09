@@ -163,11 +163,20 @@
 
   <!-- CALL FORM -->
   <div id="callSection" class="hidden app-section">
-    <div class="text-center">
-      <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Log a new call</h1>
-      <p class="mt-2 text-gray-500">Logged in as <span id="callSectionCoachNameDisplay" class="font-bold text-blue-600"></span>.</p>
-    </div>
+<div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-3">
+  <div class="flex items-center gap-3">
+    <span class="text-3xl">📝</span>
+    <h2 class="text-2xl font-semibold text-gray-800">Log a New Call</h2>
+  </div>
+  <button id="backToDashboardBtn"
+    class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500 transition">
+    Back to Dashboard
+  </button>
+</div>
 
+<p class="text-gray-500 mb-4">
+  Logged in as <span id="callSectionCoachNameDisplay" class="font-bold text-blue-600"></span>.
+</p>
     <div class="flex gap-6 items-center mt-4">
       <label class="flex items-center gap-2"><input type="radio" name="callType" value="IND" checked> IND</label>
       <label class="flex items-center gap-2"><input type="radio" name="callType" value="GROUP"> GROUP</label>
