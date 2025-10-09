@@ -138,17 +138,14 @@
       <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Log a new call</h1>
       <p class="mt-2 text-gray-500">Logged in as <span id="callSectionCoachNameDisplay" class="font-bold text-blue-600"></span>.</p>
     </div>
-
     <div class="flex gap-6 items-center mt-4">
       <label class="flex items-center gap-2"><input type="radio" name="callType" value="IND" checked> IND</label>
       <label class="flex items-center gap-2"><input type="radio" name="callType" value="GROUP"> GROUP</label>
     </div>
-
     <form id="callForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
       <input type="hidden" id="units">
       <input type="hidden" id="contractId">
       <input type="hidden" id="productId">
-
       <!-- Student (IND only) -->
       <div id="studentIdContainer">
         <label for="studentId" class="form-label block mb-2">Student ID</label>
@@ -156,7 +153,6 @@
           <option value="" disabled selected>Loading Student IDs...</option>
         </select>
       </div>
-
           <!-- Product -->
     <div class="md:col-span-1">
       <label for="productIdSelect" class="form-label block mb-2">Product</label>
@@ -165,13 +161,11 @@
       </select>
       <div id="remainingCalls" class="mt-2 p-2 rounded-lg text-sm bg-gray-200 text-gray-700 hidden"></div>
     </div>
-    
-    <!-- Group students -->
+        <!-- Group students -->
     <div id="groupStudentsContainer" class="hidden md:col-span-1">
       <label class="form-label block mb-2">Select Students</label>
       <div id="groupStudentsDynamic" class="space-y-2"></div>
     </div>
-
       <!-- Date -->
       <div>
         <label for="callDate" class="form-label block mb-2">Date</label>
@@ -198,7 +192,6 @@
           <option value="120">120</option>
         </select>
       </div>
-
             <!-- Attendance -->
       <div>
         <label for="attendance" class="form-label block mb-2">Attendance</label>
@@ -207,14 +200,11 @@
           <option value="NO">NO</option>
         </select>
       </div>
-      
             <!-- Notes -->
       <div class="md:col-span-2">
         <label for="notes" class="form-label block mb-2">Notes</label>
         <textarea id="notes" class="form-input" rows="3" placeholder="Write any notes here..."></textarea>
       </div>
-
-
       <div class="md:col-span-2 mt-4">
         <button type="submit" id="submitBtn" class="w-full bg-blue-600 text-white py-3 px-6 rounded-xl shadow-lg hover:bg-blue-700 disabled:bg-blue-400 disabled:cursor-not-allowed">Log Call</button>
         <button type="button" id="backToDashboardBtn" class="w-full mt-2 bg-gray-400 text-white py-3 px-6 rounded-xl hover:bg-gray-500">Back to Dashboard</button>
@@ -223,7 +213,7 @@
     <div id="callMessageBox" class="mt-8 p-4 rounded-xl text-center hidden"></div>
   </div>
 
-<!-- Students Section -->
+    <!-- STUDENTS SECTION -->
 <div id="studentsSection" class="hidden app-section">
   <div class="flex items-center justify-between mb-6 flex-col sm:flex-row">
     <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 sm:mb-0">My Students</h2>
@@ -232,7 +222,6 @@
       Back to Dashboard
     </button>
   </div>
-
   <div class="space-y-4">
     <div>
       <label for="studentSelect" class="form-label block mb-2">Select a Student</label>
@@ -260,7 +249,6 @@
         Back to Dashboard
       </button>
     </div>
-
     <!-- META INFO -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
       <div>
@@ -274,12 +262,11 @@
         <input id="debriefDateInput" type="date" class="w-full border rounded-lg px-3 py-2" />
       </div>
     </div>
-
     <!-- LAYOUT A DUE COLONNE -->
     <div class="flex flex-col lg:flex-row gap-6">
       <!-- LEFT COLUMN (Main Debrief Fields) -->
-      <div class="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div id="debriefFieldsContainer" class="flex-1 bg-gray-50 border border-gray-200 rounded-xl p-6 shadow-sm">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div class="space-y-4">
             <div>
               <label class="block font-semibold mb-1 text-gray-700">
@@ -290,7 +277,6 @@
               <textarea id="debrief_goals" rows="3"
                         class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
-
             <div>
               <label class="block font-semibold mb-1 text-gray-700">
                 Topics
@@ -300,7 +286,6 @@
               <textarea id="debrief_topics" rows="3"
                         class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
-
             <div>
               <label class="block font-semibold mb-1 text-gray-700">
                 Grammar
@@ -311,7 +296,6 @@
                         class="w-full border border-gray-300 rounded p-2 text-sm focus:ring-blue-500 focus:border-blue-500"></textarea>
             </div>
           </div>
-
           <div class="space-y-4">
             <div>
               <label class="block font-semibold mb-1 text-gray-700">
