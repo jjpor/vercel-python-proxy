@@ -1351,13 +1351,6 @@ document.getElementById('backToDashboardFromReportsBtn').addEventListener('click
   switchSection(dashboardSection);
 });
 
-backToReportCardsBtn.addEventListener('click', () => {
-  reportCardForm.reset();
-  const callsTable = document.getElementById('reportCardCallsTable');
-  if (callsTable) callsTable.classList.add('hidden');
-  switchSection(reportCardsSection);
-});
-
 document.getElementById('backToDashboardFromDebriefBtn').addEventListener('click', () => {
   switchSection(dashboardSection);
 });
@@ -1962,8 +1955,20 @@ confirmSendAllBtn?.addEventListener('click', async () => {
   }
 })();
 
-      //FLASHCARDS//
+// --- BACK TO REPORT CARDS NAVIGATION ---
+const backToReportCardsBtn = document.getElementById('backToReportCardsBtn');
+if (backToReportCardsBtn) {
+  backToReportCardsBtn.addEventListener('click', () => {
+    if (typeof reportCardForm !== 'undefined' && reportCardForm) {
+      reportCardForm.reset();
+    }
+    const callsTable = document.getElementById('reportCardCallsTable');
+    if (callsTable) callsTable.classList.add('hidden');
+    switchSection(reportCardsSection);
+  });
+}
 
+      //FLASHCARDS//
 viewFlashcardsBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   switchSection(flashcardsSection);
