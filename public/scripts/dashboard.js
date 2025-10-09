@@ -173,6 +173,13 @@ function switchSection(showEl) {
   document.querySelectorAll('.app-section').forEach(el => el.classList.add('hidden'));
   showEl.classList.remove('hidden');
   window.scrollTo({ top: 0, behavior: 'auto' });
+   // evidenzia voce attiva nell'header
+  document.querySelectorAll('#mainHeader nav button').forEach(btn => {
+    btn.classList.remove('text-blue-600', 'font-semibold');
+  });
+  const activeBtn = Array.from(document.querySelectorAll('#mainHeader nav button'))
+    .find(b => b.getAttribute('onclick')?.includes(showEl.id));
+  if (activeBtn) activeBtn.classList.add('text-blue-600', 'font-semibold');
 }
 
 // API helpers
