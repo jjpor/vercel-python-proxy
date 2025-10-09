@@ -553,104 +553,106 @@ localStorage.setItem("coachSession", JSON.stringify({
   }
 });
 
-// crea bottone e container drafts (una sola volta, persistenti)
-const labelEl = document.querySelector('label[for="debriefStudentSelect"]');
-if (labelEl && !document.getElementById('debriefLoadDraftsBtn')) {
-  const btn = document.createElement('button');
-  btn.id = 'debriefLoadDraftsBtn';
-  btn.textContent = '📂 Load Drafts';
-  btn.className = 'ml-2 px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700';
-  labelEl.after(btn);
+  // crea bottone e container drafts (una sola volta, persistenti)
+  const labelEl = document.querySelector('label[for="debriefStudentSelect"]');
 
-  const container = document.createElement('div');
-  container.id = 'debriefDraftsContainer';
-  container.className = 'hidden mt-4';
-  coachingDebriefSection.insertBefore(container, document.getElementById('debriefFieldsContainer'));
-
-  btn.addEventListener('click', async () => {
-  const studentId = debriefStudentSelect.value || null;
-
-  // Mostra loader nella sezione sotto il modulo
-  container.innerHTML = loaderHTML("Loading drafts...");
-  container.classList.remove('hidden');
-
-  try {
-    const resp = await apiGet('getDebriefDrafts', { coachId: CURRENT_COACH_ID, studentId });
-    if (!resp.success || !resp.drafts?.length) {
-      container.innerHTML = '<p class="text-gray-500 text-sm mt-4 border-t pt-3">No drafts found.</p>';
-      return;
-    }
-
-    // sposta container sotto al modulo di debrief (se non già lì)
-    const fields = document.getElementById('debriefFieldsContainer');
-    if (fields && fields.nextSibling !== container) {
-      fields.parentNode.insertBefore(container, fields.nextSibling);
-    }
-
-    let html = `
-      <div class="border-t mt-6 pt-4">
-        <h3 class="text-lg font-semibold mb-2">💾 Saved Drafts</h3>
-        <table class="min-w-full border border-gray-200 rounded-xl text-sm">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="px-3 py-2 border">Date</th>
-              <th class="px-3 py-2 border">Student</th>
-              <th class="px-3 py-2 border">Goals</th>
-              <th class="px-3 py-2 border">Topics</th>
-              <th class="px-3 py-2 border">Load</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-    resp.drafts.forEach(d => {
-      html += `
-        <tr class="border-b hover:bg-gray-50">
-          <td class="px-3 py-2">${d.dateISO || '-'}</td>
-          <td class="px-3 py-2">${d.studentId || '-'}</td>
-          <td class="px-3 py-2">${(d.goals || '').slice(0, 50)}</td>
-          <td class="px-3 py-2">${(d.topics || '').slice(0, 50)}</td>
-          <td class="px-3 py-2 text-center">
-            <button class="px-2 py-1 bg-green-600 text-white rounded text-xs loadDraftBtn"
-                    data-row="${d.rowNumber}">Load</button>
-          </td>
-        </tr>`;
-    });
-
-    html += `</tbody></table></div>`;
-    container.innerHTML = html;
-  } catch (err) {
-    container.innerHTML = `<p class="text-red-500 text-sm mt-4 border-t pt-3">Error: ${err.message}</p>`;
-  }
-});
-
-}
-
+  if (labelEl && !document.getElementById('debriefLoadDraftsBtn')) {
+    const btn = document.createElement('button');
+    btn.id = 'debriefLoadDraftsBtn';
+    btn.textContent = '📂 Load Drafts';
+    btn.className = 'ml-2 px-3 py-1 rounded bg-blue-600 text-white text-sm hover:bg-blue-700';
+    labelEl.after(btn);
   
-viewCoachingDebriefBtn.addEventListener('click', async () => {
-
-  // listener globale per i bottoni Load (delegato)
-    document.addEventListener('click', (e) => {
-      if (!e.target.classList.contains('loadDraftBtn')) return;
-      const row = e.target.dataset.row;
-      if (!row) return;
-    
-      // salviamo l’ID riga in memoria
-      window.debriefLoadedRow = row;
-    
-      // preleva dati dalla riga della tabella (puoi anche riusare fetch se serve)
-      const tr = e.target.closest('tr');
-      const tds = tr.querySelectorAll('td');
-      const goals = tds[2]?.textContent || '';
-      const topics = tds[3]?.textContent || '';
-    
-      // popola solo preview per ora (campi completi verranno fetchati lato backend se vuoi)
-      document.getElementById('debrief_goals').value = goals;
-      document.getElementById('debrief_topics').value = topics;
-    
-      showToast(`Loaded draft from row ${row}`, 3000, 'bg-green-600');
+    const container = document.createElement('div');
+    container.id = 'debriefDraftsContainer';
+    container.className = 'hidden mt-4';
+    coachingDebriefSection.insertBefore(container, document.getElementById('debriefFieldsContainer'));
+    btn.addEventListener('click', async () => {
+    const studentId = debriefStudentSelect.value || null;
+      // Mostra loader nella sezione sotto il modulo
+    container.innerHTML = loaderHTML("Loading drafts...");
+    container.classList.remove('hidden');
+      try {
+      const resp = await apiGet('getDebriefDrafts', { coachId: CURRENT_COACH_ID, studentId });
+      if (!resp.success || !resp.drafts?.length) {
+        container.innerHTML = '<p class="text-gray-500 text-sm mt-4 border-t pt-3">No drafts found.</p>';
+        return;
+      }
+        // sposta container sotto al modulo di debrief (se non già lì)
+      const fields = document.getElementById('debriefFieldsContainer');
+      if (fields && fields.nextSibling !== container) {
+        fields.parentNode.insertBefore(container, fields.nextSibling);
+      }
+        let html = `
+        <div class="border-t mt-6 pt-4">
+          <h3 class="text-lg font-semibold mb-2">💾 Saved Drafts</h3>
+          <table class="min-w-full border border-gray-200 rounded-xl text-sm">
+            <thead class="bg-gray-100">
+              <tr>
+                <th class="px-3 py-2 border">Date</th>
+                <th class="px-3 py-2 border">Student</th>
+                <th class="px-3 py-2 border">Goals</th>
+                <th class="px-3 py-2 border">Topics</th>
+                <th class="px-3 py-2 border">Load</th>
+              </tr>
+            </thead>
+            <tbody>`;
+  
+      resp.drafts.forEach(d => {
+        html += `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-3 py-2">${d.dateISO || '-'}</td>
+            <td class="px-3 py-2">${d.studentId || '-'}</td>
+            <td class="px-3 py-2">${(d.goals || '').slice(0, 50)}</td>
+            <td class="px-3 py-2">${(d.topics || '').slice(0, 50)}</td>
+            <td class="px-3 py-2 text-center">
+              <button class="px-2 py-1 bg-green-600 text-white rounded text-xs loadDraftBtn"
+                      data-row="${d.rowNumber}">Load</button>
+            </td>
+          </tr>`;
+      });
+        html += `</tbody></table></div>`;
+      container.innerHTML = html;
+    } catch (err) {
+      container.innerHTML = `<p class="text-red-500 text-sm mt-4 border-t pt-3">Error: ${err.message}</p>`;
+    }
   });
+  
+  }
+   
+   // --- Listener globale per i bottoni "Load" dei drafts (fuori da qualsiasi altro evento) ---
+   document.addEventListener('click', async (e) => {
+     if (!e.target.classList.contains('loadDraftBtn')) return;
+     const row = e.target.dataset.row;
+     if (!row) return;
+   
+     window.debriefLoadedRow = row;
+     showGlobalLoader();
+   
+     try {
+       const resp = await apiGet('getDebriefByRow', { coachId: CURRENT_COACH_ID, rowNumber: row });
+       if (!resp.success || !resp.draft) throw new Error(resp.error || "Draft not found");
+   
+       const d = resp.draft;
+       document.getElementById('debrief_goals').value = d.goals || '';
+       document.getElementById('debrief_topics').value = d.topics || '';
+       document.getElementById('debrief_grammar').value = d.grammar || '';
+       document.getElementById('debrief_vocabulary').value = d.vocabulary || '';
+       document.getElementById('debrief_pronunciation').value = d.pronunciation || '';
+       document.getElementById('debrief_homework').value = d.homework || '';
+       document.getElementById('debrief_other').value = d.other || '';
+   
+       showToast("✅ Draft loaded", 3000, "bg-green-600");
+     } catch (err) {
+       console.error("Load draft error:", err);
+       showToast(`❌ ${err.message}`, 3000, "bg-red-600");
+     } finally {
+       hideGlobalLoader();
+     }
+   });
 
   
+  viewCoachingDebriefBtn.addEventListener('click', async () => {
   
   switchSection(coachingDebriefSection);
 
