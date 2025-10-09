@@ -640,8 +640,8 @@ viewCoachingDebriefBtn.addEventListener('click', async () => {
       // preleva dati dalla riga della tabella (puoi anche riusare fetch se serve)
       const tr = e.target.closest('tr');
       const tds = tr.querySelectorAll('td');
-      const goals = tds[1]?.textContent || '';
-      const topics = tds[2]?.textContent || '';
+      const goals = tds[2]?.textContent || '';
+      const topics = tds[3]?.textContent || '';
     
       // popola solo preview per ora (campi completi verranno fetchati lato backend se vuoi)
       document.getElementById('debrief_goals').value = goals;
