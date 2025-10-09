@@ -1331,6 +1331,7 @@ const reportCardsContainer = document.getElementById('reportCardsContainer');
 const reportCardNoShowsContainer = document.getElementById('reportCardNoShowsContainer');
 const reportCardFormSection = document.getElementById('reportCardFormSection');
 const reportCardForm = document.getElementById('reportCardForm');
+const backToReportCardsBtn = document.getElementById('backToReportCardsBtn');
 const reportCardMessageBox = document.getElementById('reportCardMessageBox');
     // storico report cards
 const reportCardHistoryContainer = document.getElementById('reportCardHistoryContainer');
@@ -1348,6 +1349,13 @@ document.getElementById('viewReportCardsBtn').addEventListener('click', async ()
 
 document.getElementById('backToDashboardFromReportsBtn').addEventListener('click', () => {
   switchSection(dashboardSection);
+});
+
+backToReportCardsBtn.addEventListener('click', () => {
+  reportCardForm.reset();
+  const callsTable = document.getElementById('reportCardCallsTable');
+  if (callsTable) callsTable.classList.add('hidden');
+  switchSection(reportCardsSection);
 });
 
 document.getElementById('backToDashboardFromDebriefBtn').addEventListener('click', () => {
@@ -1954,20 +1962,8 @@ confirmSendAllBtn?.addEventListener('click', async () => {
   }
 })();
 
-// --- BACK TO REPORT CARDS NAVIGATION ---
-const backToReportCardsBtn = document.getElementById('backToReportCardsBtn');
-if (backToReportCardsBtn) {
-  backToReportCardsBtn.addEventListener('click', () => {
-    if (typeof reportCardForm !== 'undefined' && reportCardForm) {
-      reportCardForm.reset();
-    }
-    const callsTable = document.getElementById('reportCardCallsTable');
-    if (callsTable) callsTable.classList.add('hidden');
-    switchSection(reportCardsSection);
-  });
-}
-
       //FLASHCARDS//
+
 viewFlashcardsBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   switchSection(flashcardsSection);
