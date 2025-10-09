@@ -1962,8 +1962,6 @@ confirmSendAllBtn?.addEventListener('click', async () => {
   }
 })();
 
-      //FLASHCARDS//
-
 viewFlashcardsBtn.addEventListener('click', async () => {
   if (!CURRENT_COACH_ID) return;
   switchSection(flashcardsSection);
@@ -1972,6 +1970,10 @@ viewFlashcardsBtn.addEventListener('click', async () => {
 
 backToDashboardFromFlashcardsBtn.addEventListener('click', () => {
   switchSection(dashboardSection);
+});
+
+document.getElementById('viewTeachingMaterialsBtn').addEventListener('click', () => {
+  switchSection(document.getElementById('teachingMaterialsSection'));
 });
 
 async function loadFlashcards() {
