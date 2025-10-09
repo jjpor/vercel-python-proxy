@@ -1331,7 +1331,6 @@ const reportCardsContainer = document.getElementById('reportCardsContainer');
 const reportCardNoShowsContainer = document.getElementById('reportCardNoShowsContainer');
 const reportCardFormSection = document.getElementById('reportCardFormSection');
 const reportCardForm = document.getElementById('reportCardForm');
-const backToReportCardsBtn = document.getElementById('backToReportCardsBtn');
 const reportCardMessageBox = document.getElementById('reportCardMessageBox');
     // storico report cards
 const reportCardHistoryContainer = document.getElementById('reportCardHistoryContainer');
