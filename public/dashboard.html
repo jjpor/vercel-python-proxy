@@ -61,25 +61,78 @@
 
   <!-- DASHBOARD -->
   <div id="dashboardSection" class="hidden app-section">
-    <div class="text-center">
+    <div class="text-center mb-6">
       <h1 class="text-3xl md:text-4xl font-bold text-gray-800">Dashboard</h1>
-      <p class="mt-2 text-gray-500">Welcome, <span id="coachNameDisplay" class="font-bold text-blue-600"></span>!</p>
+      <p class="mt-2 text-gray-500">
+        Welcome, <span id="coachNameDisplay" class="font-bold text-blue-600"></span>!
+      </p>
     </div>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-      <div id="monthlyEarningsDisplay" class="cube-button bg-blue-600 text-white cursor-default">
-        <p class="text-lg font-medium opacity-80">Monthly Earnings</p>
-        <p class="mt-2 text-4xl sm:text-5xl font-bold"><span id="earningsAmount">--</span>€</p>
+
+    <!-- GRID PRINCIPALE -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
+      <!-- 1ª riga -->
+      <button id="viewCoachingDebriefBtn" class="cube-button bg-indigo-600 text-white">
+        <span class="text-4xl">💬</span>
+        <p class="mt-2 text-lg font-semibold">Coaching Debrief</p>
+      </button>
+      <button id="logCallBtn" class="cube-button bg-green-600 text-white">
+        <span class="text-4xl">📝</span>
+        <p class="mt-2 text-lg font-semibold">Log a new call</p>
+      </button>
+      <button id="viewCallLogBtn" class="cube-button bg-purple-600 text-white">
+        <span class="text-4xl">📖</span>
+        <p class="mt-2 text-lg font-semibold">Call log</p>
+      </button>
+      <button id="viewReportCardsBtn" class="cube-button bg-teal-600 text-white">
+        <span class="text-4xl">📈</span>
+        <p class="mt-2 text-lg font-semibold">Report Cards</p>
+      </button>
+
+      <!-- 2ª riga -->
+      <button id="viewStudentsBtn" class="cube-button bg-orange-600 text-white">
+        <span class="text-4xl">🧑‍🎓</span>
+        <p class="mt-2 text-lg font-semibold">Students</p>
+      </button>
+      <button id="viewFlashcardsBtn" class="cube-button bg-pink-600 text-white">
+        <span class="text-4xl">🃏</span>
+        <p class="mt-2 text-lg font-semibold">Flashcards</p>
+      </button>
+      <button id="viewFolderBtn" class="cube-button bg-gray-600 text-white">
+        <span class="text-4xl">📂</span>
+        <p class="mt-2 text-lg font-semibold">My payment folder</p>
+      </button>
+      <div id="bulletinBoard" class="cube-button bg-yellow-400 text-gray-800 cursor-default">
+        <span class="text-4xl">📢</span>
+        <p class="mt-2 text-lg font-semibold">Bulletin Board</p>
       </div>
-      <button id="logCallBtn" class="cube-button bg-green-600 text-white"><span class="text-4xl">📝</span><p class="mt-2 text-lg font-semibold">Log a new call</p></button>
-      <button id="viewCallLogBtn" class="cube-button bg-purple-600 text-white"><span class="text-4xl">📖</span><p class="mt-2 text-lg font-semibold">Call log</p></button>
-      <button id="viewStudentsBtn" class="cube-button bg-orange-600 text-white"><span class="text-4xl">🧑‍🎓</span><p class="mt-2 text-lg font-semibold">Students</p></button>
-      <button id="viewCoachingDebriefBtn" class="cube-button bg-indigo-600 text-white">  <span class="text-4xl">📝</span>  <p class="mt-2 text-lg font-semibold">Coaching Debrief</p></button>
-      <button id="viewReportCardsBtn" class="cube-button bg-teal-600 text-white"><span class="text-4xl">📈</span><p class="mt-2 text-lg font-semibold">Report Cards</p></button>
-      <button id="viewFlashcardsBtn" class="cube-button bg-pink-600 text-white"><span class="text-4xl">🃏</span><p class="mt-2 text-lg font-semibold">Flashcards</p></button>
-      <button id="viewFolderBtn" class="cube-button bg-gray-600 text-white"><span class="text-4xl">📂</span><p class="mt-2 text-lg font-semibold">My payment folder</p></button>
-      <button id="logoutBtn" class="cube-button bg-red-600 text-white sm:col-span-2 lg:col-span-1"><span class="text-4xl">🚪</span><p class="mt-2 text-lg font-semibold">Log out</p></button>
+
+      <!-- 3ª riga -->
+      <div id="monthlyEarningsDisplay" class="cube-button bg-blue-600 text-white lg:col-span-2 cursor-default">
+        <p class="text-lg font-medium opacity-80">Monthly Earnings</p>
+        <p class="mt-2 text-5xl font-bold">
+          <span id="earningsAmount">--</span>€
+        </p>
+      </div>
+      <div id="calendarPlaceholder" class="cube-button bg-slate-200 text-gray-700 lg:col-span-2 cursor-default">
+        <span class="text-5xl">📅</span>
+        <p class="mt-4 text-lg font-semibold">Calendar (Coming soon)</p>
+      </div>
     </div>
+
+    <!-- LOGOUT -->
+    <button
+      id="logoutBtn"
+      class="w-full bg-red-600 text-white font-semibold py-3 px-6 rounded-xl shadow-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center gap-2 mt-8"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24"
+        stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+      </svg>
+      <span>Log out</span>
+    </button>
   </div>
+
 
   <!-- CALL FORM -->
   <div id="callSection" class="hidden app-section">
