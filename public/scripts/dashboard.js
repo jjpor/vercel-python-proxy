@@ -10,10 +10,10 @@ function hideGlobalLoader() {
  
   
 async function handleGoogleLogin(response) {
-  showGlobalLoader(); // 👈 overlay a schermo intero
-
   try {
-    const credential = response.credential; 
+    showGlobalLoader(); // spostato DENTRO il try
+
+    const credential = response.credential;
     const resp = await apiPost("loginWithGoogle", { credential });
 
     if (!resp.success) {
@@ -45,12 +45,13 @@ async function handleGoogleLogin(response) {
     await fetchMonthlyEarnings();
     await loadStudentIds();
   } catch (err) {
+    console.error("Google login error:", err);
+    hideGlobalLoader(); // 👈 chiudi SEMPRE anche in caso di errore esterno
     showToast("Errore login Google: " + (err.message || err), 5000, "bg-red-600");
   } finally {
-    hideGlobalLoader(); // 👈 safety net in caso di errori
+    hideGlobalLoader(); // safety net
   }
 }
-
 // API proxy
 const base_url = "https://vercel-python-proxy.vercel.app/api";
 const deployment_id = "AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD";
