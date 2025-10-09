@@ -166,20 +166,30 @@ function showToast(msg, ms = 4000, color = "bg-green-600") {
   t.classList.remove("hidden");
   setTimeout(() => { t.classList.add("hidden"); }, ms);
 }
-
   
 function switchSection(showEl) {
-  // li prendo tutti senza dimentirne uno (tutti quelli che hanno classe  app-section)
+  // nasconde tutte le sezioni app-section
   document.querySelectorAll('.app-section').forEach(el => el.classList.add('hidden'));
-  showEl.classList.remove('hidden');
+  // mostra la sezione richiesta
+  if (showEl) showEl.classList.remove('hidden');
+  // torna in cima
   window.scrollTo({ top: 0, behavior: 'auto' });
-   // evidenzia voce attiva nell'header
-  document.querySelectorAll('#mainHeader nav button').forEach(btn => {
-    btn.classList.remove('text-blue-600', 'font-semibold');
+  // evidenzia voce attiva nell'header (versione sicura)
+  const header = document.getElementById('mainHeader');
+  if (!header) return; // se l'header non esiste, esci senza errori
+  const nav = header.querySelector('nav');
+  if (!nav) return;
+  const buttons = nav.querySelectorAll('button');
+  buttons.forEach(btn => btn.classList.remove('text-blue-600', 'font-semibold'));
+  let matched = false;
+  buttons.forEach(btn => {
+    const onclk = btn.getAttribute('onclick') || '';
+    if (showEl && showEl.id && onclk.indexOf(showEl.id) !== -1) {
+      btn.classList.add('text-blue-600', 'font-semibold');
+      matched = true;
+    }
   });
-  const activeBtn = Array.from(document.querySelectorAll('#mainHeader nav button'))
-    .find(b => b.getAttribute('onclick')?.includes(showEl.id));
-  if (activeBtn) activeBtn.classList.add('text-blue-600', 'font-semibold');
+  // nessun errore se non trova match
 }
 
 // API helpers
