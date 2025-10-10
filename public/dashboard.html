@@ -7,44 +7,49 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="styles/dashboard.css">
 </head>
+  
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
   
-<!-- HEADER NAV -->
-<header id="mainHeader" class="w-full bg-white shadow-md fixed top-0 left-0 z-50">
-  <div class="w-full flex items-center justify-between px-6 py-0.5">
-    
-    <!-- LOGO SX -->
-    <a href="https://www.smartalk.online" target="_blank" rel="noopener noreferrer"
-       class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
-      <img src="https://res.cloudinary.com/dk5bqpodg/image/upload/v1756747292/smartalk_banner_ke1kkq.svg"
-           alt="Smartalk Logo" class="h-10 md:h-11">
-    </a>
+        <!-- HEADER NAV -->
+        <header id="mainHeader" class="w-full bg-white shadow-md fixed top-0 left-0 z-50">
+          <div class="w-full flex items-center justify-between px-6 py-0.5">
+            
+            <!-- LOGO SX -->
+            <a href="https://www.smartalk.online" target="_blank" rel="noopener noreferrer"
+               class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
+              <img src="https://res.cloudinary.com/dk5bqpodg/image/upload/v1756747292/smartalk_banner_ke1kkq.svg"
+                   alt="Smartalk Logo" class="h-10 md:h-11">
+            </a>
 
-    <!-- NAV DX -->
-    <nav class="flex flex-wrap gap-6 text-sm md:text-base font-semibold text-gray-700">
-      <button onclick="switchSection(dashboardSection)" class="hover:text-blue-600 transition-colors">Dashboard</button>
-      <button onclick="switchSection(coachingDebriefSection)" class="hover:text-blue-600 transition-colors">Debrief</button>
-      <button onclick="switchSection(callSection)" class="hover:text-blue-600 transition-colors">Log Call</button>
-      <button onclick="switchSection(callHistorySection)" class="hover:text-blue-600 transition-colors">Call History</button>
-      <button onclick="switchSection(studentsSection)" class="hover:text-blue-600 transition-colors">Students</button>
-      <button onclick="switchSection(reportCardsSection)" class="hover:text-blue-600 transition-colors">Report Cards</button>
-      <button onclick="switchSection(teachingMaterialsSection)" class="hover:text-blue-600 transition-colors">Teaching Materials</button>
-      <button onclick="switchSection(flashcardsSection)" class="hover:text-blue-600 transition-colors">Flashcards</button>
-    </nav>
+            <!-- NAV DX -->
+            <nav class="flex flex-wrap gap-6 text-sm md:text-base font-semibold text-gray-700">
+              <button onclick="switchSection(dashboardSection)" class="hover:text-blue-600 transition-colors">Dashboard</button>
+              <button onclick="switchSection(coachingDebriefSection)" class="hover:text-blue-600 transition-colors">Debrief</button>
+              <button onclick="switchSection(callSection)" class="hover:text-blue-600 transition-colors">Log Call</button>
+              <button onclick="switchSection(callHistorySection)" class="hover:text-blue-600 transition-colors">Call History</button>
+              <button onclick="switchSection(studentsSection)" class="hover:text-blue-600 transition-colors">Students</button>
+              <button onclick="switchSection(reportCardsSection)" class="hover:text-blue-600 transition-colors">Report Cards</button>
+              <button onclick="switchSection(teachingMaterialsSection)" class="hover:text-blue-600 transition-colors">Teaching Materials</button>
+              <button onclick="switchSection(flashcardsSection)" class="hover:text-blue-600 transition-colors">Flashcards</button>
+            </nav>
+        
+          </div>
+        </header>
 
-  </div>
-</header>
 
 
+        <!-- spacer per non far coprire il contenuto -->
+        <div class="h-16"></div>
 
-<!-- spacer per non far coprire il contenuto -->
-<div class="h-16"></div>
+      <!-- 🌐 GLOBAL LOADER OVERLAY -->
+      <div id="globalLoader"
+           class="fixed inset-0 bg-white/80 flex items-center justify-center z-[9999]"
+           style="display:none;">
+        <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-solid"></div>
+      </div>
 
-  <!-- Global loader overlay -->
-<div id="globalLoader">
-  <div class="loader-circle"></div>
-</div>
-<main id="appRoot" class="w-full flex flex-col items-center">
+  
+  <main id="appRoot" class="w-full flex flex-col items-center">
 <div class="container bg-white p-8 md:p-12 rounded-2xl shadow-xl space-y-8 border border-gray-200">
 
 <!-- GOOGLE AUTH -->
@@ -149,7 +154,7 @@
       </div>
       <div id="bulletinBoard" class="cube-button bg-yellow-400 text-gray-800 cursor-default lg:col-span-2">
         <span class="text-4xl">📢</span>
-        <p class="mt-2 text-lg font-semibold">Bulletin Board</p>
+        <p class="mt-2 text-lg font-semibold">Bulletin Board (Coming soon)</p>
       </div>
       <!-- 4ª riga -->
       <div id="calendarPlaceholder" class="cube-button bg-slate-200 text-gray-700 lg:col-span-4 cursor-default">
