@@ -568,57 +568,71 @@ localStorage.setItem("coachSession", JSON.stringify({
     container.id = 'debriefDraftsContainer';
     container.className = 'hidden mt-4';
     coachingDebriefSection.insertBefore(container, document.getElementById('debriefFieldsContainer'));
+    
     btn.addEventListener('click', async () => {
-    const studentId = debriefStudentSelect.value || null;
-      // Mostra loader nella sezione sotto il modulo
-    container.innerHTML = loaderHTML("Loading drafts...");
-    container.classList.remove('hidden');
+      const studentId = debriefStudentSelect.value || null;
+      
+      showGlobalLoader(); // 🌐 mostra la rotellina globale
+      container.classList.remove('hidden');
+    
       try {
-      const resp = await apiGet('getDebriefDrafts', { coachId: CURRENT_COACH_ID, studentId });
-      if (!resp.success || !resp.drafts?.length) {
-        container.innerHTML = '<p class="text-gray-500 text-sm mt-4 border-t pt-3">No drafts found.</p>';
-        return;
-      }
-        // sposta container sotto al modulo di debrief (se non già lì)
-      const fields = document.getElementById('debriefFieldsContainer');
-      if (fields && fields.nextSibling !== container) {
-        fields.parentNode.insertBefore(container, fields.nextSibling);
-      }
+        const resp = await apiGet('getDebriefDrafts', { coachId: CURRENT_COACH_ID, studentId });
+        
+        if (!resp.success || !resp.drafts?.length) {
+          container.innerHTML = `
+            <p class="text-gray-500 text-sm mt-4 border-t pt-3">No drafts found.</p>`;
+          return;
+        }
+    
+        // assicurati che container sia subito dopo i campi
+        const fields = document.getElementById('debriefFieldsContainer');
+        if (fields && fields.nextSibling !== container) {
+          fields.parentNode.insertBefore(container, fields.nextSibling);
+        }
+    
+        // costruisci la tabella HTML dei drafts
         let html = `
-        <div class="border-t mt-6 pt-4">
-          <h3 class="text-lg font-semibold mb-2">💾 Saved Drafts</h3>
-          <table class="min-w-full border border-gray-200 rounded-xl text-sm">
-            <thead class="bg-gray-100">
-              <tr>
-                <th class="px-3 py-2 border">Date</th>
-                <th class="px-3 py-2 border">Student</th>
-                <th class="px-3 py-2 border">Goals</th>
-                <th class="px-3 py-2 border">Topics</th>
-                <th class="px-3 py-2 border">Load</th>
-              </tr>
-            </thead>
-            <tbody>`;
-  
-      resp.drafts.forEach(d => {
-        html += `
-          <tr class="border-b hover:bg-gray-50">
-            <td class="px-3 py-2">${d.dateISO || '-'}</td>
-            <td class="px-3 py-2">${d.studentId || '-'}</td>
-            <td class="px-3 py-2">${(d.goals || '').slice(0, 50)}</td>
-            <td class="px-3 py-2">${(d.topics || '').slice(0, 50)}</td>
-            <td class="px-3 py-2 text-center">
-              <button class="px-2 py-1 bg-green-600 text-white rounded text-xs loadDraftBtn"
-                      data-row="${d.rowNumber}">Load</button>
-            </td>
-          </tr>`;
-      });
+          <div class="border-t mt-6 pt-4">
+            <h3 class="text-lg font-semibold mb-2">💾 Saved Drafts</h3>
+            <table class="min-w-full border border-gray-200 rounded-xl text-sm">
+              <thead class="bg-gray-100">
+                <tr>
+                  <th class="px-3 py-2 border">Date</th>
+                  <th class="px-3 py-2 border">Student</th>
+                  <th class="px-3 py-2 border">Goals</th>
+                  <th class="px-3 py-2 border">Topics</th>
+                  <th class="px-3 py-2 border">Load</th>
+                </tr>
+              </thead>
+              <tbody>`;
+    
+        resp.drafts.forEach(d => {
+          html += `
+            <tr class="border-b hover:bg-gray-50">
+              <td class="px-3 py-2">${d.dateISO || '-'}</td>
+              <td class="px-3 py-2">${d.studentId || '-'}</td>
+              <td class="px-3 py-2">${(d.goals || '').slice(0, 50)}</td>
+              <td class="px-3 py-2">${(d.topics || '').slice(0, 50)}</td>
+              <td class="px-3 py-2 text-center">
+                <button class="px-2 py-1 bg-green-600 text-white rounded text-xs loadDraftBtn"
+                        data-row="${d.rowNumber}">Load</button>
+              </td>
+            </tr>`;
+        });
+    
         html += `</tbody></table></div>`;
-      container.innerHTML = html;
-    } catch (err) {
-      container.innerHTML = `<p class="text-red-500 text-sm mt-4 border-t pt-3">Error: ${err.message}</p>`;
-    }
-  });
-  
+        container.innerHTML = html;
+    
+      } catch (err) {
+        container.innerHTML = `
+          <p class="text-red-500 text-sm mt-4 border-t pt-3">
+            Error loading drafts: ${err.message}
+          </p>`;
+      } finally {
+        hideGlobalLoader(); // 🌐 rimuove la rotellina
+      }
+    });
+ 
   }
    
    // --- Listener globale per i bottoni "Load" dei drafts (fuori da qualsiasi altro evento) ---
