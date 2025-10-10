@@ -110,7 +110,7 @@ const submitBtn = document.getElementById('submitBtn');
 const callMessageBox = document.getElementById('callMessageBox');
 
 const callTypeRadios = document.querySelectorAll('input[name="callType"]');
-const remainingCallsDisplay = document.getElementById('remainingCalls');
+var remainingCallsDisplay = document.getElementById('remainingCalls');
 
 const callHistorySection = document.getElementById('callHistorySection');
 const callHistoryTableBody = document.getElementById('callHistoryTableBody');
