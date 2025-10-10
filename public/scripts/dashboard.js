@@ -1,13 +1,14 @@
  // Global overlay loader controls
-function showGlobalLoader() {
-  const el = document.getElementById('globalLoader');
-  if (el) el.style.display = 'flex';
-}
-function hideGlobalLoader() {
-  const el = document.getElementById('globalLoader');
-  if (el) el.style.display = 'none';
-}
+ function showGlobalLoader() {
+   const el = document.getElementById('globalLoader');
+   if (el) el.classList.add('active');
+ }
  
+ function hideGlobalLoader() {
+   const el = document.getElementById('globalLoader');
+   if (el) el.classList.remove('active');
+ }
+  
   
 async function handleGoogleLogin(response) {
   showGlobalLoader(); // 👈 overlay a schermo intero
