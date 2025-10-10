@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Call Logging Dashboard</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="styles/dashboard.css">
+  <!-- ✅ CSS iniziale: caricato subito, versione base -->
+  <link id="smartalkCss" rel="stylesheet" href="styles/dashboard.css?v=1">
+
 </head>
   
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
@@ -662,7 +664,16 @@
   
 </main>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="scripts/dashboard.js"></script>
-
+<script id="smartalkJs" src="scripts/dashboard.js?v=1"></script>
+<script>
+  const ts = Date.now();
+  // aggiorna CSS con nuovo timestamp
+  const css = document.getElementById("smartalkCss");
+  if (css) css.href = `styles/dashboard.css?v=${ts}`;
+  // inserisci JS nuovo
+  const js = document.createElement('script');
+  js.src = `scripts/dashboard.js?v=${ts}`;
+  document.body.appendChild(js);
+</script>
 </body>
 </html>
