@@ -1,0 +1,1149 @@
+/**
+ * ====================================================================
+ * DASHBOARD APP - VERSIONE FINALE E PERFETTAMENTE COMPATIBILE GOOGLE APPS SCRIPT
+ * Corretti endpoint, nomi dei parametri (studentName -> studentId) e listener.
+ * ====================================================================
+ */
+
+// --------------------------------------------------------------------
+// 1. CONFIGURAZIONE E COSTANTI (Config & Constants)
+// --------------------------------------------------------------------
+const CONFIG = {
+    // ⚠️ VERIFICA CHE QUESTO SIA IL TUO URL COMPLETO DI DEPLOYMENT (deve finire con '/exec')
+    API_BASE_URL: "https://script.google.com/macros/s/AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD/exec",
+    DEPLOYMENT_ID: "", 
+    
+    SESSION_KEY: "coachSession",
+    
+    // Lista completa e aggiornata di tutti gli ID DOM usati
+    DOM_REFS: {
+        loginSection: 'loginSection',
+        dashboardSection: 'dashboardSection',
+        callSection: 'callSection',
+        coachingDebriefSection: 'coachingDebriefSection',
+        callHistorySection: 'callHistorySection',
+        studentsSection: 'studentsSection',
+        flashcardsSection: 'flashcardsSection',
+        bulletinBoardSection: 'bulletinBoardSection',
+        reportCardsSection: 'reportCardsSection',
+        teachingMaterialsSection: 'teachingMaterialsSection',
+
+        loginForm: 'loginForm',
+        coachIdInput: 'coachId',
+        passwordInput: 'password',
+        loginMessageBox: 'loginMessageBox',
+        googleLoginContainer: 'googleLoginContainer',
+        logoutBtn: 'logoutBtn',
+
+        globalLoader: 'globalLoader',
+        toast: 'toast',
+        coachNameDisplay: 'coachNameDisplay',
+        callSectionCoachNameDisplay: 'callSectionCoachNameDisplay',
+        earningsAmountDisplay: 'earningsAmount',
+        viewFolderBtn: 'viewFolderBtn',
+
+        callLogForm: 'callLogForm',
+        callLogStudentSelect: 'callLogStudentSelect',
+        callLogMessageBox: 'callLogMessageBox',
+        
+        studentSelect: 'studentSelect',
+        studentDetailsContainer: 'studentDetailsContainer',
+
+        debriefStudentSelect: 'debriefStudentSelect',
+        debriefDateInput: 'debriefDateInput',
+        debriefMsg: 'debriefMsg',
+        debriefLoadDraftsBtn: 'debriefLoadDraftsBtn',
+        debriefDraftsContainer: 'debriefDraftsContainer',
+        debriefForm: 'coachingDebriefForm',
+        debriefSaveDraftBtn: 'debriefSaveDraftBtn',
+        debriefSendBtn: 'debriefSendBtn',
+        debriefAIPreviewContainer: 'debriefAIPreviewContainer',
+        
+        callHistoryTableBody: 'callHistoryTableBody',
+        historyMonthYear: 'historyMonthYear',
+
+        flashcardsContainer: 'flashcardsContainer',
+        flashcardsStudentSelect: 'flashcardsStudentSelect',
+        flashcardCardContainer: 'flashcardCardContainer',
+        flashcardControlsContainer: 'flashcardControlsContainer',
+        flashcardFront: 'flashcardFront',
+        flashcardBack: 'flashcardBack',
+        flashcardStepDisplay: 'flashcardStepDisplay',
+        flashcardProgress: 'flashcardProgress',
+        flashcardDeckTotal: 'flashcardDeckTotal',
+        flashcardGoodBtn: 'flashcardGoodBtn',
+        flashcardBadBtn: 'flashcardBadBtn',
+        flashcardSendUpdatesBtn: 'flashcardSendUpdatesBtn',
+        flashcardRetryRedsBtn: 'flashcardRetryRedsBtn',
+    }
+};
+
+// --------------------------------------------------------------------
+// 2. SERVIZIO API (APIService Class) - ADATTATO A GOOGLE APPS SCRIPT
+// --------------------------------------------------------------------
+class APIService {
+    constructor(baseUrl) {
+        this.baseUrl = baseUrl;
+    }
+
+    // Corrisponde a doGet(e) sul Apps Script
+    async get(action, params = {}) {
+        const url = new URL(this.baseUrl);
+        url.searchParams.set("action", action);
+        url.searchParams.set("_ts", Date.now());
+
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) url.searchParams.set(k, v);
+        });
+
+        const res = await fetch(url.toString());
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`GET ${action} failed: ${res.status} ${res.statusText}. Response: ${errorText.substring(0, 100)}...`);
+        }
+        return res.json();
+    }
+
+    // Corrisponde a doPost(e) sul Apps Script
+    async post(action, body = {}) {
+        const res = await fetch(this.baseUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            // Invia l'action nel corpo JSON, come richiesto da doPost
+            body: JSON.stringify({ action, ...body }) 
+        });
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`POST ${action} failed: ${res.status} ${res.statusText}. Response: ${errorText.substring(0, 100)}...`);
+        }
+        return res.json();
+    }
+}
+
+// --------------------------------------------------------------------
+// 3. UTILITY E GESTIONE UI (UIManager Object)
+// --------------------------------------------------------------------
+const UIManager = {
+    refs: {},
+
+    initRefs: () => {
+        for (const [key, id] of Object.entries(CONFIG.DOM_REFS)) {
+            UIManager.refs[key] = document.getElementById(id);
+        }
+    },
+
+    showGlobalLoader: () => { UIManager.refs.globalLoader?.classList.add('active'); },
+    hideGlobalLoader: () => { UIManager.refs.globalLoader?.classList.remove('active'); },
+
+    showToast: (msg, ms = 4000, color = "bg-green-600") => {
+        const t = UIManager.refs.toast;
+        if (!t) return;
+        t.className = t.className.replace(/\b(bg-red-600|bg-green-600|bg-yellow-600)\b/g, '');
+        t.className = `fixed top-4 right-4 text-white px-4 py-2 rounded-lg shadow-lg z-[99999] hidden ${color}`;
+        t.textContent = msg;
+        t.classList.remove("hidden");
+        setTimeout(() => { t.classList.add("hidden"); }, ms);
+    },
+
+    switchSection: (sectionId) => {
+        document.querySelectorAll('.app-section').forEach(el => el.classList.add('hidden'));
+        const showEl = UIManager.refs[sectionId];
+        if (showEl) showEl.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+        document.querySelector(`.nav-link[data-section="${sectionId}"]`)?.classList.add('active');
+    },
+
+    loaderHTML: (message = "Loading...") => {
+        return `
+            <div class="flex flex-col items-center justify-center py-4 text-gray-500">
+              <div class="spinner-container mb-2">
+                <div class="spinner-dot"></div>
+                <div class="spinner-dot"></div>
+                <div class="spinner-dot"></div>
+              </div>
+              <p>${message}</p>
+            </div>
+        `;
+    },
+
+    showMessage: (boxElement, message, isSuccess = true) => {
+        if (!boxElement) return;
+        boxElement.classList.remove('hidden', 'bg-red-100', 'bg-green-100');
+        boxElement.classList.add(isSuccess ? 'bg-green-100' : 'bg-red-100');
+        boxElement.innerHTML = `<p class="${isSuccess ? 'text-green-800' : 'text-red-800'}">${message}</p>`;
+    },
+    
+    hideMessage: (boxElement) => {
+        if (!boxElement) return;
+        boxElement.classList.add('hidden');
+        boxElement.innerHTML = '';
+    },
+    
+    capitalize: (s) => s.charAt(0).toUpperCase() + s.slice(1),
+    escapeHTML: (str) => String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+    escapeBackticks: (str) => String(str).replace(/`/g, '\\`'), // Per stringhe template in HTML inline
+    normalizeUrl: (u) => {
+        const s = String(u || '').trim();
+        if (!s) return "";
+        if (/^https?:\/\//i.test(s)) return s;
+        return "https://" + s;
+    }
+};
+
+// --------------------------------------------------------------------
+// 4. CLASSE PRINCIPALE (DashboardApp)
+// --------------------------------------------------------------------
+class DashboardApp {
+    #coach = { id: null, name: null, role: null };
+    #api;
+    #studentsData = {};
+    #callHistory = [];
+    #debriefLoadedRow = null;
+    
+    #pendingFlashcardUpdates = [];
+    #stepIndex = 0;
+    #sessionTotalSteps = 20;
+    #cardsByEn = new Map();
+    #currentDeck = [];
+    #renderNextCard = null;
+
+    constructor() {
+        UIManager.initRefs();
+        // Passa solo l'URL base
+        this.#api = new APIService(CONFIG.API_BASE_URL); 
+        this.initEventListeners();
+    }
+
+    async init() {
+        if (this.restoreSession()) {
+            UIManager.switchSection(CONFIG.DOM_REFS.dashboardSection);
+            this.updateCoachDisplay();
+            this.loadDashboardData();
+        } else {
+            UIManager.switchSection(CONFIG.DOM_REFS.loginSection);
+        }
+    }
+
+    // ------------------- GESTIONE AUTENTICAZIONE E SESSIONE -------------------
+
+    restoreSession() {
+        const session = localStorage.getItem(CONFIG.SESSION_KEY);
+        if (session) {
+            try {
+                const data = JSON.parse(session);
+                this.#coach.id = data.id;
+                this.#coach.name = data.name;
+                this.#coach.role = data.role;
+                return true;
+            } catch (e) {
+                localStorage.removeItem(CONFIG.SESSION_KEY);
+            }
+        }
+        return false;
+    }
+    
+    saveSession(coachData) {
+        this.#coach.id = String(coachData.coachId);
+        this.#coach.name = coachData.coachName || this.#coach.id;
+        this.#coach.role = coachData.role;
+
+        localStorage.setItem(CONFIG.SESSION_KEY, JSON.stringify(this.#coach));
+        this.updateCoachDisplay();
+        UIManager.refs.googleLoginContainer?.classList.add('hidden');
+    }
+
+    async handleManualLogin(e) {
+        e.preventDefault();
+        UIManager.hideMessage(UIManager.refs.loginMessageBox);
+        UIManager.showGlobalLoader();
+
+        try {
+            const coachId = UIManager.refs.coachIdInput.value.trim();
+            const password = UIManager.refs.passwordInput.value.trim();
+            
+            const resp = await this.#api.post('login', { coachId, password });
+            
+            if (!resp.success) throw new Error(resp.error || 'Login fallito');
+            if (!resp.role) throw new Error("Ruolo coach non trovato.");
+
+            this.saveSession(resp);
+            
+            // Passa subito alla dashboard
+            UIManager.switchSection(CONFIG.DOM_REFS.dashboardSection);
+            UIManager.hideGlobalLoader();
+            
+            await this.loadDashboardData();
+            
+        } catch (err) {
+            UIManager.showMessage(UIManager.refs.loginMessageBox, err.message || String(err), false);
+        } finally {
+            if (UIManager.refs.globalLoader?.classList.contains('active')) {
+                UIManager.hideGlobalLoader();
+            }
+        }
+    }
+    
+    async handleGoogleLogin(response) {
+        UIManager.showGlobalLoader();
+        try {
+            const resp = await this.#api.post("loginWithGoogle", { credential: response.credential });
+
+            if (!resp.success) {
+                UIManager.showToast("Google login fallito: " + resp.error, 5000, "bg-red-600");
+                return;
+            }
+
+            this.saveSession(resp);
+            
+            // Passa subito alla dashboard
+            UIManager.switchSection(CONFIG.DOM_REFS.dashboardSection);
+            UIManager.hideGlobalLoader();
+            
+            await this.loadDashboardData();
+            
+        } catch (err) {
+            UIManager.showToast("Errore login Google: " + (err.message || err), 5000, "bg-red-600");
+        } finally {
+            if (UIManager.refs.globalLoader?.classList.contains('active')) {
+                UIManager.hideGlobalLoader();
+            }
+        }
+    }
+
+    handleLogout() {
+        this.#coach = { id: null, name: null, role: null };
+        this.#studentsData = {};
+        localStorage.removeItem(CONFIG.SESSION_KEY);
+        UIManager.refs.coachIdInput.value = "";
+        UIManager.refs.passwordInput.value = "";
+        UIManager.refs.googleLoginContainer?.classList.remove('hidden');
+        UIManager.switchSection(CONFIG.DOM_REFS.loginSection);
+        UIManager.hideMessage(UIManager.refs.loginMessageBox);
+    }
+
+    // ------------------- CARICAMENTI DASHBOARD/INIZIALI -------------------
+
+    updateCoachDisplay() {
+        const name = this.#coach.name || 'Coach';
+        UIManager.refs.coachNameDisplay.textContent = name;
+        UIManager.refs.callSectionCoachNameDisplay.textContent = name;
+    }
+
+    async loadDashboardData() {
+        await Promise.allSettled([
+            this.fetchMonthlyEarnings(),
+            this.loadStudentsForCallLog(),
+        ]);
+    }
+
+    async fetchMonthlyEarnings() {
+        if (!this.#coach.id) return;
+        UIManager.refs.earningsAmountDisplay.textContent = '...';
+        try {
+            const resp = await this.#api.get('getMonthlyEarnings', { coachId: this.#coach.id });
+            const value = (resp && resp.success) ? resp.earnings : 0;
+            UIManager.refs.earningsAmountDisplay.textContent = Number(value).toFixed(2);
+        } catch (err) {
+            UIManager.refs.earningsAmountDisplay.textContent = '--';
+        }
+    }
+    
+    async handleViewFolder() {
+        if (!this.#coach.id) return;
+        UIManager.showGlobalLoader();
+        try {
+            const resp = await this.#api.get('getPaymentFolderUrl', { coachId: this.#coach.id });
+            if (resp.success && resp.url) {
+                window.open(UIManager.normalizeUrl(resp.url), "_blank");
+            } else {
+                UIManager.showToast("No folder found", 4000, "bg-red-600");
+            }
+        } catch (err) {
+            UIManager.showToast("Error: " + err.message, 5000, "bg-red-600");
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+    
+    // ------------------- MODULO CALL LOG (Log Call) -------------------
+    
+    async loadStudentsForCallLog() {
+        const select = UIManager.refs.callLogStudentSelect;
+        if (!select) return;
+        select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
+
+        try {
+            const resp = await this.#api.get('getStudents');
+            let arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+            arr.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+
+            select.innerHTML = '<option value="" disabled selected>Select a student</option>';
+            arr.forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = id;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            select.innerHTML = '<option value="" disabled selected>Error loading students</option>';
+        }
+    }
+    
+    async handleCallLogSubmission(e) {
+        e.preventDefault();
+        UIManager.hideMessage(UIManager.refs.callLogMessageBox);
+        UIManager.showGlobalLoader();
+        
+        const data = Object.fromEntries(new FormData(UIManager.refs.callLogForm).entries());
+        
+        if (!data.studentName || !data.date || !data.callType) {
+             UIManager.showMessage(UIManager.refs.callLogMessageBox, "Please fill all required fields (Student, Date, Type).", false);
+             UIManager.hideGlobalLoader();
+             return;
+        }
+
+        // Mappa i parametri per il backend (studentName -> studentId)
+        const payload = {
+            coachId: this.#coach.id,
+            studentId: data.studentName, // ID dello studente
+            date: data.date,
+            callType: data.callType,
+            // Aggiungi tutti gli altri campi del form se il tuo backend li gestisce
+            ...data
+        };
+        // Rimuovi la chiave non necessaria dal payload
+        delete payload.studentName;
+
+        try {
+            // Endpoing corretto: logCall
+            const resp = await this.#api.post('logCall', payload);
+            
+            if (resp.success) {
+                UIManager.showMessage(UIManager.refs.callLogMessageBox, "Call logged successfully!", true);
+                UIManager.refs.callLogForm.reset();
+                this.handleViewCallHistory(); 
+            } else {
+                throw new Error(resp.error || 'Submission failed.');
+            }
+        } catch (err) {
+            UIManager.showMessage(UIManager.refs.callLogMessageBox, `Submission failed: ${err.message}`, false);
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+
+    // ------------------- MODULO HISTORY (Call History) -------------------
+    
+    async handleViewCallHistory() {
+        if (!this.#coach.id) return;
+        UIManager.switchSection(CONFIG.DOM_REFS.callHistorySection);
+        const tableBody = UIManager.refs.callHistoryTableBody;
+        if (!tableBody) return;
+        
+        tableBody.innerHTML = `<tr><td colspan="4">${UIManager.loaderHTML("Loading call history...")}</td></tr>`;
+        UIManager.showGlobalLoader();
+        
+        try {
+            const resp = await this.#api.get('getCallHistory', { coachId: this.#coach.id });
+            if (resp.success && Array.isArray(resp.history)) {
+                this.#callHistory = resp.history;
+                this.renderHistoryTable();
+            } else {
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No calls logged</td></tr>';
+            }
+        } catch (err) {
+            tableBody.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-500">Error: ${err.message}</td></tr>`;
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+
+    renderHistoryTable() {
+        const tableBody = UIManager.refs.callHistoryTableBody;
+        const filter = UIManager.refs.historyMonthYear.value;
+        if (!tableBody) return;
+
+        let filteredHistory = this.#callHistory;
+
+        if (filter) {
+            filteredHistory = this.#callHistory.filter(call => {
+                const callDate = new Date(call.date);
+                const filterDate = new Date(filter);
+                return callDate.getFullYear() === filterDate.getFullYear() && callDate.getMonth() === filterDate.getMonth();
+            });
+        }
+        
+        if (!filteredHistory.length) {
+            tableBody.innerHTML = '<tr><td colspan="4" class="text-center p-4">No calls found for this period.</td></tr>';
+            return;
+        }
+
+        const rows = filteredHistory.map(call => `
+            <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">${call.date}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${call.studentName}</td>
+                <td class="px-6 py-4 whitespace-nowrap">${call.callType}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <button class="text-blue-600 hover:text-blue-900" 
+                        onclick="window.appInstance.loadDebriefForCall('${call.studentName}', '${call.date}')">
+                        View/Edit Debrief
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+
+        tableBody.innerHTML = rows;
+    }
+    
+    loadDebriefForCall(studentName, date) {
+        UIManager.refs.debriefStudentSelect.value = studentName;
+        UIManager.refs.debriefDateInput.value = date;
+        UIManager.switchSection(CONFIG.DOM_REFS.coachingDebriefSection);
+        this.handleLoadDraftDebrief();
+    }
+
+
+    // ------------------- MODULO STUDENTI (Student info) -------------------
+    
+    handleViewStudents() {
+        UIManager.switchSection(CONFIG.DOM_REFS.studentsSection);
+        this.loadStudentsForInfoSection();
+    }
+    
+    async loadStudentsForInfoSection() {
+        const select = UIManager.refs.studentSelect;
+        const container = UIManager.refs.studentDetailsContainer;
+        if (!select || !container) return;
+        
+        select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
+        container.innerHTML = UIManager.loaderHTML("Select a student from the dropdown to view their details.");
+
+        UIManager.showGlobalLoader();
+
+        try {
+            const resp = await this.#api.get('getStudents');
+            let arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+            arr.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+
+            select.innerHTML = '<option value="" disabled selected>Select a student</option>';
+            arr.forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = id;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            select.innerHTML = '<option value="" disabled selected>Error loading students</option>';
+            container.innerHTML = `<p class="text-red-500 text-center">Error loading students: ${err.message}</p>`;
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+
+    async fetchAndRenderStudentDetails(studentId) {
+        const container = UIManager.refs.studentDetailsContainer;
+        if (!container) return;
+        container.innerHTML = UIManager.loaderHTML("Loading student details...");
+        UIManager.showGlobalLoader();
+
+        try {
+            // Student ID è corretto qui, viene usato dal select element
+            const [infoResp, contractsResp] = await Promise.all([
+                this.#api.get('getStudentInfo', { studentId }),
+                this.#api.get('getStudentContracts', { studentId }).catch(e => ({ success: false, contracts: [] }))
+            ]);
+
+            if (!infoResp.success || !infoResp.studentInfo) {
+                throw new Error(infoResp.error || "Student not found");
+            }
+
+            const info = infoResp.studentInfo;
+            const calls = info.calls || [];
+            delete info.calls;
+            const contracts = contractsResp.success ? contractsResp.contracts : [];
+
+            container.innerHTML = this.renderStudentDetailsHTML(studentId, info, calls, contracts); 
+
+        } catch (err) {
+            container.innerHTML = `<p class="text-red-500 text-center">Error: ${err.message}</p>`;
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+    
+    renderStudentDetailsHTML(studentId, info, calls, contracts) {
+        const infoHtml = Object.entries(info).map(([key, value]) => {
+            const displayKey = UIManager.capitalize(key.replace(/([A-Z])/g, ' $1').trim());
+            return `<div class="p-2 border-b"><span class="font-semibold">${displayKey}:</span> <span>${UIManager.escapeHTML(value)}</span></div>`;
+        }).join('');
+        
+        const contractRows = contracts.length ? contracts.map(c => `
+            <tr>
+                <td>${c.product || 'N/A'}</td>
+                <td>${c.startDate || 'N/A'}</td>
+                <td>${c.endDate || 'N/A'}</td>
+                <td><a href="${UIManager.normalizeUrl(c.link)}" target="_blank" class="text-blue-500 hover:underline">View</a></td>
+            </tr>
+        `).join('') : '<tr><td colspan="4" class="text-center">No contracts found.</td></tr>';
+
+        const callRows = calls.length ? calls.map(c => `
+            <tr>
+                <td>${c.date || 'N/A'}</td>
+                <td>${c.type || 'N/A'}</td>
+                <td><a href="#" onclick="window.appInstance.loadDebriefForCall('${studentId}', '${c.date}')" class="text-blue-500 hover:underline">View Debrief</a></td>
+            </tr>
+        `).join('') : '<tr><td colspan="3" class="text-center">No call history found.</td></tr>';
+
+
+        return `
+            <h3 class="text-xl font-bold mb-4">${UIManager.escapeHTML(studentId)} Details</h3>
+            <div class="bg-white shadow rounded-lg p-6 mb-8">
+                <h4 class="font-semibold text-lg mb-3 border-b pb-2">Student Info</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${infoHtml}</div>
+            </div>
+            <div class="bg-white shadow rounded-lg p-6 mb-8">
+                <h4 class="font-semibold text-lg mb-3 border-b pb-2">Contracts</h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead><tr><th>Product</th><th>Start Date</th><th>End Date</th><th>Link</th></tr></thead>
+                        <tbody class="divide-y divide-gray-200">${contractRows}</tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="bg-white shadow rounded-lg p-6">
+                <h4 class="font-semibold text-lg mb-3 border-b pb-2">Call History</h4>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead><tr><th>Date</th><th>Type</th><th>Debrief</th></tr></thead>
+                        <tbody class="divide-y divide-gray-200">${callRows}</tbody>
+                    </table>
+                </div>
+            </div>
+        `;
+    }
+
+    // ------------------- MODULO DEBRIEF (Coaching Debrief) -------------------
+
+    async handleViewDebrief() {
+        UIManager.switchSection(CONFIG.DOM_REFS.coachingDebriefSection);
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        UIManager.refs.debriefDateInput.value = `${yyyy}-${mm}-${dd}`;
+        await this.loadStudentsForDebrief();
+    }
+    
+    async loadStudentsForDebrief() {
+        const select = UIManager.refs.debriefStudentSelect;
+        if (!select) return;
+        select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
+
+        UIManager.showGlobalLoader();
+        try {
+            const resp = await this.#api.get('getStudents');
+            let arr = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+            arr.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+
+            select.innerHTML = '<option value="" disabled selected>Select a student</option>';
+            arr.forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = id;
+                select.appendChild(opt);
+            });
+        } catch (err) {
+            select.innerHTML = '<option value="" disabled selected>Error loading students</option>';
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+    
+    async handleSaveDraftDebrief(e) {
+        if(e) e.preventDefault();
+        UIManager.hideMessage(UIManager.refs.debriefMsg);
+        
+        const data = Object.fromEntries(new FormData(UIManager.refs.debriefForm).entries());
+        
+        if (!data.studentName || !data.date) {
+            UIManager.showMessage(UIManager.refs.debriefMsg, "Student and Date are required to save a draft.", false);
+            return;
+        }
+        
+        // Mappa i parametri per il backend
+        const payload = {
+            coachId: this.#coach.id,
+            studentId: data.studentName, // ID dello studente
+            ...data
+        };
+        delete payload.studentName; // Rimuovi la chiave non necessaria
+
+        UIManager.showGlobalLoader();
+        try {
+            // Endpoint corretto: saveDebrief (usato anche per i draft)
+            const resp = await this.#api.post('saveDebrief', payload);
+            
+            if (resp.success) {
+                UIManager.showToast("Draft saved successfully!", 3000, "bg-green-600");
+                this.handleLoadDraftDebrief();
+            } else {
+                throw new Error(resp.error || 'Failed to save draft.');
+            }
+        } catch (err) {
+            UIManager.showMessage(UIManager.refs.debriefMsg, `Error saving draft: ${err.message}`, false);
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+
+    async handleLoadDraftDebrief() {
+        const student = UIManager.refs.debriefStudentSelect.value;
+        const date = UIManager.refs.debriefDateInput.value;
+        const container = UIManager.refs.debriefDraftsContainer;
+        if (!container) return;
+        
+        container.innerHTML = UIManager.loaderHTML("Loading drafts...");
+        this.#debriefLoadedRow = null;
+        
+        if (!student) {
+            container.innerHTML = "<p class='text-gray-500'>Select a student to load drafts.</p>";
+            return;
+        }
+
+        try {
+            // GET request usa studentId nel parametro
+            const resp = await this.#api.get('getDebriefDrafts', { coachId: this.#coach.id, studentId: student, date: date });
+            
+            if (resp.success && Array.isArray(resp.drafts)) {
+                container.innerHTML = this.renderDraftsList(resp.drafts);
+            } else {
+                container.innerHTML = "<p class='text-gray-500'>No drafts found.</p>";
+            }
+        } catch (err) {
+            container.innerHTML = `<p class="text-red-500">Error loading drafts: ${err.message}</p>`;
+        }
+    }
+
+    renderDraftsList(drafts) {
+        if (!drafts.length) return "<p class='text-gray-500'>No drafts found.</p>";
+        
+        const rows = drafts.map(draft => {
+            const summary = draft.content.substring(0, 100) + '...';
+            return `
+                <div class="border p-3 mb-2 rounded flex justify-between items-center bg-gray-50">
+                    <div>
+                        <p class="font-semibold">${draft.timestamp || 'N/A'}</p>
+                        <p class="text-sm text-gray-600">${UIManager.escapeHTML(summary)}</p>
+                    </div>
+                    <button class="bg-blue-500 hover:bg-blue-600 text-white text-sm py-1 px-3 rounded"
+                        onclick="window.appInstance.applyDraftToForm(${UIManager.escapeHTML(JSON.stringify(draft))})">
+                        Load
+                    </button>
+                </div>
+            `;
+        }).join('');
+        
+        return `<div class="mt-4 max-h-60 overflow-y-auto">${rows}</div>`;
+    }
+    
+    applyDraftToForm(draft) {
+        const form = UIManager.refs.debriefForm;
+        if (!form) return;
+        
+        for (const [key, value] of Object.entries(draft)) {
+            const input = form.elements[key];
+            if (input) {
+                input.value = value;
+            }
+        }
+        this.#debriefLoadedRow = draft;
+        UIManager.showToast("Draft loaded into form.", 3000, "bg-green-600");
+    }
+
+    async handleSendDebrief(e) {
+        e.preventDefault();
+        UIManager.hideMessage(UIManager.refs.debriefMsg);
+        
+        const data = Object.fromEntries(new FormData(UIManager.refs.debriefForm).entries());
+        
+        if (!data.studentName || !data.date || !data.content) {
+            UIManager.showMessage(UIManager.refs.debriefMsg, "Student, Date, and Content are required to send the debrief.", false);
+            return;
+        }
+
+        // Mappa i parametri per il backend (studentName -> studentId)
+        const payload = {
+            coachId: this.#coach.id,
+            studentId: data.studentName, // ID dello studente
+            isFinal: true, // Flag per indicare al backend che è la sottomissione finale
+            ...data
+        };
+        delete payload.studentName;
+
+        UIManager.showGlobalLoader();
+        try {
+            // Endpoint corretto: saveDebrief
+            const resp = await this.#api.post('saveDebrief', payload);
+            
+            if (resp.success) {
+                UIManager.showMessage(UIManager.refs.debriefMsg, "Debrief sent successfully!", true);
+                UIManager.refs.debriefForm.reset();
+                this.handleLoadDraftDebrief();
+            } else {
+                throw new Error(resp.error || 'Failed to send debrief.');
+            }
+        } catch (err) {
+            UIManager.showMessage(UIManager.refs.debriefMsg, `Error sending debrief: ${err.message}`, false);
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+    
+    async handleAIPreview(fieldName) {
+        const student = UIManager.refs.debriefStudentSelect.value;
+        const content = document.querySelector(`[name="${fieldName}"]`)?.value;
+        const previewContainer = UIManager.refs.debriefAIPreviewContainer;
+
+        if (!student || !content) {
+            UIManager.showToast("Select a student and fill the content first.", 3000, "bg-yellow-600");
+            return;
+        }
+
+        previewContainer.innerHTML = UIManager.loaderHTML("Generating AI preview...");
+        
+        try {
+            // Endpoint corretto: generateDebriefText
+            const resp = await this.#api.post('generateDebriefText', { 
+                coachId: this.#coach.id, 
+                studentId: student, // ID dello studente
+                fieldName: fieldName, 
+                context: content 
+            });
+            
+            if (resp.success && resp.suggestion) {
+                previewContainer.innerHTML = `
+                    <div class="border p-4 rounded bg-yellow-50">
+                        <p class="font-bold">AI Suggestion for ${UIManager.capitalize(fieldName)}:</p>
+                        <p class="mt-2 whitespace-pre-wrap">${UIManager.escapeHTML(resp.suggestion)}</p>
+                        <div class="mt-4 flex gap-2">
+                            <button class="bg-green-500 hover:bg-green-600 text-white py-1 px-3 rounded"
+                                onclick="window.appInstance.applyAISuggestion('${fieldName}', \`${UIManager.escapeBackticks(resp.suggestion)}\`)">Apply</button>
+                            <button class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded"
+                                onclick="window.appInstance.discardAISuggestion()">Discard</button>
+                        </div>
+                    </div>
+                `;
+            } else {
+                previewContainer.innerHTML = `<p class="text-red-500">AI failed: ${resp.error || 'Unknown error'}</p>`;
+            }
+        } catch (err) {
+            previewContainer.innerHTML = `<p class="text-red-500">Error: ${err.message}</p>`;
+        }
+    }
+    
+    applyAISuggestion(fieldName, suggestion) {
+        document.querySelector(`[name="${fieldName}"]`).value = suggestion;
+        this.discardAISuggestion();
+        UIManager.showToast("Suggestion applied.", 2000, "bg-green-600");
+    }
+    
+    discardAISuggestion() {
+        UIManager.refs.debriefAIPreviewContainer.innerHTML = "";
+    }
+
+
+    // ------------------- MODULO FLASHCARDS -------------------
+    
+    handleViewFlashcards() {
+        UIManager.switchSection(CONFIG.DOM_REFS.flashcardsSection);
+        this.initFlashcardsLogic(); 
+    }
+
+    async initFlashcardsLogic() {
+        const container = UIManager.refs.flashcardsContainer;
+        const select = UIManager.refs.flashcardsStudentSelect;
+        if (!container || !select) return;
+
+        container.innerHTML = UIManager.loaderHTML("Loading students...");
+        select.innerHTML = '<option value="" disabled selected>Loading students...</option>';
+
+        UIManager.showGlobalLoader();
+        try {
+            const resp = await this.#api.get('getStudents');
+            let students = (resp && resp.success && Array.isArray(resp.students)) ? resp.students : [];
+            students.sort((a, b) => a.localeCompare(b, 'en', { sensitivity: 'base' }));
+
+            select.innerHTML = '<option value="" disabled selected>Select a student</option>';
+            students.forEach(id => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = id;
+                select.appendChild(opt);
+            });
+            
+            container.innerHTML = "<p class='text-gray-500 text-center'>Select a student to start the Flashcard session.</p>";
+            select.addEventListener('change', () => this.startFlashcardSession(select.value));
+
+        } catch (err) {
+             container.innerHTML = `<p class="text-red-500 text-center">Error loading students: ${err.message}</p>`;
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+
+    async startFlashcardSession(studentId) {
+        const container = UIManager.refs.flashcardsContainer;
+        container.innerHTML = UIManager.loaderHTML("Loading flashcards...");
+        
+        try {
+            const resp = await this.#api.get('getFlashcards', { studentId: studentId });
+            
+            if (!resp.success || !Array.isArray(resp.cards)) {
+                throw new Error(resp.error || "Failed to load flashcards.");
+            }
+            
+            this.#cardsByEn = new Map(resp.cards.map(c => [String(c.en || "").toLowerCase(), c]));
+            this.#pendingFlashcardUpdates = [];
+            this.#stepIndex = 0;
+            this.#sessionTotalSteps = 20;
+            this.#currentDeck = this.buildSmartDeck(resp.cards);
+            
+            const renderCard = (step, total, card) => {
+                UIManager.refs.flashcardStepDisplay.textContent = step + 1;
+                UIManager.refs.flashcardDeckTotal.textContent = total;
+                UIManager.refs.flashcardProgress.style.width = `${((step + 1) / total) * 100}%`;
+                
+                UIManager.refs.flashcardFront.textContent = UIManager.escapeHTML(card.en);
+                UIManager.refs.flashcardBack.textContent = UIManager.escapeHTML(card.it);
+                
+                UIManager.refs.flashcardSendUpdatesBtn.classList.add('hidden');
+                UIManager.refs.flashcardRetryRedsBtn.classList.add('hidden');
+                UIManager.refs.flashcardCardContainer.classList.remove('flipped');
+                UIManager.refs.flashcardControlsContainer.classList.remove('hidden');
+
+                UIManager.refs.flashcardGoodBtn.onclick = () => this.updateFlashcardScore(card, 'good');
+                UIManager.refs.flashcardBadBtn.onclick = () => this.updateFlashcardScore(card, 'bad');
+                
+                UIManager.refs.flashcardCardContainer.onclick = () => UIManager.refs.flashcardCardContainer.classList.toggle('flipped');
+            };
+
+            this.#renderNextCard = () => {
+                if (this.#stepIndex >= this.#sessionTotalSteps) {
+                    this.renderFlashcardSessionComplete();
+                    return;
+                }
+                
+                const next = this.pickCardFromSmartDeck(this.#currentDeck);
+                renderCard(this.#stepIndex, this.#sessionTotalSteps, next);
+                this.#stepIndex++;
+            };
+            
+            this.#renderNextCard();
+
+        } catch (err) {
+            container.innerHTML = `<p class="text-red-500 text-center">Error loading flashcards: ${err.message}</p>`;
+        }
+    }
+
+    buildSmartDeck(cards) {
+        const deck = [];
+        const now = Date.now();
+        
+        cards.forEach(card => {
+            const lastReview = card.lastReview ? new Date(card.lastReview).getTime() : 0;
+            const score = Math.max(card.score || 1, 1);
+
+            const priority = (now - lastReview) / (score * 86400000) + (10 / score);
+            
+            for (let i = 0; i < Math.min(Math.ceil(priority), 15); i++) {
+                deck.push(card);
+            }
+        });
+        
+        for (let i = deck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [deck[i], deck[j]] = [deck[j], deck[i]];
+        }
+        
+        return deck;
+    }
+
+    pickCardFromSmartDeck(deck) {
+        if (!deck || deck.length === 0) {
+            const fallback = Array.from(this.#cardsByEn.values());
+            return fallback[Math.floor(Math.random() * fallback.length)];
+        }
+        return deck.shift();
+    }
+    
+    updateFlashcardScore(card, status) {
+        this.#pendingFlashcardUpdates = this.#pendingFlashcardUpdates.filter(u => u.en !== card.en);
+        
+        let newScore = card.score;
+        if (status === 'good') {
+            newScore = Math.min((newScore || 1) + 1, 15);
+        } else if (status === 'bad') {
+            newScore = Math.max((newScore || 1) - 1, 1);
+        }
+        
+        this.#pendingFlashcardUpdates.push({
+            en: card.en,
+            score: newScore,
+            status: status
+        });
+        
+        card.score = newScore;
+        card.lastReview = new Date().toISOString().split('T')[0];
+        
+        this.#renderNextCard();
+    }
+    
+    renderFlashcardSessionComplete() {
+        UIManager.refs.flashcardCardContainer.innerHTML = `
+            <div class="p-8 text-center">
+                <h3 class="text-2xl font-bold text-green-600 mb-4">Session Complete!</h3>
+                <p>You reviewed ${this.#sessionTotalSteps} cards.</p>
+                <p class="mt-2">Ready to save your progress?</p>
+            </div>
+        `;
+        UIManager.refs.flashcardControlsContainer.classList.add('hidden');
+        UIManager.refs.flashcardSendUpdatesBtn.classList.remove('hidden');
+        
+        if (this.#pendingFlashcardUpdates.some(u => u.status === 'bad')) {
+            UIManager.refs.flashcardRetryRedsBtn.classList.remove('hidden');
+        } else {
+             UIManager.refs.flashcardRetryRedsBtn.classList.add('hidden');
+        }
+        
+    }
+
+    async sendFlashcardUpdates() {
+        if (this.#pendingFlashcardUpdates.length === 0) {
+            UIManager.showToast("No changes to save.", 3000, "bg-yellow-600");
+            return;
+        }
+
+        UIManager.showGlobalLoader();
+        try {
+            const updates = this.#pendingFlashcardUpdates.map(u => ({
+                en: u.en, score: u.score, lastReview: new Date().toISOString().split('T')[0],
+            }));
+            
+            const studentId = UIManager.refs.flashcardsStudentSelect.value;
+            // Endpoint corretto: updateFlashcardStatus
+            const resp = await this.#api.post('updateFlashcardStatus', { studentId, updates });
+            
+            if (resp.success) {
+                UIManager.showToast("Progress saved successfully!", 3000, "bg-green-600");
+                this.initFlashcardsLogic();
+            } else {
+                throw new Error(resp.error || 'Failed to save progress.');
+            }
+        } catch (err) {
+            UIManager.showToast(`Error saving progress: ${err.message}`, 5000, "bg-red-600");
+        } finally {
+            UIManager.hideGlobalLoader();
+        }
+    }
+    
+    handleRetryReds() {
+        const redCards = this.#pendingFlashcardUpdates
+          .filter(c => c.status === "bad")
+          .map(u => this.#cardsByEn.get(String(u.en || "").toLowerCase()))
+          .filter(Boolean);
+
+        if (!redCards.length) return;
+        
+        this.#pendingFlashcardUpdates = [];
+        this.#stepIndex = 0;
+        this.#sessionTotalSteps = 10;
+
+        const redDeck = this.buildSmartDeck(redCards);
+        
+        const renderNextRed = () => {
+            if (this.#stepIndex >= this.#sessionTotalSteps) {
+                this.renderFlashcardSessionComplete();
+                return;
+            }
+            const next = this.pickCardFromSmartDeck(redDeck);
+            
+            UIManager.refs.flashcardStepDisplay.textContent = this.#stepIndex + 1;
+            UIManager.refs.flashcardDeckTotal.textContent = this.#sessionTotalSteps;
+            
+            UIManager.refs.flashcardGoodBtn.onclick = () => this.updateFlashcardScore(next, 'good');
+            UIManager.refs.flashcardBadBtn.onclick = () => this.updateFlashcardScore(next, 'bad');
+            
+            this.#stepIndex++;
+            
+            // Renderizza la carta successiva dopo l'aggiornamento
+            UIManager.refs.flashcardFront.textContent = UIManager.escapeHTML(next.en);
+            UIManager.refs.flashcardBack.textContent = UIManager.escapeHTML(next.it);
+            UIManager.refs.flashcardCardContainer.classList.remove('flipped');
+        };
+
+        this.#renderNextCard = renderNextRed;
+        this.#renderNextCard();
+    }
+
+
+    // ------------------- GESTIONE EVENTI (Event Listeners) -------------------
+
+    initEventListeners() {
+        // Rendi accessibili le funzioni globali per l'HTML inline
+        window.appInstance = this;
+        window.handleGoogleLogin = this.handleGoogleLogin.bind(this);
+        window.handleAIPreview = (fieldName) => this.handleAIPreview(fieldName);
+        window.applyAISuggestion = (fieldName, suggestion) => this.applyAISuggestion(fieldName, suggestion);
+        window.discardAISuggestion = () => this.discardAISuggestion();
+
+        // Auth
+        UIManager.refs.loginForm?.addEventListener('submit', (e) => this.handleManualLogin(e));
+        UIManager.refs.logoutBtn?.addEventListener('click', () => this.handleLogout());
+
+        // Navigazione Menu
+        document.getElementById('viewDashboardBtn')?.addEventListener('click', () => UIManager.switchSection(CONFIG.DOM_REFS.dashboardSection));
+        document.getElementById('viewStudentsBtn')?.addEventListener('click', () => this.handleViewStudents());
+        UIManager.refs.viewFolderBtn?.addEventListener('click', () => this.handleViewFolder());
+        document.getElementById('viewCallLogBtn')?.addEventListener('click', () => UIManager.switchSection(CONFIG.DOM_REFS.callSection));
+        document.getElementById('viewCallHistoryBtn')?.addEventListener('click', () => this.handleViewCallHistory());
+        document.getElementById('viewCoachingDebriefBtn')?.addEventListener('click', () => this.handleViewDebrief());
+        document.getElementById('viewFlashcardsBtn')?.addEventListener('click', () => this.handleViewFlashcards());
+        
+        // Aggiunti i listener per le nuove sezioni
+        document.getElementById('viewBulletinBoardBtn')?.addEventListener('click', () => UIManager.switchSection(CONFIG.DOM_REFS.bulletinBoardSection));
+        document.getElementById('viewReportCardsBtn')?.addEventListener('click', () => UIManager.switchSection(CONFIG.DOM_REFS.reportCardsSection));
+        document.getElementById('viewTeachingMaterialsBtn')?.addEventListener('click', () => UIManager.switchSection(CONFIG.DOM_REFS.teachingMaterialsSection));
+
+
+        // Sezione Studenti
+        UIManager.refs.studentSelect?.addEventListener('change', (e) => {
+            if (e.target.value) this.fetchAndRenderStudentDetails(e.target.value);
+        });
+
+        // Sezione Call Log
+        UIManager.refs.callLogForm?.addEventListener('submit', (e) => this.handleCallLogSubmission(e));
+
+        // Sezione History (filtro)
+        UIManager.refs.historyMonthYear?.addEventListener('change', () => this.renderHistoryTable());
+        
+        // Sezione Debrief
+        UIManager.refs.debriefForm?.addEventListener('submit', (e) => this.handleSendDebrief(e));
+        UIManager.refs.debriefSaveDraftBtn?.addEventListener('click', (e) => this.handleSaveDraftDebrief(e));
+        UIManager.refs.debriefLoadDraftsBtn?.addEventListener('click', () => this.handleLoadDraftDebrief());
+        UIManager.refs.debriefStudentSelect?.addEventListener('change', () => this.handleLoadDraftDebrief());
+        UIManager.refs.debriefDateInput?.addEventListener('change', () => this.handleLoadDraftDebrief());
+        
+        // Sezione Flashcards
+        UIManager.refs.flashcardSendUpdatesBtn?.addEventListener('click', () => this.sendFlashcardUpdates());
+        UIManager.refs.flashcardRetryRedsBtn?.addEventListener('click', () => this.handleRetryReds());
+    }
+}
+
+// --------------------------------------------------------------------
+// 5. INIZIALIZZAZIONE GLOBALE
+// --------------------------------------------------------------------
+document.addEventListener('DOMContentLoaded', () => {
+    const app = new DashboardApp();
+    app.init();
+});
