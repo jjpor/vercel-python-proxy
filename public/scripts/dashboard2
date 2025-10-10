@@ -1,1 +1,576 @@
+(function() {
+    'use strict';
 
+    // =================================================================
+    // 1. DICHIARAZIONI GLOBALI (Protetto nello scope privato)
+    // =================================================================
+
+    // API proxy
+    const base_url = "https://vercel-python-proxy.vercel.app/api";
+    const deployment_id = "AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD"; 
+
+    // Stato
+    let CURRENT_COACH_ID = null;
+    let CURRENT_COACH_NAME = null;
+    let CURRENT_COACH_ROLE = null;
+    let CURRENT_ALLOCATIONS_BY_STUDENT = {};
+    let LAST_SELECTED_STUDENT = null;
+    let LAST_DRAFTS = [];
+    let pendingFlashcardUpdates = [];
+    let stepIndex = 0; // Necessario per le Flashcards
+    let sessionTotalSteps = 20; // Necessario per le Flashcards
+    
+    // Variabile globale per il debriefing (esposta alla fine)
+    let debriefLoadedRow = null; 
+
+    // =================================================================
+    // 2. DOM REFERENCES (Riferimenti agli elementi HTML)
+    // =================================================================
+
+    const loginForm = document.getElementById('loginForm');
+    const loginBtn = document.getElementById('loginBtn');
+    const loginMessageBox = document.getElementById('loginMessageBox');
+
+    const loginSection = document.getElementById('loginSection');
+    const dashboardSection = document.getElementById('dashboardSection');
+    const callSection = document.getElementById('callSection');
+
+    const coachIdInput = document.getElementById('coachId');
+    const passwordInput = document.getElementById('password');
+    const coachNameDisplay = document.getElementById('coachNameDisplay');
+    const callSectionCoachNameDisplay = document.getElementById('callSectionCoachNameDisplay');
+
+    const earningsAmountDisplay = document.getElementById('earningsAmount');
+
+    const logCallBtn = document.getElementById('logCallBtn');
+    const viewStudentsBtn = document.getElementById('viewStudentsBtn');
+    const viewFolderBtn = document.getElementById('viewFolderBtn');
+    const viewCallLogBtn = document.getElementById('viewCallLogBtn');
+    const viewReportCardsBtn = document.getElementById('viewReportCardsBtn');
+    const viewCoachingDebriefBtn = document.getElementById('viewCoachingDebriefBtn');
+    const coachingDebriefSection = document.getElementById('coachingDebriefSection');
+
+    // Coaching Debrief DOM
+    const debriefStudentSelect   = document.getElementById('debriefStudentSelect');
+    const debriefDateInput       = document.getElementById('debriefDateInput');
+    const debriefGoals           = document.getElementById('debrief_goals');
+    const debriefTopics          = document.getElementById('debrief_topics');
+    const debriefGrammar         = document.getElementById('debrief_grammar');
+    const debriefVocabulary      = document.getElementById('debrief_vocabulary');
+    const debriefPronunciation   = document.getElementById('debrief_pronunciation');
+    const debriefOther           = document.getElementById('debrief_other');
+    const debriefHomework        = document.getElementById('debrief_homework');
+    const debriefSaveDraftBtn    = document.getElementById('debriefSaveDraftBtn');
+    const debriefSendBtn         = document.getElementById('debriefSendBtn');
+    const debriefMsg             = document.getElementById('debriefMsg');
+    const debriefDraftsContainer = document.getElementById('debriefDraftsContainer');
+    const debriefAIPreview       = document.getElementById('debriefAIPreview');
+
+    const logoutBtn = document.getElementById('logoutBtn');
+
+    const studentIdSelect = document.getElementById('studentId');
+    const productIdSelect = document.getElementById('productIdSelect');
+    const groupStudentsContainer = document.getElementById('groupStudentsContainer');
+    const groupStudentsDynamic = document.getElementById('groupStudentsDynamic'); // Assumo questo ID per la parte dinamica
+
+    const callDateInput = document.getElementById('callDate');
+    const hourlyRateInput = document.getElementById('hourlyRate');
+    const technicalDurationInput = document.getElementById('technicalDuration');
+    const callDurationSelect = document.getElementById('callDuration');
+    const unitsInput = document.getElementById('units');
+    const contractIdInput = document.getElementById('contractId');
+    const productIdInput = document.getElementById('productId');
+    const submitBtn = document.getElementById('submitBtn');
+    const callMessageBox = document.getElementById('callMessageBox');
+
+    const callTypeRadios = document.querySelectorAll('input[name="callType"]');
+    const remainingCallsDisplay = document.getElementById('remainingCalls');
+
+    const callHistorySection = document.getElementById('callHistorySection');
+    const callHistoryTableBody = document.getElementById('callHistoryTableBody');
+    const backFromCallHistoryBtn = document.getElementById('backFromCallHistoryBtn');
+    const historyMonthYear = document.getElementById('historyMonthYear');
+    const historyMessage = document.getElementById('historyMessage');
+
+    const viewFlashcardsBtn = document.getElementById('viewFlashcardsBtn');
+    const flashcardsSection = document.getElementById('flashcardsSection');
+    const backToDashboardFromFlashcardsBtn = document.getElementById('backToDashboardFromFlashcardsBtn');
+    const flashcardsContainer = document.getElementById('flashcardsContainer');
+
+    // =================================================================
+    // 3. FUNZIONI UTILITY / HELPERS
+    // =================================================================
+
+    function showGlobalLoader() {
+        const el = document.getElementById('globalLoader');
+        if (el) el.classList.add('active');
+    }
+
+    function hideGlobalLoader() {
+        const el = document.getElementById('globalLoader');
+        if (el) el.classList.remove('active');
+    }
+
+    function showMessage(box, message, isSuccess = true) {
+        box.textContent = message;
+        box.className = 'mt-4 p-4 rounded-xl text-center block ' + (isSuccess ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700');
+    }
+
+    function hideMessage(box) {
+        box.textContent = '';
+        box.className = 'mt-4 p-4 rounded-xl text-center hidden';
+    }
+
+    function loaderHTML(message = "Loading...") {
+        return `<div class="flex flex-col items-center justify-center py-4 text-gray-500"><div class="spinner-container mb-2"><div class="spinner-dot"></div><div class="spinner-dot"></div><div class="spinner-dot"></div></div><p>${message}</p></div>`;
+    }
+
+    function showToast(msg, ms = 4000, color = "bg-green-600") {
+        const t = document.getElementById("toast");
+        if (!t) return;
+        t.className = `fixed top-4 right-4 text-white px-4 py-2 rounded-lg shadow-lg z-[99999] ${color}`;
+        t.textContent = msg;
+        t.classList.remove("hidden");
+        setTimeout(() => { t.classList.add("hidden"); }, ms);
+    }
+
+    function switchSection(showEl) {
+        document.querySelectorAll('.app-section').forEach(el => el.classList.add('hidden'));
+        if (showEl) showEl.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'auto' });
+        const header = document.getElementById('mainHeader');
+        if (!header) return;
+        const nav = header.querySelector('nav');
+        if (!nav) return;
+        const buttons = nav.querySelectorAll('button');
+        buttons.forEach(btn => btn.classList.remove('text-blue-600', 'font-semibold'));
+        buttons.forEach(btn => {
+            const onclk = btn.getAttribute('onclick') || '';
+            if (showEl && showEl.id && onclk.indexOf(showEl.id) !== -1) {
+                btn.classList.add('text-blue-600', 'font-semibold');
+            }
+        });
+    }
+    
+    // Utility AI
+    function capitalize(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+    function escapeHTML(str) { return str.replace(/[&<>'"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+    function escapeBackticks(str) { return str.replace(/`/g, "\\`"); }
+    
+    // Funzioni mancanti per le Flashcards (usate internamente, non necessitano di IIFE)
+    function buildSmartDeck(cards) { /* ... logica dal tuo file ... */ return cards; } 
+    function pickCardFromSmartDeck(deck) { /* ... logica dal tuo file ... */ return deck[0]; } // Esempio
+    function scoreToColor(score) { /* ... logica dal tuo file ... */ return 'green'; } // Esempio
+
+
+    // =================================================================
+    // 4. FUNZIONI API
+    // =================================================================
+
+    async function apiGet(action, params = {}) {
+        // ... (Logica dal tuo file) ...
+        const url = new URL(base_url + "/get");
+        url.searchParams.set("deployment_id", deployment_id);
+        url.searchParams.set("action", action);
+        url.searchParams.set("_ts", Date.now());
+        Object.entries(params).forEach(([k, v]) => {
+            if (v !== undefined && v !== null) url.searchParams.set(k, v);
+        });
+        const res = await fetch(url.toString());
+        if (!res.ok) throw new Error(`GET ${action} failed: ${res.status}`);
+        return res.json();
+    }
+
+    async function apiPost(action, body = {}) {
+        // ... (Logica dal tuo file) ...
+        const res = await fetch(base_url + "/post", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ deployment_id, action, ...body })
+        });
+        if (!res.ok) throw new Error(`POST ${action} failed: ${res.status}`);
+        return res.json();
+    }
+
+    // =================================================================
+    // 5. FUNZIONI DI LOGICA E CARICAMENTO
+    // =================================================================
+
+    // --- Login Handler (DEVE ESSERE ESPORTATO) ---
+    async function handleGoogleLogin(response) {
+        showGlobalLoader();
+
+        try {
+            const credential = response.credential;
+            const resp = await apiPost("loginWithGoogle", { credential });
+
+            if (!resp.success) {
+                showToast("Google login fallito: " + resp.error, 5000, "bg-red-600");
+                location.reload();
+                return;
+            }
+
+            document.getElementById('googleLoginContainer').classList.add('hidden');
+
+            CURRENT_COACH_ID = resp.coachId;
+            CURRENT_COACH_NAME = resp.coachName;
+            CURRENT_COACH_ROLE = resp.role;
+            
+            localStorage.setItem("coachSession", JSON.stringify({
+                id: CURRENT_COACH_ID,
+                name: CURRENT_COACH_NAME,
+                role: CURRENT_COACH_ROLE
+            }));
+
+            coachNameDisplay.textContent = CURRENT_COACH_NAME;
+            callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+
+            switchSection(dashboardSection);
+
+            hideGlobalLoader();
+
+            await fetchMonthlyEarnings();
+            await loadStudentIds();
+        } catch (err) {
+            showToast("Errore login Google: " + (err.message || err), 5000, "bg-red-600");
+        } finally {
+            hideGlobalLoader();
+        }
+    }
+
+    // --- Logica di Caricamento ---
+    async function fetchMonthlyEarnings() {
+        // ... (Logica dal tuo file) ...
+        if (!CURRENT_COACH_ID) return;
+        earningsAmountDisplay.textContent = '...';
+        try {
+            const resp = await apiGet('getMonthlyEarnings', { coachId: CURRENT_COACH_ID });
+            const value = (resp && resp.success) ? resp.earnings : 0;
+            earningsAmountDisplay.textContent = Number(value).toFixed(2);
+        } catch (err) {
+            earningsAmountDisplay.textContent = '--';
+        }
+    }
+
+    async function loadStudentIds() {
+        // ... (Logica dal tuo file) ...
+        if (!CURRENT_COACH_ID) return;
+        try {
+            const resp = await apiGet('getStudentIds', { coachId: CURRENT_COACH_ID });
+            // ... (Popola la select studentIdSelect) ...
+            studentIdSelect.innerHTML = '<option value="">Select Student</option>' + 
+                resp.studentIds.map(id => `<option value="${id}">${id}</option>`).join('');
+            
+            if (LAST_SELECTED_STUDENT && resp.studentIds.includes(LAST_SELECTED_STUDENT)) {
+                studentIdSelect.value = LAST_SELECTED_STUDENT;
+                fetchAndRenderStudentDetails(LAST_SELECTED_STUDENT);
+            }
+        } catch (err) {
+            showToast("Failed to load student IDs: " + err.message, 5000, "bg-red-600");
+        }
+    }
+
+    async function fetchAndRenderStudentDetails(studentId) {
+        // ... (Logica dal tuo file) ...
+        LAST_SELECTED_STUDENT = studentId;
+        await loadStudentContracts(studentId);
+        await renderHistoryTable();
+    }
+
+    async function loadStudentContracts(studentId) {
+        // ... (Logica dal tuo file) ...
+        if (!studentId) return;
+        try {
+            const resp = await apiGet('getStudentContracts', { studentId });
+            // ... (Logica per popolare productIdSelect e gestire CURRENT_ALLOCATIONS_BY_STUDENT) ...
+            CURRENT_ALLOCATIONS_BY_STUDENT = resp.contracts.reduce((acc, contract) => {
+                acc[contract.contractId] = contract;
+                return acc;
+            }, {});
+            
+            productIdSelect.innerHTML = '<option value="">Select Contract</option>' + 
+                resp.contracts.map(c => `<option value="${c.contractId}">${c.productId} (${c.remainingCalls} calls)</option>`).join('');
+            
+            updateFormState(); // Aggiorna lo stato iniziale del form
+        } catch (err) {
+            showToast("Failed to load contracts: " + err.message, 5000, "bg-red-600");
+        }
+    }
+
+    function updateFormState() {
+        // ... (Logica dal tuo file) ...
+        const selectedContractId = productIdSelect.value;
+        const selectedContract = CURRENT_ALLOCATIONS_BY_STUDENT[selectedContractId];
+        const selectedCallType = document.querySelector('input[name="callType"]:checked')?.value;
+        
+        if (selectedContract) {
+            remainingCallsDisplay.textContent = selectedContract.remainingCalls;
+            contractIdInput.value = selectedContract.contractId;
+            productIdInput.value = selectedContract.productId;
+
+            // Logica per mostrare/nascondere campi basati sul tipo di contratto/chiamata
+            if (selectedCallType === 'group') {
+                groupStudentsContainer.classList.remove('hidden');
+                hourlyRateInput.value = selectedContract.groupRate || ''; // Presumo ci sia groupRate
+            } else {
+                groupStudentsContainer.classList.add('hidden');
+                hourlyRateInput.value = selectedContract.rate || '';
+            }
+            // ... Logica per Duration/Units/RemainingCalls
+        } else {
+            remainingCallsDisplay.textContent = 'N/A';
+            contractIdInput.value = '';
+            productIdInput.value = '';
+            hourlyRateInput.value = '';
+        }
+    }
+
+    async function renderHistoryTable(month = null, year = null) {
+        // ... (Logica dal tuo file) ...
+        callHistoryTableBody.innerHTML = loaderHTML("Caricamento registro...");
+        historyMessage.classList.add('hidden');
+
+        try {
+            const studentId = studentIdSelect.value;
+            if (!studentId) {
+                 callHistoryTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Seleziona uno studente.</td></tr>';
+                 return;
+            }
+            
+            const [y, m] = historyMonthYear.value.split('-');
+            const params = { studentId, coachId: CURRENT_COACH_ID, month: m, year: y };
+
+            const resp = await apiGet('getCallHistory', params);
+            
+            if (!resp.history || resp.history.length === 0) {
+                 callHistoryTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-gray-500">Nessuna chiamata registrata.</td></tr>';
+                 return;
+            }
+
+            // ... (Logica per popolare callHistoryTableBody con i dati) ...
+            callHistoryTableBody.innerHTML = resp.history.map(row => `
+                <tr class="border-b">
+                    <td class="px-4 py-2">${row.date}</td>
+                    <td class="px-4 py-2">${row.type}</td>
+                    <td class="px-4 py-2">${row.duration}</td>
+                    <td class="px-4 py-2">${row.units}</td>
+                    <td class="px-4 py-2">${row.rate}</td>
+                    <td class="px-4 py-2">${row.product}</td>
+                </tr>
+            `).join('');
+
+        } catch (err) {
+            callHistoryTableBody.innerHTML = `<tr><td colspan="6" class="text-center py-4 text-red-500">Errore: ${err.message}</td></tr>`;
+        }
+    }
+
+    // --- Logica Flashcards ---
+    async function loadFlashcards() {
+        const container = flashcardsContainer;
+        if (!container) return;
+
+        container.innerHTML = loaderHTML("Caricamento flashcards e logica di studio...");
+        // ... (Logica Flashcards completa dal tuo file, inclusa renderCard, handleCardClick, buildDeck, ecc.) ...
+        // Assicurati che TUTTE le variabili interne come stepIndex, sessionTotalSteps, pendingFlashcardUpdates 
+        // usino const/let e siano definite nello scope dell'IIFE o all'interno di loadFlashcards se non globali.
+
+        try {
+            const resp = await apiGet('getFlashcards', { coachId: CURRENT_COACH_ID });
+            if (!resp.success) throw new Error(resp.error || 'Failed to fetch flashcards.');
+
+            const cards = resp.cards; // Array di oggetti carta
+            const cardsByEn = new Map(cards.map(c => [String(c.en || "").toLowerCase(), c]));
+
+            let deck = buildSmartDeck(cards);
+            
+            // ... (Tutta la logica di gestione della sessione e del rendering) ...
+
+            // Esempio di una funzione interna (da completare con la tua logica)
+            function renderCard(currentStep, totalSteps, cardData) { 
+                 // ... Logica per mostrare la carta (fronte/retro, pulsanti di valutazione) ... 
+            }
+            
+            let renderNextCard; // Funzione che gestisce il ciclo
+
+            // 🚀 Avvia la prima carta (inizialmente sessionTotalSteps è 20)
+            renderNextCard(); 
+
+        } catch (err) {
+            container.innerHTML = `<p class="text-red-500 text-center">Error loading flashcards: ${err.message}</p>`;
+        }
+    }
+    
+    // --- Logica Debriefing ---
+    async function loadDebriefDrafts(studentId) {
+         // ... (Logica per caricare i draft) ...
+         LAST_DRAFTS = [];
+         // ...
+         // Dopo il caricamento
+         debriefDraftsContainer.innerHTML = '...HTML dei draft...';
+    }
+    
+    // Altre funzioni di logica... (applyAISuggestion, discardAISuggestion, saveDebriefDraft, sendDebrief)
+
+
+    // =================================================================
+    // 6. EVENT LISTENERS
+    // =================================================================
+
+    // Login (normale)
+    loginForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        hideMessage(loginMessageBox);
+        showGlobalLoader();
+
+        try {
+            const coachId = coachIdInput.value.trim();
+            const password = passwordInput.value.trim();
+            const resp = await apiPost('login', { coachId, password });
+            if (!resp.success) throw new Error(resp.error || 'Login failed');
+
+            CURRENT_COACH_ID = String(resp.coachId);
+            CURRENT_COACH_NAME = resp.coachName || CURRENT_COACH_ID;
+            CURRENT_COACH_ROLE = resp.role;
+            if (!CURRENT_COACH_ROLE) throw new Error("Ruolo coach non trovato. Contatta l'amministratore.");
+
+            localStorage.setItem("coachSession", JSON.stringify({
+                id: CURRENT_COACH_ID,
+                name: CURRENT_COACH_NAME,
+                role: CURRENT_COACH_ROLE
+            }));
+
+            coachNameDisplay.textContent = CURRENT_COACH_NAME;
+            callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+
+            switchSection(dashboardSection);
+            hideGlobalLoader();
+            await fetchMonthlyEarnings();
+            await loadStudentIds();
+
+            document.getElementById('googleLoginContainer').classList.add('hidden');
+
+        } catch (err) {
+            showMessage(loginMessageBox, err.message || String(err), false);
+        } finally {
+            hideGlobalLoader();
+        }
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', () => {
+        CURRENT_COACH_ID = null;
+        CURRENT_COACH_NAME = null;
+        CURRENT_COACH_ROLE = null;
+        CURRENT_ALLOCATIONS_BY_STUDENT = {};
+        coachIdInput.value = "";
+        passwordInput.value = "";
+        localStorage.removeItem("coachSession");
+        document.getElementById('googleLoginContainer')?.classList.remove('hidden');
+        switchSection(loginSection);
+        hideMessage(loginMessageBox);
+    });
+
+    // Student/Call form listeners
+    studentIdSelect.addEventListener('change', (e) => {
+        fetchAndRenderStudentDetails(e.target.value);
+    });
+    productIdSelect.addEventListener('change', updateFormState);
+    callTypeRadios.forEach(radio => radio.addEventListener('change', updateFormState));
+    // ... (Altri listener per il form di call) ...
+    
+    submitBtn.addEventListener('click', async (e) => {
+        // ... Logica di submit della call ...
+    });
+
+    // Navigazione e History listeners
+    viewCallLogBtn.addEventListener('click', async () => {
+        switchSection(callHistorySection);
+        await renderHistoryTable();
+    });
+    backFromCallHistoryBtn.addEventListener('click', () => switchSection(dashboardSection));
+    historyMonthYear.addEventListener('change', renderHistoryTable);
+
+    // Flashcards listeners
+    viewFlashcardsBtn.addEventListener('click', async () => {
+        switchSection(flashcardsSection);
+        await loadFlashcards();
+    });
+    backToDashboardFromFlashcardsBtn.addEventListener('click', () => switchSection(dashboardSection));
+    
+    // Coaching Debrief listeners
+    viewCoachingDebriefBtn.addEventListener('click', async () => {
+        switchSection(coachingDebriefSection);
+        // ... Logica per caricare i dati del debriefing, come popolare debriefStudentSelect e caricare i draft
+        debriefStudentSelect.value = studentIdSelect.value;
+        loadDebriefDrafts(debriefStudentSelect.value);
+    });
+    debriefStudentSelect.addEventListener('change', e => loadDebriefDrafts(e.target.value));
+    debriefSaveDraftBtn.addEventListener('click', async () => { /* ... Logica save draft ... */ });
+    debriefSendBtn.addEventListener('click', async () => { /* ... Logica send debrief ... */ });
+    
+    // Draft loader globale
+    document.addEventListener('click', async (e) => {
+        if (!e.target.classList.contains('loadDraftBtn')) return;
+        // ... (Logica per caricare il draft)
+    });
+
+
+    // =================================================================
+    // 7. INITIALIZATION (Controllo sessione all'avvio)
+    // =================================================================
+
+    function initializeApp() {
+        const session = localStorage.getItem("coachSession");
+        if (session) {
+            try {
+                const data = JSON.parse(session);
+                CURRENT_COACH_ID = data.id;
+                CURRENT_COACH_NAME = data.name;
+                CURRENT_COACH_ROLE = data.role;
+
+                coachNameDisplay.textContent = CURRENT_COACH_NAME;
+                callSectionCoachNameDisplay.textContent = CURRENT_COACH_NAME;
+
+                document.getElementById('googleLoginContainer').classList.add('hidden');
+
+                switchSection(dashboardSection);
+                fetchMonthlyEarnings();
+                loadStudentIds();
+
+            } catch (e) {
+                console.error("Session data corrupted:", e);
+                localStorage.removeItem("coachSession");
+                switchSection(loginSection);
+            }
+        } else {
+            switchSection(loginSection);
+        }
+        
+        callDateInput.valueAsDate = new Date();
+    }
+    
+    // Avvio effettivo
+    initializeApp();
+
+
+    // =================================================================
+    // 8. ESPORTAZIONI GLOBALI
+    // =================================================================
+
+    // ESSENZIALE: handleGoogleLogin deve essere accessibile al widget Google
+    window.handleGoogleLogin = handleGoogleLogin;
+
+    // Utile: Esportare i loader se usati nell'HTML inline (es. <body onload="hideGlobalLoader()">)
+    window.showGlobalLoader = showGlobalLoader;
+    window.hideGlobalLoader = hideGlobalLoader;
+
+    // Utile: Esportare le funzioni AI se chiamate dall'HTML generato
+    // window.applyAISuggestion = applyAISuggestion;
+    // window.discardAISuggestion = discardAISuggestion;
+
+    // Per la gestione dei draft caricati:
+    window.debriefLoadedRow = debriefLoadedRow; // Se questa variabile DEVE essere manipolata da codice esterno
+
+
+// Fine dell'IIFE
+})();
