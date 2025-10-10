@@ -1,16 +1,8 @@
-/**
- * ====================================================================
- * DASHBOARD APP - VERSIONE FINALE E PERFETTAMENTE COMPATIBILE GOOGLE APPS SCRIPT
- * Corretti endpoint, nomi dei parametri (studentName -> studentId) e listener.
- * ====================================================================
- */
-
 // --------------------------------------------------------------------
 // 1. CONFIGURAZIONE E COSTANTI (Config & Constants)
 // --------------------------------------------------------------------
 const CONFIG = {
-    // ⚠️ VERIFICA CHE QUESTO SIA IL TUO URL COMPLETO DI DEPLOYMENT (deve finire con '/exec')
-    API_BASE_URL: "https://script.google.com/macros/s/AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD/exec",
+  API_BASE_URL: "https://script.google.com/macros/s/AKfycbwjmnBDZcMdBmP6Dj67S19qGDP61ujNtBvJZU65xqlUfluThOy1pphwjvACS9FVXJeD/exec",
     DEPLOYMENT_ID: "", 
     
     SESSION_KEY: "coachSession",
