@@ -11,18 +11,17 @@
   
 <!-- HEADER NAV -->
 <header id="mainHeader" class="w-full bg-white shadow-md fixed top-0 left-0 z-50">
-  <div class="max-w-6xl mx-auto px-0 py-0 flex items-center justify-between">
-    <!-- LOGO -->
-    <div class="flex items-center gap-3">
-      <a href="https://www.smartalk.online" target="_blank" rel="noopener noreferrer"
-         class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity duration-200">
-        <img src="https://res.cloudinary.com/dk5bqpodg/image/upload/v1756747292/smartalk_banner_ke1kkq.svg"
-             alt="Smartalk Logo" class="h-10 md:h-11">
-      </a>
-    </div>
+  <div class="max-w-6xl mx-auto flex items-center justify-between px-6 py-3">
+    
+    <!-- LOGO SX -->
+    <a href="https://www.smartalk.online" target="_blank" rel="noopener noreferrer"
+       class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
+      <img src="https://res.cloudinary.com/dk5bqpodg/image/upload/v1756747292/smartalk_banner_ke1kkq.svg"
+           alt="Smartalk Logo" class="h-10 md:h-11">
+    </a>
 
-    <!-- NAVIGATION -->
-    <nav class="flex flex-wrap gap-6 text-sm md:text-base font-semibold text-gray-700">
+    <!-- NAV DX -->
+    <nav class="hidden md:flex flex-wrap gap-6 text-sm md:text-base font-semibold text-gray-700">
       <button onclick="switchSection(dashboardSection)" class="hover:text-blue-600 transition-colors">Dashboard</button>
       <button onclick="switchSection(coachingDebriefSection)" class="hover:text-blue-600 transition-colors">Debrief</button>
       <button onclick="switchSection(callSection)" class="hover:text-blue-600 transition-colors">Log Call</button>
@@ -32,8 +31,10 @@
       <button onclick="switchSection(teachingMaterialsSection)" class="hover:text-blue-600 transition-colors">Teaching Materials</button>
       <button onclick="switchSection(flashcardsSection)" class="hover:text-blue-600 transition-colors">Flashcards</button>
     </nav>
+
   </div>
 </header>
+
 
 <!-- spacer per non far coprire il contenuto -->
 <div class="h-16"></div>
