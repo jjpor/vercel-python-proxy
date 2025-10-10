@@ -124,7 +124,7 @@ const flashcardsContainer = document.getElementById('flashcardsContainer');
 
 
 // Stato
-let CURRENT_COACH_ID = null;
+var CURRENT_COACH_ID = null;
 let CURRENT_COACH_NAME = null;
 let CURRENT_COACH_ROLE = null;
 let CURRENT_ALLOCATIONS_BY_STUDENT = {};
