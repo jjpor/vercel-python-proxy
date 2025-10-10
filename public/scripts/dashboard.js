@@ -110,7 +110,7 @@ const submitBtn = document.getElementById('submitBtn');
 const callMessageBox = document.getElementById('callMessageBox');
 
 const callTypeRadios = document.querySelectorAll('input[name="callType"]');
-var remainingCallsDisplay = document.getElementById('remainingCalls');
+const remainingCallsDisplay = document.getElementById('remainingCalls');
 
 const callHistorySection = document.getElementById('callHistorySection');
 const callHistoryTableBody = document.getElementById('callHistoryTableBody');
@@ -124,7 +124,7 @@ const flashcardsContainer = document.getElementById('flashcardsContainer');
 
 
 // Stato
-var CURRENT_COACH_ID = null;
+let CURRENT_COACH_ID = null;
 let CURRENT_COACH_NAME = null;
 let CURRENT_COACH_ROLE = null;
 let CURRENT_ALLOCATIONS_BY_STUDENT = {};
