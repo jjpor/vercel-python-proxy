@@ -12,33 +12,31 @@
   
 <body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
   
-        <!-- HEADER NAV -->
-        <header id="mainHeader" class="w-full bg-white shadow-md fixed top-0 left-0 z-50">
-          <div class="w-full flex items-center justify-between px-6 py-0.5">
-            
-            <!-- LOGO SX -->
-            <a href="https://www.smartalk.online" target="_blank" rel="noopener noreferrer"
-               class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
-              <img src="https://res.cloudinary.com/dk5bqpodg/image/upload/v1756747292/smartalk_banner_ke1kkq.svg"
-                   alt="Smartalk Logo" class="h-10 md:h-11">
-            </a>
+<!-- HEADER NAV UNIFICATO CON STILE SMARTALK -->
+<header id="mainHeader" class="fixed top-0 left-0 w-full z-50 bg-white shadow-md">
+  <nav class="container mx-auto px-4 sm:px-6 py-2 flex items-center justify-between">
+    
+    <!-- LOGO SMARTALK -->
+    <a href="https://www.smartalk.online/home" target="_blank" rel="noopener noreferrer"
+       class="flex items-center gap-3 hover:opacity-80 transition-opacity duration-200">
+      <img src="https://res.cloudinary.com/dk5bqpodg/image/upload/v1756747292/smartalk_banner_ke1kkq.svg"
+           alt="Smartalk Logo" class="h-10 sm:h-12">
+    </a>
 
-            <!-- NAV DX -->
-            <nav class="flex flex-wrap gap-6 text-sm md:text-base font-semibold text-gray-700">
-              <button onclick="switchSection(dashboardSection)" class="hover:text-blue-600 transition-colors">Dashboard</button>
-              <button onclick="switchSection(coachingDebriefSection)" class="hover:text-blue-600 transition-colors">Debrief</button>
-              <button onclick="switchSection(callSection)" class="hover:text-blue-600 transition-colors">Log Call</button>
-              <button onclick="switchSection(callHistorySection)" class="hover:text-blue-600 transition-colors">Call History</button>
-              <button onclick="switchSection(studentsSection)" class="hover:text-blue-600 transition-colors">Students</button>
-              <button onclick="switchSection(reportCardsSection)" class="hover:text-blue-600 transition-colors">Report Cards</button>
-              <button onclick="switchSection(teachingMaterialsSection)" class="hover:text-blue-600 transition-colors">Teaching Materials</button>
-              <button onclick="switchSection(flashcardsSection)" class="hover:text-blue-600 transition-colors">Flashcards</button>
-            </nav>
-        
-          </div>
-        </header>
+    <!-- MENU NAVIGAZIONE DASHBOARD -->
+    <ul class="flex items-center space-x-4 sm:space-x-8 text-base sm:text-lg font-semibold text-gray-700">
+      <li><button onclick="switchSection(dashboardSection)" class="hover:text-blue-600 transition-colors">Dashboard</button></li>
+      <li><button onclick="switchSection(coachingDebriefSection)" class="hover:text-blue-600 transition-colors">Debrief</button></li>
+      <li><button onclick="switchSection(callSection)" class="hover:text-blue-600 transition-colors">Log Call</button></li>
+      <li><button onclick="switchSection(callHistorySection)" class="hover:text-blue-600 transition-colors">Call History</button></li>
+      <li><button onclick="switchSection(studentsSection)" class="hover:text-blue-600 transition-colors">Students</button></li>
+      <li><button onclick="switchSection(reportCardsSection)" class="hover:text-blue-600 transition-colors">Report Cards</button></li>
+      <li><button onclick="switchSection(teachingMaterialsSection)" class="hover:text-blue-600 transition-colors">Teaching Materials</button></li>
+      <li><button onclick="switchSection(flashcardsSection)" class="hover:text-blue-600 transition-colors">Flashcards</button></li>
+    </ul>
 
-
+  </nav>
+</header>
 
         <!-- spacer per non far coprire il contenuto -->
         <div class="h-16"></div>
