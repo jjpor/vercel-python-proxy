@@ -582,28 +582,26 @@ if (btn && !btn.dataset.bound) {
             <table class="min-w-full text-sm">
               <thead class="bg-gray-100 sticky top-0">
                 <tr>
-                  <th class="px-3 py-2 border">Date</th>
-                  <th class="px-3 py-2 border">Student</th>
-                  <th class="px-3 py-2 border">Lesson Plan</th>
-                  <th class="px-3 py-2 border">Goals</th>
-                  <th class="px-3 py-2 border">Topics</th>
-                  <th class="px-3 py-2 border">Grammar</th>
-                  <th class="px-3 py-2 border">Vocabulary</th>
-                  <th class="px-3 py-2 border">Pronunciation</th>
-                  <th class="px-3 py-2 border">Homework</th>
-                  <th class="px-3 py-2 border">Other</th>
-                  <th class="px-3 py-2 border">Load</th>
+                  <th class="px-3 py-2 border w-[90px]">Date</th>
+                  <th class="px-3 py-2 border w-[100px]">Student</th>
+                  <th class="px-3 py-2 border w-[160px]">Goals</th>
+                  <th class="px-3 py-2 border w-[160px]">Topics</th>
+                  <th class="px-3 py-2 border w-auto">Grammar</th>
+                  <th class="px-3 py-2 border w-auto">Vocabulary</th>
+                  <th class="px-3 py-2 border w-auto">Pronunciation</th>
+                  <th class="px-3 py-2 border w-auto">Homework</th>
+                  <th class="px-3 py-2 border w-auto">Other</th>
+                  <th class="px-3 py-2 border w-[70px] text-center">Load</th>
                 </tr>
               </thead>
               <tbody>`;
-
+      
       resp.drafts.forEach(d => {
-        const safe = v => (v || "").replace(/\n/g, " ").slice(0, 40);
+        const safe = v => (v || "").replace(/\n/g, " ").slice(0, 80);
         html += `
           <tr class="border-b hover:bg-gray-50">
-            <td class="px-3 py-2">${d.dateISO || '-'}</td>
+            <td class="px-3 py-2">${(d.dateISO || '-').slice(0, 10)}</td>
             <td class="px-3 py-2">${d.studentId || '-'}</td>
-            <td class="px-3 py-2">${safe(d.lessonplan)}</td>
             <td class="px-3 py-2">${safe(d.goals)}</td>
             <td class="px-3 py-2">${safe(d.topics)}</td>
             <td class="px-3 py-2">${safe(d.grammar)}</td>
@@ -617,9 +615,10 @@ if (btn && !btn.dataset.bound) {
             </td>
           </tr>`;
       });
-
+      
       html += `</tbody></table></div></div>`;
       container.innerHTML = html;
+
 
       // funzione per riempire i campi del debrief
       function fillDebriefFields(draft) {
