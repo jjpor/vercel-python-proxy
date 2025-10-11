@@ -310,30 +310,49 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
       <div>
         <label for="debriefStudentSelect" class="block text-sm font-semibold text-gray-700 mb-1">Student</label>
-        <select id="debriefStudentSelect" class="form-input">
+        <select id="debriefStudentSelect"
+          class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800">
           <option value="" disabled selected>Select a student</option>
         </select>
       </div>
       <div>
         <label for="debriefDateInput" class="block text-sm font-semibold text-gray-700 mb-1">Date</label>
-        <input id="debriefDateInput" type="date" class="form-input" />
+        <input id="debriefDateInput" type="date"
+          class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800" />
       </div>
+    </div>
+
+    <!-- LESSON PLAN -->
+    <div class="bg-gray-50 rounded-xl p-4 border border-gray-200 mb-6">
+      <div class="flex items-center justify-between mb-2">
+        <h3 class="font-semibold text-gray-800">Lesson Plan</h3>
+        <div class="flex gap-2">
+          <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+            data-ai-preview="lessonplan">AI Preview</button>
+          <button id="debriefGeneratePlanBtn"
+            class="px-3 py-1 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded">✨ Generate Plan</button>
+        </div>
+      </div>
+      <textarea id="debrief_lessonplan"
+        class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800 resize-y"
+        rows="5"></textarea>
+      <div id="aiPreview_lessonplan" class="hidden mt-3"></div>
     </div>
 
     <!-- MAIN GRID -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-      <!-- LEFT COLUMN -->
+      <!-- LEFT -->
       <div class="space-y-6">
         <!-- GOALS -->
         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-semibold text-gray-800">Goals</h3>
-            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" data-ai-preview="goals">
-              AI Preview
-            </button>
+            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+              data-ai-preview="goals">AI Preview</button>
           </div>
-          <textarea id="debrief_goals" class="form-textarea" rows="5"></textarea>
+          <textarea id="debrief_goals"
+            class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800 resize-y"
+            rows="5"></textarea>
           <div id="aiPreview_goals" class="hidden mt-3"></div>
         </div>
 
@@ -341,11 +360,12 @@
         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-semibold text-gray-800">Topics</h3>
-            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" data-ai-preview="topics">
-              AI Preview
-            </button>
+            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+              data-ai-preview="topics">AI Preview</button>
           </div>
-          <textarea id="debrief_topics" class="form-textarea" rows="5"></textarea>
+          <textarea id="debrief_topics"
+            class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800 resize-y"
+            rows="5"></textarea>
           <div id="aiPreview_topics" class="hidden mt-3"></div>
         </div>
 
@@ -353,16 +373,17 @@
         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-semibold text-gray-800">Grammar</h3>
-            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" data-ai-preview="grammar">
-              AI Preview
-            </button>
+            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+              data-ai-preview="grammar">AI Preview</button>
           </div>
-          <textarea id="debrief_grammar" class="form-textarea" rows="4"></textarea>
+          <textarea id="debrief_grammar"
+            class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800 resize-y"
+            rows="4"></textarea>
           <div id="aiPreview_grammar" class="hidden mt-3"></div>
         </div>
       </div>
 
-      <!-- RIGHT COLUMN -->
+      <!-- RIGHT -->
       <div class="space-y-6">
         <!-- VOCABULARY -->
         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
@@ -372,12 +393,12 @@
               <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
                 data-ai-preview="vocabulary">AI Preview</button>
               <button id="debriefGenerateFlashcardsBtn"
-                class="px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded">
-                🃏 Flashcards
-              </button>
+                class="px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded">🃏 Flashcards</button>
             </div>
           </div>
-          <textarea id="debrief_vocabulary" class="form-textarea" rows="4"></textarea>
+          <textarea id="debrief_vocabulary"
+            class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800 resize-y"
+            rows="4"></textarea>
           <div id="aiPreview_vocabulary" class="hidden mt-3"></div>
         </div>
 
@@ -388,7 +409,9 @@
             <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
               data-ai-preview="pronunciation">AI Preview</button>
           </div>
-          <textarea id="debrief_pronunciation" class="form-textarea" rows="4"></textarea>
+          <textarea id="debrief_pronunciation"
+            class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800 resize-y"
+            rows="4"></textarea>
           <div id="aiPreview_pronunciation" class="hidden mt-3"></div>
         </div>
 
@@ -396,16 +419,12 @@
         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-semibold text-gray-800">Homework</h3>
-            <div class="flex gap-2">
-              <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
-                data-ai-preview="homework">AI Preview</button>
-              <button id="debriefGeneratePlanBtn"
-                class="px-3 py-1 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded">
-                ✨ Generate Plan
-              </button>
-            </div>
+            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+              data-ai-preview="homework">AI Preview</button>
           </div>
-          <textarea id="debrief_homework" class="form-textarea" rows="5"></textarea>
+          <textarea id="debrief_homework"
+            class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800 resize-y"
+            rows="5"></textarea>
           <div id="aiPreview_homework" class="hidden mt-3"></div>
         </div>
 
@@ -413,42 +432,35 @@
         <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
           <div class="flex items-center justify-between mb-2">
             <h3 class="font-semibold text-gray-800">Other Notes</h3>
-            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded" data-ai-preview="other">
-              AI Preview
-            </button>
+            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+              data-ai-preview="other">AI Preview</button>
           </div>
-          <textarea id="debrief_other" class="form-textarea" rows="5"></textarea>
+          <textarea id="debrief_other"
+            class="w-full border border-gray-300 rounded-xl p-3 focus:border-blue-500 focus:ring focus:ring-blue-200 focus:outline-none text-gray-800 resize-y"
+            rows="5"></textarea>
           <div id="aiPreview_other" class="hidden mt-3"></div>
         </div>
       </div>
     </div>
 
-    <!-- ACTION BAR -->
+    <!-- ACTION BAR (invertita per toast a destra) -->
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-8 border-t pt-4">
-      <!-- LEFT: Load drafts -->
-      <button id="debriefLoadDraftsBtn"
-        class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-xl hover:bg-gray-300">
-        💾 Load Drafts
-      </button>
-
-      <!-- RIGHT: Delete / Save / Send -->
-      <div class="flex gap-3 justify-end">
+      <!-- LEFT: Delete / Save / Send -->
+      <div class="flex gap-3 justify-start">
         <button id="debriefDeleteDraftBtn"
-          class="bg-red-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-red-700">
-          Delete Draft
-        </button>
+          class="bg-red-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-red-700">Delete Draft</button>
         <button id="debriefSaveDraftBtn"
-          class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-blue-700">
-          Save Draft
-        </button>
+          class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-blue-700">Save Draft</button>
         <button id="debriefSendBtn"
-          class="bg-green-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-green-700">
-          Send Debrief
-        </button>
+          class="bg-green-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-green-700">Send Debrief</button>
       </div>
+
+      <!-- RIGHT: Load drafts -->
+      <button id="debriefLoadDraftsBtn"
+        class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-xl hover:bg-gray-300">💾 Load Drafts</button>
     </div>
 
-    <!-- DRAFTS TABLE -->
+    <!-- SAVED DRAFTS -->
     <div id="debriefDraftsContainer" class="mt-8 hidden">
       <div class="border-t pt-4">
         <h3 class="text-lg font-semibold mb-2">💾 Saved Drafts</h3>
