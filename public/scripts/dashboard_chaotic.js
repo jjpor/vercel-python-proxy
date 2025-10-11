@@ -554,95 +554,120 @@ localStorage.setItem("coachSession", JSON.stringify({
   }
 });
 
-     // crea bottone e container drafts (una sola volta, persistenti)
-    const labelEl = document.querySelector('label[for="debriefStudentSelect"]');
-    const btn = document.getElementById('debriefLoadDraftsBtn');
-    const container = document.getElementById('debriefDraftsContainer');
+  // === LOAD DRAFTS (complete version) ===
+const btn = document.getElementById('debriefLoadDraftsBtn');
+const container = document.getElementById('debriefDraftsContainer');
 
-    if (btn && !btn.dataset.bound) {
-      btn.dataset.bound = "1"; // evita duplicati
-    
-      btn.addEventListener('click', async () => {
-        const studentId = debriefStudentSelect.value || null;
-        container.innerHTML = loaderHTML("Loading drafts...");
-        container.classList.remove('hidden');
-        showGlobalLoader();
-    
-        try {
-          const resp = await apiGet('getDebriefDrafts', { coachId: CURRENT_COACH_ID, studentId });
-          if (!resp.success || !resp.drafts?.length) {
-            container.innerHTML = '<p class="text-gray-500 mt-4 border-t pt-3">No drafts found.</p>';
-            return;
-          }
-    
-          let html = `
-            <div class="border-t mt-6 pt-4">
-              <h3 class="text-lg font-semibold mb-2">💾 Saved Drafts</h3>
-              <table class="min-w-full border border-gray-200 rounded-xl text-sm">
-                <thead class="bg-gray-100">
-                  <tr>
-                    <th class="px-3 py-2 border">Date</th>
-                    <th class="px-3 py-2 border">Student</th>
-                    <th class="px-3 py-2 border">Goals</th>
-                    <th class="px-3 py-2 border">Topics</th>
-                    <th class="px-3 py-2 border">Load</th>
-                  </tr>
-                </thead>
-                <tbody>`;
-          resp.drafts.forEach(d => {
-            html += `
-              <tr class="border-b hover:bg-gray-50">
-                <td class="px-3 py-2">${d.dateISO || '-'}</td>
-                <td class="px-3 py-2">${d.studentId || '-'}</td>
-                <td class="px-3 py-2">${(d.goals || '').slice(0, 50)}</td>
-                <td class="px-3 py-2">${(d.topics || '').slice(0, 50)}</td>
-                <td class="px-3 py-2 text-center">
-                  <button class="loadDraftBtn px-2 py-1 bg-green-600 text-white rounded text-xs"
-                          data-row="${d.rowNumber}">Load</button>
-                </td>
-              </tr>`;
-          });
-          html += '</tbody></table></div>';
-          container.innerHTML = html;
-        } catch (err) {
-          container.innerHTML = `<p class="text-red-500 text-sm mt-4">Error: ${err.message}</p>`;
-        } finally {
-          hideGlobalLoader();
-        }
+if (btn && !btn.dataset.bound) {
+  btn.dataset.bound = "1"; // evita duplicati
+
+  btn.addEventListener('click', async () => {
+    const studentId = debriefStudentSelect.value || null;
+    container.innerHTML = "";
+    container.classList.remove('hidden');
+    showGlobalLoader();
+
+    try {
+      const resp = await apiGet('getDebriefDrafts', { coachId: CURRENT_COACH_ID, studentId });
+      if (!resp.success || !resp.drafts?.length) {
+        container.innerHTML = '<p class="text-gray-500 mt-4 border-t pt-3">No drafts found.</p>';
+        return;
+      }
+
+      // costruiamo la tabella dinamicamente
+      let html = `
+        <div class="border-t mt-6 pt-4">
+          <h3 class="text-lg font-semibold mb-2">💾 Saved Drafts</h3>
+          <div class="max-h-80 overflow-y-auto rounded-xl border border-gray-200">
+            <table class="min-w-full text-sm">
+              <thead class="bg-gray-100 sticky top-0">
+                <tr>
+                  <th class="px-3 py-2 border">Date</th>
+                  <th class="px-3 py-2 border">Student</th>
+                  <th class="px-3 py-2 border">Lesson Plan</th>
+                  <th class="px-3 py-2 border">Goals</th>
+                  <th class="px-3 py-2 border">Topics</th>
+                  <th class="px-3 py-2 border">Grammar</th>
+                  <th class="px-3 py-2 border">Vocabulary</th>
+                  <th class="px-3 py-2 border">Pronunciation</th>
+                  <th class="px-3 py-2 border">Homework</th>
+                  <th class="px-3 py-2 border">Other</th>
+                  <th class="px-3 py-2 border">Load</th>
+                </tr>
+              </thead>
+              <tbody>`;
+
+      resp.drafts.forEach(d => {
+        const safe = v => (v || "").replace(/\n/g, " ").slice(0, 40);
+        html += `
+          <tr class="border-b hover:bg-gray-50">
+            <td class="px-3 py-2">${d.dateISO || '-'}</td>
+            <td class="px-3 py-2">${d.studentId || '-'}</td>
+            <td class="px-3 py-2">${safe(d.lessonplan)}</td>
+            <td class="px-3 py-2">${safe(d.goals)}</td>
+            <td class="px-3 py-2">${safe(d.topics)}</td>
+            <td class="px-3 py-2">${safe(d.grammar)}</td>
+            <td class="px-3 py-2">${safe(d.vocabulary)}</td>
+            <td class="px-3 py-2">${safe(d.pronunciation)}</td>
+            <td class="px-3 py-2">${safe(d.homework)}</td>
+            <td class="px-3 py-2">${safe(d.other)}</td>
+            <td class="px-3 py-2 text-center">
+              <button class="loadDraftBtn px-2 py-1 bg-green-600 text-white rounded text-xs"
+                      data-row="${d.rowNumber}">Load</button>
+            </td>
+          </tr>`;
       });
-    }
 
-   
-   // --- Listener globale per i bottoni "Load" dei drafts (fuori da qualsiasi altro evento) ---
-   document.addEventListener('click', async (e) => {
-     if (!e.target.classList.contains('loadDraftBtn')) return;
-     const row = e.target.dataset.row;
-     if (!row) return;
-   
-     window.debriefLoadedRow = row;
-     showGlobalLoader();
-   
-     try {
-       const resp = await apiGet('getDebriefByRow', { coachId: CURRENT_COACH_ID, rowNumber: row });
-       if (!resp.success || !resp.draft) throw new Error(resp.error || "Draft not found");
-   
-       const d = resp.draft;
-       document.getElementById('debrief_goals').value = d.goals || '';
-       document.getElementById('debrief_topics').value = d.topics || '';
-       document.getElementById('debrief_grammar').value = d.grammar || '';
-       document.getElementById('debrief_vocabulary').value = d.vocabulary || '';
-       document.getElementById('debrief_pronunciation').value = d.pronunciation || '';
-       document.getElementById('debrief_homework').value = d.homework || '';
-       document.getElementById('debrief_other').value = d.other || '';
-   
-       showToast("✅ Draft loaded", 3000, "bg-green-600");
-     } catch (err) {
-       console.error("Load draft error:", err);
-       showToast(`❌ ${err.message}`, 3000, "bg-red-600");
-     } finally {
-       hideGlobalLoader();
-     }
-   });
+      html += `</tbody></table></div></div>`;
+      container.innerHTML = html;
+
+      // funzione per riempire i campi del debrief
+      function fillDebriefFields(draft) {
+        const map = {
+          lessonplan: 'debrief_lessonplan',
+          goals: 'debrief_goals',
+          topics: 'debrief_topics',
+          grammar: 'debrief_grammar',
+          vocabulary: 'debrief_vocabulary',
+          pronunciation: 'debrief_pronunciation',
+          homework: 'debrief_homework',
+          other: 'debrief_other'
+        };
+        for (const key in map) {
+          const el = document.getElementById(map[key]);
+          if (el && draft[key] !== undefined) el.value = draft[key] || '';
+        }
+      }
+
+      // listener per ogni bottone "Load"
+      container.querySelectorAll('.loadDraftBtn').forEach(loadBtn => {
+        loadBtn.addEventListener('click', async e => {
+          const rowNumber = e.target.dataset.row;
+          showGlobalLoader();
+          try {
+            const single = await apiGet('getDebriefByRow', { rowNumber });
+            if (single.success && single.draft) {
+              fillDebriefFields(single.draft);
+              showToast("Draft loaded ✅", 3000, "bg-green-600");
+            } else {
+              showToast("Failed to load draft", 3000, "bg-red-600");
+            }
+          } catch (err) {
+            showToast(`Error: ${err.message}`, 3000, "bg-red-600");
+          } finally {
+            hideGlobalLoader();
+          }
+        });
+      });
+
+    } catch (err) {
+      container.innerHTML = `<p class="text-red-500 text-sm mt-4">Error: ${err.message}</p>`;
+    } finally {
+      hideGlobalLoader();
+    }
+  });
+}
+
 
   
   viewCoachingDebriefBtn.addEventListener('click', async () => {
