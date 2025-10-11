@@ -292,142 +292,175 @@
   
 <!-- COACHING DEBRIEF -->
 <div id="coachingDebriefSection" class="hidden app-section">
-  <!-- HEADER -->
-<div class="flex justify-between items-center mb-8 border-b border-gray-200 pb-3">
-  <div class="flex items-center gap-3">
-    <span class="text-3xl">💬</span>
-    <h2 class="text-2xl font-semibold text-gray-800">Coaching Debrief</h2>
+  <div class="bg-white p-8 rounded-2xl shadow-xl border border-gray-200">
+
+    <!-- HEADER -->
+    <div class="flex items-center justify-between border-b pb-4 mb-6">
+      <div class="flex items-center gap-3">
+        <span class="text-3xl">💬</span>
+        <h2 class="text-2xl font-semibold text-gray-800">Coaching Debrief</h2>
+      </div>
+      <button id="backToDashboardFromDebriefBtn"
+        class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500">
+        Back to Dashboard
+      </button>
+    </div>
+
+    <!-- META (Student / Date) -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label for="debriefStudentSelect" class="block text-sm font-medium text-gray-700 mb-1">Student</label>
+        <select id="debriefStudentSelect" class="form-input">
+          <option value="" disabled selected>Select a student</option>
+        </select>
+      </div>
+      <div>
+        <label for="debriefDateInput" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+        <input id="debriefDateInput" type="date" class="form-input" />
+      </div>
+    </div>
+
+    <!-- 2-COLUMN BOARD -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+      <!-- LEFT -->
+      <div class="space-y-6">
+        <!-- Goals -->
+        <div class="bg-gray-50 rounded-xl p-4 border">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-gray-800">Session Goals</h3>
+            <div class="flex gap-2">
+              <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                      data-ai-preview="goals">AI Preview</button>
+            </div>
+          </div>
+          <textarea id="debrief_goals" class="form-textarea" rows="5" disabled></textarea>
+          <div id="aiPreview_goals" class="hidden mt-3"></div>
+        </div>
+
+        <!-- Topics -->
+        <div class="bg-gray-50 rounded-xl p-4 border">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-gray-800">Hot Topics</h3>
+            <div class="flex gap-2">
+              <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                      data-ai-preview="topics">AI Preview</button>
+            </div>
+          </div>
+          <textarea id="debrief_topics" class="form-textarea" rows="5" disabled></textarea>
+          <div id="aiPreview_topics" class="hidden mt-3"></div>
+        </div>
+      </div>
+
+      <!-- RIGHT -->
+      <div class="space-y-6">
+        <!-- Grammar -->
+        <div class="bg-gray-50 rounded-xl p-4 border">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-gray-800">Grammar</h3>
+            <div class="flex gap-2">
+              <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                      data-ai-preview="grammar">AI Preview</button>
+            </div>
+          </div>
+          <textarea id="debrief_grammar" class="form-textarea" rows="4" disabled></textarea>
+          <div id="aiPreview_grammar" class="hidden mt-3"></div>
+        </div>
+
+        <!-- Vocabulary -->
+        <div class="bg-gray-50 rounded-xl p-4 border">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-gray-800">Vocabulary</h3>
+            <div class="flex gap-2">
+              <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                      data-ai-preview="vocabulary">AI Preview</button>
+            </div>
+          </div>
+          <textarea id="debrief_vocabulary" class="form-textarea" rows="4" disabled></textarea>
+          <div id="aiPreview_vocabulary" class="hidden mt-3"></div>
+        </div>
+
+        <!-- Pronunciation -->
+        <div class="bg-gray-50 rounded-xl p-4 border">
+          <div class="flex items-center justify-between mb-2">
+            <h3 class="font-semibold text-gray-800">Pronunciation</h3>
+            <div class="flex gap-2">
+              <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                      data-ai-preview="pronunciation">AI Preview</button>
+            </div>
+          </div>
+          <textarea id="debrief_pronunciation" class="form-textarea" rows="4" disabled
+            placeholder="Parole su cui lavorare, una per riga."></textarea>
+          <div id="aiPreview_pronunciation" class="hidden mt-3"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROW 2 -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <!-- Homework -->
+      <div class="bg-gray-50 rounded-xl p-4 border">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold text-gray-800">Homework</h3>
+          <div class="flex gap-2">
+            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                    data-ai-preview="homework">AI Preview</button>
+            <button id="debriefGeneratePlanBtn"
+                    class="px-3 py-1 text-xs bg-indigo-600 hover:bg-indigo-700 text-white rounded">✨ Generate Future Plan</button>
+          </div>
+        </div>
+        <textarea id="debrief_homework" class="form-textarea" rows="5" disabled></textarea>
+        <div id="aiPreview_homework" class="hidden mt-3"></div>
+      </div>
+
+      <!-- Other -->
+      <div class="bg-gray-50 rounded-xl p-4 border">
+        <div class="flex items-center justify-between mb-2">
+          <h3 class="font-semibold text-gray-800">Other / Notes</h3>
+          <div class="flex gap-2">
+            <button class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white rounded"
+                    data-ai-preview="other">AI Preview</button>
+            <button id="debriefGenerateFlashcardsBtn"
+                    class="px-3 py-1 text-xs bg-emerald-600 hover:bg-emerald-700 text-white rounded">🃏 Generate Flashcards</button>
+          </div>
+        </div>
+        <textarea id="debrief_other" class="form-textarea" rows="5" disabled></textarea>
+        <div id="aiPreview_other" class="hidden mt-3"></div>
+      </div>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="flex flex-col md:flex-row md:items-center gap-3 mt-8">
+      <div class="flex-1">
+        <button id="debriefLoadDraftsBtn"
+                class="bg-gray-200 text-gray-800 font-semibold py-2 px-4 rounded-xl hover:bg-gray-300">
+          💾 Load Drafts
+        </button>
+      </div>
+      <div class="flex gap-3 justify-end">
+        <button id="debriefDeleteDraftBtn"
+                class="bg-red-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-red-700">
+          Delete Draft
+        </button>
+        <button id="debriefSaveDraftBtn"
+                class="bg-blue-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-blue-700">
+          Save Draft
+        </button>
+        <button id="debriefSendBtn"
+                class="bg-green-600 text-white font-semibold py-2 px-4 rounded-xl hover:bg-green-700">
+          Send Debrief
+        </button>
+      </div>
+    </div>
+
+    <!-- MESSAGE LINE (kept for accessibility; toasts show feedback) -->
+    <p id="debriefMsg" class="text-sm text-gray-500 mt-2"></p>
+
+    <!-- SAVED DRAFTS TABLE RENDER TARGET -->
+    <div id="debriefDraftsContainer" class="mt-6 hidden"></div>
   </div>
-  <button id="backToDashboardFromDebriefBtn"
-    class="bg-gray-400 text-white font-semibold py-2 px-4 rounded-xl shadow-lg hover:bg-gray-500 transition">
-    Back to Dashboard
-  </button>
 </div>
-<!-- META INFO -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-  <div>
-    <label for="debriefStudentSelect" class="block text-sm font-medium mb-1 text-gray-700">Student</label>
-    <select id="debriefStudentSelect" class="form-input">
-      <option value="" disabled selected>Loading students...</option>
-    </select>
-  </div>
-  <div>
-    <label for="debriefDateInput" class="block text-sm font-medium mb-1 text-gray-700">Date</label>
-    <input id="debriefDateInput" type="date" class="form-input" />
-  </div>
-</div>
-<!-- MAIN FIELDS -->
-<div id="debriefFieldsContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-  <div class="space-y-6">
-    <div>
-      <label class="block font-semibold mb-1 text-gray-800">
-        Goals
-        <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-          onclick="handleAIPreview('goals')">⚡ AI Preview</button>
-      </label>
-      <textarea id="debrief_goals" rows="3" class="form-input"></textarea>
-      <div id="aiPreview_goals" class="mt-2 hidden"></div>
-    </div>
-    <div>
-      <label class="block font-semibold mb-1 text-gray-800">
-        Topics
-        <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-          onclick="handleAIPreview('topics')">⚡ AI Preview</button>
-      </label>
-      <textarea id="debrief_topics" rows="3" class="form-input"></textarea>
-      <div id="aiPreview_topics" class="mt-2 hidden"></div>
-    </div>
-    <div>
-      <label class="block font-semibold mb-1 text-gray-800">
-        Grammar
-        <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-          onclick="handleAIPreview('grammar')">⚡ AI Preview</button>
-      </label>
-      <textarea id="debrief_grammar" rows="3" class="form-input"></textarea>
-      <div id="aiPreview_grammar" class="mt-2 hidden"></div>
-    </div>
-    <div>
-      <label class="block font-semibold mb-1 text-gray-800">
-        Vocabulary
-        <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-          onclick="handleAIPreview('vocabulary')">⚡ AI Preview</button>
-      </label>
-      <textarea id="debrief_vocabulary" rows="3" class="form-input"></textarea>
-      <div id="aiPreview_vocabulary" class="mt-2 hidden"></div>
-    </div>
-  </div>
-  <div class="space-y-6">
-    <div>
-      <label class="block font-semibold mb-1 text-gray-800">
-        Pronunciation
-        <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-          onclick="handleAIPreview('pronunciation')">⚡ AI Preview</button>
-      </label>
-      <textarea id="debrief_pronunciation" rows="3" class="form-input"></textarea>
-      <div id="aiPreview_pronunciation" class="mt-2 hidden"></div>
-    </div>
-    <div>
-      <label class="block font-semibold mb-1 text-gray-800">
-        Homework
-        <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-          onclick="handleAIPreview('homework')">⚡ AI Preview</button>
-      </label>
-      <textarea id="debrief_homework" rows="3" class="form-input"></textarea>
-      <div id="aiPreview_homework" class="mt-2 hidden"></div>
-    </div>
-    <div>
-      <label class="block font-semibold mb-1 text-gray-800">
-        Other
-        <button type="button" class="text-xs text-blue-600 hover:text-blue-800 ml-2"
-          onclick="handleAIPreview('other')">⚡ AI Preview</button>
-      </label>
-      <textarea id="debrief_other" rows="3" class="form-input"></textarea>
-      <div id="aiPreview_other" class="mt-2 hidden"></div>
-    </div>
-  </div>
-</div>
-<!-- ACTION BUTTONS -->
-<div class="flex items-center justify-between flex-wrap gap-3 mb-8">
-  <button id="debriefLoadDraftsBtn"
-    class="px-4 py-2 rounded-lg bg-gray-600 text-white hover:bg-gray-700 transition">
-    📂 Load Drafts
-  </button>
-  <div class="flex items-center gap-3">
-    <button id="debriefSaveDraftBtn"
-      class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 transition">
-      💾 Save Draft
-    </button>
-    <button id="debriefSendBtn"
-      class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700 transition">
-      📤 Send Debrief
-    </button>
-  </div>
-</div>
-<!-- TABLE OF DRAFTS -->
-<div id="debriefDraftsContainer" class="hidden">
-  <h3 class="text-xl font-semibold text-gray-800 mb-3">Saved Drafts</h3>
-  <div class="overflow-x-auto">
-    <table class="min-w-full border border-gray-200 rounded-xl">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="px-4 py-2 border">Date</th>
-          <th class="px-4 py-2 border">Student</th>
-          <th class="px-4 py-2 border">Goals</th>
-          <th class="px-4 py-2 border">Topics</th>
-          <th class="px-4 py-2 border">Grammar</th>
-          <th class="px-4 py-2 border">Vocabulary</th>
-          <th class="px-4 py-2 border">Pronunciation</th>
-          <th class="px-4 py-2 border">Homework</th>
-          <th class="px-4 py-2 border">Other</th>
-          <th class="px-4 py-2 border">Action</th>
-        </tr>
-      </thead>
-      <tbody id="debriefDraftsTableBody"></tbody>
-    </table>
-  </div>
-</div>
-<span id="debriefMsg" class="block mt-4 text-sm text-gray-500"></span>
-</div>
+
   
 <!-- CALL HISTORY -->
 <div id="callHistorySection" class="hidden app-section">
